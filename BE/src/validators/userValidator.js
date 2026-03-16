@@ -14,6 +14,9 @@ export const registerSchema = Joi.object({
     'any.required': 'Name is required',
   }),
   phone: Joi.string().optional(),
+  licenseType: Joi.string().valid('A1', 'B1').optional().default('A1').messages({
+    'any.only': 'License type must be A1 or B1',
+  }),
 })
 
 export const loginSchema = Joi.object({

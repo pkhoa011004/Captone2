@@ -8,7 +8,7 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
 const PASSWORD_HASH_ROUNDS = parseInt(process.env.PASSWORD_HASH_ROUNDS) || 10
 
 export class UserService {
-  static async register(email, password, name, phone = '') {
+  static async register(email, password, name, phone = '', licenseType = 'A1') {
     // Check if user exists
     const existingUser = await UserModel.findByEmail(email)
     if (existingUser) {
@@ -26,6 +26,7 @@ export class UserService {
       passwordHash,
       name,
       phone,
+      licenseType,
     })
 
     logger.info(`User registered: ${email}`)
@@ -41,21 +42,28 @@ export class UserService {
       throw error
     }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash)
+    // Verify password - use password_hash (snake_case from database)
+    const passwordHash = user.password_hash || user.passwordHash
+    if (!passwordHash) {
+      const error = new Error('Invalid email or password')
+      error.statusCode = 401
+      throw error
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, passwordHash)
     if (!isPasswordValid) {
       const error = new Error('Invalid email or password')
       error.statusCode = 401
       throw error
     }
 
-    // Generate JWT token
+    // Generate JWT token - use role_id instead of role
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        roleId: user.role_id,
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }

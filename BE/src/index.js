@@ -8,6 +8,7 @@ import { dirname } from 'path'
 import { logger } from './utils/logger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import userRoutes from './routes/userRoutes.js'
+import { testConnection } from './config/database.js'
 
 // Load environment variables
 dotenv.config()
@@ -22,11 +23,17 @@ const NODE_ENV = process.env.NODE_ENV || 'development'
 
 // Security Middleware
 app.use(helmet())
+
+// CORS Configuration - Allow localhost on any port for development
+const allowedOrigins = NODE_ENV === 'development' 
+  ? [/^http:\/\/localhost:\d+$/] 
+  : process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173']
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: allowedOrigins,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 )
@@ -66,9 +73,12 @@ app.use((req, res) => {
 app.use(errorHandler)
 
 // Start Server
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   logger.info(`✅ Server running on http://localhost:${PORT}`)
   logger.info(`Environment: ${NODE_ENV}`)
+  
+  // Test database connection
+  await testConnection()
 })
 
 // Handle Unhandled Rejections

@@ -1,83 +1,161 @@
-// User Model - Mock Data (Replace with actual database implementation)
-// For demo purposes, using in-memory storage
-
-let users = [
-  {
-    id: 1,
-    email: 'admin@example.com',
-    name: 'Admin User',
-    phone: '0123456789',
-    role: 'admin',
-    passwordHash: '$2a$10$example_hash', // bcrypt hash of 'admin123'
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-]
-
-let userIdCounter = 2
+import { pool } from '../config/database.js'
+import { logger } from '../utils/logger.js'
 
 export class UserModel {
   static async findAll(filters = {}) {
-    let result = users
+    try {
+      let query = 'SELECT id, email, name, phone, license_type, role_id, created_at, updated_at FROM users WHERE 1=1'
+      const params = []
 
-    if (filters.search) {
-      result = result.filter(
-        (u) =>
-          u.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-          u.email.toLowerCase().includes(filters.search.toLowerCase())
-      )
+      if (filters.search) {
+        query += ' AND (name LIKE ? OR email LIKE ?)'
+        params.push(`%${filters.search}%`, `%${filters.search}%`)
+      }
+
+      if (filters.roleId) {
+        query += ' AND role_id = ?'
+        params.push(filters.roleId)
+      }
+
+      const connection = await pool.getConnection()
+      const [users] = await connection.execute(query, params)
+      connection.release()
+
+      return users
+    } catch (error) {
+      logger.error('Error finding all users:', error)
+      throw error
     }
-
-    if (filters.role) {
-      result = result.filter((u) => u.role === filters.role)
-    }
-
-    return result.map((u) => this.excludePassword(u))
   }
 
   static async findById(id) {
-    const user = users.find((u) => u.id === parseInt(id))
-    return user ? this.excludePassword(user) : null
+    try {
+      const connection = await pool.getConnection()
+      const [users] = await connection.execute(
+        'SELECT id, email, name, phone, license_type, role_id, created_at, updated_at FROM users WHERE id = ?',
+        [id]
+      )
+      connection.release()
+
+      return users[0] || null
+    } catch (error) {
+      logger.error('Error finding user by id:', error)
+      throw error
+    }
   }
 
   static async findByEmail(email) {
-    return users.find((u) => u.email === email)
+    try {
+      const connection = await pool.getConnection()
+      const [users] = await connection.execute(
+        'SELECT * FROM users WHERE email = ?',
+        [email]
+      )
+      connection.release()
+
+      return users[0] || null
+    } catch (error) {
+      logger.error('Error finding user by email:', error)
+      throw error
+    }
   }
 
   static async create(data) {
-    const user = {
-      id: userIdCounter++,
-      ...data,
-      role: 'user',
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    try {
+      const { email, passwordHash, name, phone = '', licenseType = 'A1' } = data
+
+      // Validate required fields
+      if (!email || !passwordHash || !name) {
+        throw new Error('Missing required fields: email, passwordHash, name')
+      }
+
+      const connection = await pool.getConnection()
+
+      const [result] = await connection.execute(
+        'INSERT INTO users (email, password_hash, name, phone, license_type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+        [
+          String(email || ''),
+          String(passwordHash || ''),
+          String(name || ''),
+          String(phone || ''),
+          String(licenseType || 'A1')
+        ]
+      )
+
+      connection.release()
+
+      logger.info(`User created with id: ${result.insertId}`)
+      return {
+        id: result.insertId,
+        email,
+        name,
+        phone: phone || '',
+        license_type: licenseType || 'A1',
+      }
+    } catch (error) {
+      logger.error('Error creating user:', error)
+      throw error
     }
-    users.push(user)
-    return this.excludePassword(user)
   }
 
   static async update(id, data) {
-    const index = users.findIndex((u) => u.id === parseInt(id))
-    if (index === -1) return null
+    try {
+      const fields = []
+      const values = []
 
-    users[index] = {
-      ...users[index],
-      ...data,
-      updatedAt: new Date(),
+      if (data.name !== undefined) {
+        fields.push('name = ?')
+        values.push(data.name)
+      }
+      if (data.phone !== undefined) {
+        fields.push('phone = ?')
+        values.push(data.phone)
+      }
+      if (data.licenseType !== undefined) {
+        fields.push('license_type = ?')
+        values.push(data.licenseType)
+      }
+      if (data.roleId !== undefined) {
+        fields.push('role_id = ?')
+        values.push(data.roleId)
+      }
+
+      if (fields.length === 0) {
+        return null
+      }
+
+      fields.push('updated_at = NOW()')
+      values.push(id)
+
+      const connection = await pool.getConnection()
+      await connection.execute(
+        `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      )
+      connection.release()
+
+      return this.findById(id)
+    } catch (error) {
+      logger.error('Error updating user:', error)
+      throw error
     }
-    return this.excludePassword(users[index])
   }
 
   static async delete(id) {
-    const index = users.findIndex((u) => u.id === parseInt(id))
-    if (index === -1) return false
+    try {
+      const connection = await pool.getConnection()
+      await connection.execute('DELETE FROM users WHERE id = ?', [id])
+      connection.release()
 
-    users.splice(index, 1)
-    return true
+      return true
+    } catch (error) {
+      logger.error('Error deleting user:', error)
+      throw error
+    }
   }
 
   static excludePassword(user) {
-    const { passwordHash, ...userWithoutPassword } = user
+    const { password_hash, ...userWithoutPassword } = user
     return userWithoutPassword
   }
 }

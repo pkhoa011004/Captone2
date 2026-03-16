@@ -4,9 +4,9 @@ import { logger } from '../utils/logger.js'
 
 export const register = async (req, res, next) => {
   try {
-    const { email, password, name, phone } = req.validatedData
+    const { email, password, name, phone, licenseType } = req.validatedData
 
-    const user = await UserService.register(email, password, name, phone)
+    const user = await UserService.register(email, password, name, phone, licenseType)
 
     successResponse(res, user, 'User registered successfully', 201)
   } catch (error) {
