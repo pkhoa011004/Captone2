@@ -52,7 +52,20 @@ export const authorize = (...roles) => {
       })
     }
 
-    if (roles.length && !roles.includes(req.user.role)) {
+    const userRole = req.user.role || req.user.roleId
+
+    const roleAliases = {
+      admin: [1, 'admin'],
+      user: [2, 'user'],
+    }
+
+    const isAllowed = roles.length === 0
+      || roles.some((role) => {
+        const acceptedValues = roleAliases[role] || [role]
+        return acceptedValues.includes(userRole)
+      })
+
+    if (!isAllowed) {
       return res.status(403).json({
         success: false,
         message: 'Insufficient permissions',
