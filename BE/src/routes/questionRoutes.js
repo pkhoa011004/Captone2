@@ -7,10 +7,12 @@ import {
   createQuestion,
   updateQuestion,
   deleteQuestion,
+  gradeExam,
 } from '../controllers/questionController.js'
 import {
   createQuestionSchema,
   updateQuestionSchema,
+  gradeExamSchema,
 } from '../validators/questionValidator.js'
 
 const router = express.Router()
@@ -18,6 +20,7 @@ const router = express.Router()
 // Public routes
 router.get('/', getAllQuestions)
 router.get('/:id', getQuestionById)
+router.post('/grade', validateRequest(gradeExamSchema), gradeExam)
 
 // Admin routes
 router.post('/', authenticate, authorize('admin'), validateRequest(createQuestionSchema), createQuestion)
