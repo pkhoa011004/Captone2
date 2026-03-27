@@ -111,7 +111,58 @@ export const updateQuestionSchema = Joi.object({
     return value
   })
 
+const answerItemSchema = Joi.object({
+  question_id: Joi.number().integer().positive().required(),
+  selected_answer: Joi.alternatives().try(
+    Joi.number().integer().min(1).max(4),
+    Joi.string().valid('1', '2', '3', '4'),
+    Joi.valid(null)
+  ).required(),
+})
+
+export const gradeExamSchema = Joi.object({
+  certificate_id: Joi.number().integer().positive().optional(),
+  licenseType: Joi.string().trim().uppercase().valid('A1', 'B1').optional(),
+  pass_threshold: Joi.number().integer().min(1).optional(),
+  question_ids: Joi.array().items(Joi.number().integer().positive()).min(1).optional(),
+  answers: Joi.array().items(answerItemSchema).min(1).required(),
+})
+  .custom((value, helpers) => {
+    const answerQuestionIds = value.answers.map((item) => Number(item.question_id))
+    const uniqueIds = new Set(answerQuestionIds)
+
+    if (uniqueIds.size !== answerQuestionIds.length) {
+      return helpers.error('any.invalid', { message: 'Duplicate question_id in answers' })
+    }
+
+    value.answers = value.answers.map((item) => ({
+      question_id: Number(item.question_id),
+      selected_answer: item.selected_answer === null ? null : Number(item.selected_answer),
+    }))
+
+    if (Array.isArray(value.question_ids)) {
+      const normalizedQuestionIds = [...new Set(value.question_ids.map((id) => Number(id)))]
+      const answerIdSet = new Set(value.answers.map((item) => item.question_id))
+      const invalidAnswer = value.answers.find((item) => !normalizedQuestionIds.includes(item.question_id))
+
+      if (invalidAnswer) {
+        return helpers.error('any.invalid', {
+          message: `Answer question_id ${invalidAnswer.question_id} is not in question_ids`,
+        })
+      }
+
+      value.question_ids = normalizedQuestionIds
+      value.unanswered_question_ids = normalizedQuestionIds.filter((id) => !answerIdSet.has(id))
+    } else {
+      value.question_ids = value.answers.map((item) => item.question_id)
+      value.unanswered_question_ids = []
+    }
+
+    return value
+  })
+
 export default {
   createQuestionSchema,
   updateQuestionSchema,
+  gradeExamSchema,
 }

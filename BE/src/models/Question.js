@@ -110,6 +110,42 @@ export class QuestionModel {
 		}
 	}
 
+	static async findByIds(questionIds, filters = {}) {
+		const connection = await pool.getConnection()
+
+		try {
+			const normalizedIds = [...new Set((questionIds || []).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))]
+			if (!normalizedIds.length) {
+				return []
+			}
+
+			const { certificateId = null, includeAnswer = true } = filters
+			const placeholders = normalizedIds.map(() => '?').join(', ')
+			const where = [`id IN (${placeholders})`, 'is_active = 1']
+			const params = [...normalizedIds]
+
+			if (certificateId) {
+				where.push('certificate_id = ?')
+				params.push(Number(certificateId))
+			}
+
+			const [questions] = await connection.execute(
+				`SELECT id, certificate_id, question_text, option_a, option_b, option_c, option_d,
+						correct_answer, explanation, is_fatal, image_url
+				 FROM questions
+				 WHERE ${where.join(' AND ')}`,
+				params
+			)
+
+			return questions.map((question) => this.toResponse(question, includeAnswer))
+		} catch (error) {
+			logger.error('Error finding questions by ids:', error)
+			throw error
+		} finally {
+			connection.release()
+		}
+	}
+
 	static async create(data) {
 		const connection = await pool.getConnection()
 

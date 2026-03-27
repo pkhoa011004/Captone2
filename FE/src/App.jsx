@@ -3,8 +3,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import { LandingPage } from "./pages/Home_Login/LandingPage";
 import { LoginPage } from "./pages/Home_Login/Login";
-import { AdminDashboardPage } from "./pages/Admin/AdminDashboardPage";
-import { DashboardPage } from "./pages/Learner/DashboardPage";
+import { DashboardAdmin } from "./pages/Admin/DashboardAdmin";
+import { DashboardLearner } from "./pages/Learner/DashboardLearner";
+import PracticeTests from "./pages/Learner/PracticeTests";
+import AiLearner from "./pages/Learner/AiLearner";
+import SimulatorLearner from "./pages/Learner/SimulatorLearner";
+import ScheduleLearner from "./pages/Learner/ScheduleLearner";
+import AccountSettings from "./pages/Learner/AccountSettings";
 
 const App = () => {
   return (
@@ -12,8 +17,13 @@ const App = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/dashboardlearner" element={<DashboardLearner />} />
+        <Route path="/practicelearner" element={<PracticeTests />} />
+        <Route path="/ailearner" element={<AiLearner />} />
+        <Route path="/simulatorlearner" element={<SimulatorLearner />} />
+        <Route path="/schedulelearner" element={<ScheduleLearner />} />
+        <Route path="/accountsettings" element={<AccountSettings />} />
+        <Route path="/admin" element={<DashboardAdmin />} />
         <Route path="/layout" element={<Layout />}>
           <Route index element={<div>Home</div>} />
           <Route path="about" element={<div>About</div>} />

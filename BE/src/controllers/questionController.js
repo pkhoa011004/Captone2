@@ -75,10 +75,20 @@ export const deleteQuestion = async (req, res, next) => {
   }
 }
 
+export const gradeExam = async (req, res, next) => {
+  try {
+    const result = await QuestionService.gradeExam(req.validatedData)
+    successResponse(res, result, 'Exam graded successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
 export default {
   getAllQuestions,
   getQuestionById,
   createQuestion,
   updateQuestion,
   deleteQuestion,
+  gradeExam,
 }
