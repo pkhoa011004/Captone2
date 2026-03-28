@@ -1,701 +1,457 @@
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
-import { StatsCard } from '../../components/StatsCard'
 import {
-  CarIcon,
-  HomeIcon,
-  UsersIcon,
-  ClipboardListIcon,
-  Building2Icon,
-  TrendingUpIcon,
-  SettingsIcon,
-  LogOutIcon,
-  SearchIcon,
-  BellIcon,
-  PlusIcon,
-  DownloadIcon,
-  SendIcon,
-  MoreVerticalIcon,
-  DollarSignIcon,
-  UserCheckIcon,
-  PercentIcon,
-} from 'lucide-react'
+  ArrowDownRight,
+  ArrowUpRight,
+  BadgeCheck,
+  BellRing,
+  DollarSign,
+  Download,
+  HardDrive,
+  School,
+  Server,
+  ShieldCheck,
+  UserCheck,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import {
-  LineChart,
+  CartesianGrid,
   Line,
-  BarChart,
-  Bar,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { AdminUserManagement } from './AdminUserManagement'
-import { AdminExamManagement } from './AdminExamManagement'
-import { AdminClassrooms } from './AdminClassrooms'
-import { AdminAnalytics } from './AdminAnalytics'
-import { AdminSettings } from './AdminSettings'
+} from "recharts";
 
-const sidebarItems = [
+const kpiCards = [
   {
-    icon: HomeIcon,
-    label: 'Dashboard',
-    key: 'dashboard',
+    title: "TOTAL USERS",
+    value: "1,247",
+    trend: 12,
+    icon: Users,
+    iconStyle: "bg-blue-100 text-blue-700",
   },
   {
-    icon: UsersIcon,
-    label: 'User Management',
-    key: 'users',
+    title: "ACTIVE LEARNERS",
+    value: "892",
+    trend: 5.4,
+    icon: UserCheck,
+    iconStyle: "bg-amber-100 text-amber-700",
   },
   {
-    icon: ClipboardListIcon,
-    label: 'Exam Management',
-    key: 'exams',
+    title: "PASS RATE",
+    value: "87.3%",
+    trend: -1.2,
+    icon: BadgeCheck,
+    iconStyle: "bg-slate-200 text-slate-700",
   },
   {
-    icon: Building2Icon,
-    label: 'Classrooms',
-    key: 'classrooms',
+    title: "REVENUE",
+    value: "$45,200",
+    trend: 21,
+    icon: DollarSign,
+    iconStyle: "bg-emerald-100 text-emerald-700",
   },
-  {
-    icon: TrendingUpIcon,
-    label: 'Analytics',
-    key: 'analytics',
-  },
-  {
-    icon: SettingsIcon,
-    label: 'Settings',
-    key: 'settings',
-  },
-]
-const monthlyRegistrations = [
-  {
-    month: 'Oct',
-    users: 145,
-  },
-  {
-    month: 'Nov',
-    users: 189,
-  },
-  {
-    month: 'Dec',
-    users: 234,
-  },
-  {
-    month: 'Jan',
-    users: 278,
-  },
-  {
-    month: 'Feb',
-    users: 312,
-  },
-  {
-    month: 'Mar',
-    users: 356,
-  },
-]
+];
+
+const monthlyRegistrationData = [
+  { month: "JAN", registrations: 124 },
+  { month: "FEB", registrations: 132 },
+  { month: "MAR", registrations: 114 },
+  { month: "APR", registrations: 168 },
+  { month: "MAY", registrations: 236 },
+  { month: "JUN", registrations: 228 },
+  { month: "JUL", registrations: 154 },
+  { month: "AUG", registrations: 252 },
+];
+
 const passRateByLicense = [
-  {
-    type: 'B1',
-    rate: 82,
-  },
-  {
-    type: 'B2',
-    rate: 89,
-  },
-  {
-    type: 'C',
-    rate: 78,
-  },
-]
+  { name: "CLASS B1", rate: 92 },
+  { name: "CLASS B2", rate: 78 },
+  { name: "CLASS C", rate: 64 },
+];
+
 const recentUsers = [
   {
-    id: 1,
-    name: 'Thai Kim Ngoc',
-    email: 'thai.ngoc@email.com',
-    license: 'B2',
-    date: 'Mar 3, 2026',
-    status: 'active',
+    name: "Thai Kim Ngoc",
+    email: "thaikimngoc511@example.com",
+    license: "B1",
+    date: "Mar 9, 2026",
+    status: "ACTIVE",
   },
   {
-    id: 2,
-    name: 'Dinh Minh Cong',
-    email: 'minh.cong@email.com',
-    license: 'B1',
-    date: 'Mar 2, 2026',
-    status: 'active',
+    name: "Dinh Minh Cong",
+    email: "congdinh@webmail.com",
+    license: "B2",
+    date: "Mar 10, 2026",
+    status: "PENDING",
   },
   {
-    id: 3,
-    name: 'Mai Phuoc Khoa',
-    email: 'phuoc.khoa@email.com',
-    license: 'C',
-    date: 'Mar 1, 2026',
-    status: 'pending',
+    name: "Ta Hoang Huy",
+    email: "thhuy@academy.edu",
+    license: "C",
+    date: "Feb 28, 2026",
+    status: "ACTIVE",
   },
   {
-    id: 4,
-    name: 'Ta Hoang Huy',
-    email: 'hoang.huy@email.com',
-    license: 'B2',
-    date: 'Feb 28, 2026',
-    status: 'active',
+    name: "Nguyen Minh Thanh",
+    email: "thanh123@provider.net",
+    license: "B1",
+    date: "Apr 2, 2026",
+    status: "OFFLINE",
   },
-  {
-    id: 5,
-    name: 'Nguyen Minh Thanh',
-    email: 'minh.thanh@email.com',
-    license: 'B1',
-    date: 'Feb 27, 2026',
-    status: 'active',
-  },
-]
+];
+
 const quickActions = [
-  {
-    icon: PlusIcon,
-    label: 'Add Question',
-    color: 'blue',
-  },
-  {
-    icon: Building2Icon,
-    label: 'Create Classroom',
-    color: 'emerald',
-  },
-  {
-    icon: SendIcon,
-    label: 'Send Notification',
-    color: 'amber',
-  },
-  {
-    icon: DownloadIcon,
-    label: 'Export Report',
-    color: 'purple',
-  },
-]
+  { label: "Add Instructor", icon: UserPlus },
+  { label: "Create Class", icon: School },
+  { label: "System Alert", icon: BellRing },
+  { label: "Export Data", icon: Download },
+];
 
-const adminRouteMap = {
-  dashboard: '/admin',
-  users: '/admin/users',
-  exams: '/admin/exams',
-  classrooms: '/admin/classrooms',
-  analytics: '/admin/analytics',
-  settings: '/admin/settings',
-}
+const systemStatus = [
+  {
+    name: "API Status",
+    state: "OPERATIONAL",
+    dot: "bg-emerald-500",
+    badge: "bg-emerald-100 text-emerald-700",
+  },
+  {
+    name: "3D Simulator",
+    state: "ONLINE",
+    dot: "bg-emerald-500",
+    badge: "bg-emerald-100 text-emerald-700",
+  },
+  {
+    name: "AI Service",
+    state: "RUNNING",
+    dot: "bg-blue-600",
+    badge: "bg-blue-100 text-blue-700",
+  },
+];
 
-const adminPathToKey = {
-  '/admin': 'dashboard',
-  '/admin/users': 'users',
-  '/admin/exams': 'exams',
-  '/admin/classrooms': 'classrooms',
-  '/admin/analytics': 'analytics',
-  '/admin/settings': 'settings',
-}
+const alerts = [
+  {
+    title: "Pending user registrations",
+    description: "24 applications require manual ID verification.",
+    action: "Review",
+    icon: ShieldCheck,
+    cardStyle: "bg-rose-50 border-rose-200",
+    iconStyle: "bg-rose-700 text-white",
+    actionStyle: "text-rose-700",
+  },
+  {
+    title: "Server storage at 70% capacity",
+    description: "Recommended: Archive video logs from Q2.",
+    action: "Manage",
+    icon: HardDrive,
+    cardStyle: "bg-amber-50 border-amber-200",
+    iconStyle: "bg-amber-700 text-white",
+    actionStyle: "text-amber-700",
+  },
+];
+
+const statusStyles = {
+  ACTIVE: "bg-emerald-100 text-emerald-700",
+  PENDING: "bg-amber-100 text-amber-700",
+  OFFLINE: "bg-slate-200 text-slate-600",
+};
+
+const panelClasses =
+  "rounded-2xl border border-blue-100 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.05)]";
+
 export function AdminDashboardPage() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const activeItem = adminPathToKey[location.pathname] || 'dashboard'
-  const renderContent = () => {
-    switch (activeItem) {
-      case 'users':
-        return <AdminUserManagement />
-      case 'exams':
-        return <AdminExamManagement />
-      case 'classrooms':
-        return <AdminClassrooms />
-      case 'analytics':
-        return <AdminAnalytics />
-      case 'settings':
-        return <AdminSettings />
-      case 'dashboard':
-      default:
-        return (
-          <>
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <StatsCard
-                title="Total Users"
-                value="1,247"
-                icon={UsersIcon}
-                trend="up"
-                trendValue="+12%"
-                color="blue"
-                delay={0}
-              />
-              <StatsCard
-                title="Active Learners"
-                value="892"
-                icon={UserCheckIcon}
-                trend="up"
-                trendValue="+8%"
-                color="emerald"
-                delay={0.1}
-              />
-              <StatsCard
-                title="Pass Rate"
-                value="87.3%"
-                icon={PercentIcon}
-                trend="up"
-                trendValue="+2.1%"
-                color="amber"
-                delay={0.2}
-              />
-              <StatsCard
-                title="Revenue"
-                value="$45,200"
-                icon={DollarSignIcon}
-                trend="up"
-                trendValue="+15%"
-                subtitle="this month"
-                color="blue"
-                delay={0.3}
-              />
-            </div>
+  const dateLabel = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date());
 
-            {/* Charts Section */}
-            <div className="grid lg:grid-cols-2 gap-8 mb-8">
-              {/* Monthly Registrations */}
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                transition={{
-                  delay: 0.2,
-                }}
-                className="bg-slate-900/50 border border-slate-800 rounded-xl p-6"
-              >
-                <h2 className="text-lg font-bold text-white mb-6">
-                  Monthly Registrations
-                </h2>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={monthlyRegistrations}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
-                      <YAxis stroke="#94a3b8" fontSize={12} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#1e293b',
-                          border: '1px solid #334155',
-                          borderRadius: '8px',
-                          color: '#fff',
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="users"
-                        stroke="#3b82f6"
-                        strokeWidth={3}
-                        dot={{
-                          fill: '#3b82f6',
-                          strokeWidth: 2,
-                        }}
-                        activeDot={{
-                          r: 6,
-                          fill: '#3b82f6',
-                        }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </motion.div>
-
-              {/* Pass Rate by License Type */}
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                transition={{
-                  delay: 0.3,
-                }}
-                className="bg-slate-900/50 border border-slate-800 rounded-xl p-6"
-              >
-                <h2 className="text-lg font-bold text-white mb-6">
-                  Pass Rate by License Type
-                </h2>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={passRateByLicense}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="type" stroke="#94a3b8" fontSize={12} />
-                      <YAxis stroke="#94a3b8" fontSize={12} domain={[0, 100]} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#1e293b',
-                          border: '1px solid #334155',
-                          borderRadius: '8px',
-                          color: '#fff',
-                        }}
-                        formatter={(value) => [
-                          `${value}%`,
-                          'Pass Rate',
-                        ]}
-                      />
-                      <Bar
-                        dataKey="rate"
-                        fill="#10b981"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Bottom Section */}
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Recent Users */}
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                transition={{
-                  delay: 0.4,
-                }}
-                className="lg:col-span-2 bg-slate-900/50 border border-slate-800 rounded-xl p-6"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-bold text-white">Recent Users</h2>
-                  <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                    View all
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-slate-700">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
-                          Name
-                        </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
-                          Email
-                        </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
-                          License
-                        </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
-                          Date
-                        </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
-                          Status
-                        </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentUsers.map((user, index) => (
-                        <motion.tr
-                          key={user.id}
-                          initial={{
-                            opacity: 0,
-                          }}
-                          animate={{
-                            opacity: 1,
-                          }}
-                          transition={{
-                            delay: 0.5 + index * 0.05,
-                          }}
-                          className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30 transition-colors"
-                        >
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center text-white text-xs font-semibold">
-                                {user.name.charAt(0)}
-                              </div>
-                              <span className="text-sm text-white font-medium">
-                                {user.name}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-slate-400">
-                            {user.email}
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className="px-2.5 py-1 bg-slate-800 text-slate-300 text-xs font-medium rounded">
-                              {user.license}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-slate-400">
-                            {user.date}
-                          </td>
-                          <td className="py-4 px-4">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${user.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}
-                            >
-                              {user.status === 'active' ? 'Active' : 'Pending'}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4">
-                            <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-colors">
-                              <MoreVerticalIcon className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </motion.div>
-
-              {/* Quick Actions */}
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                transition={{
-                  delay: 0.5,
-                }}
-                className="bg-slate-900/50 border border-slate-800 rounded-xl p-6"
-              >
-                <h2 className="text-lg font-bold text-white mb-6">
-                  Quick Actions
-                </h2>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {quickActions.map((action, index) => {
-                    const colorClasses = {
-                      blue: 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20',
-                      emerald:
-                        'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20',
-                      amber:
-                        'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20',
-                      purple:
-                        'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20',
-                    }
-                    const Icon = action.icon
-                    return (
-                      <motion.button
-                        key={action.label}
-                        initial={{
-                          opacity: 0,
-                          scale: 0.9,
-                        }}
-                        animate={{
-                          opacity: 1,
-                          scale: 1,
-                        }}
-                        transition={{
-                          delay: 0.6 + index * 0.1,
-                        }}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-colors ${colorClasses[action.color]}`}
-                      >
-                        <Icon className="w-6 h-6" />
-                        <span className="text-xs font-medium text-center">
-                          {action.label}
-                        </span>
-                      </motion.button>
-                    )
-                  })}
-                </div>
-
-                <div className="mt-6 pt-6 border-t border-slate-700">
-                  <h3 className="text-sm font-medium text-slate-400 mb-3">
-                    System Status
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-300">API Status</span>
-                      <span className="flex items-center gap-2 text-sm text-emerald-400">
-                        <span className="w-2 h-2 bg-emerald-400 rounded-full" />
-                        Operational
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-300">
-                        3D Simulator
-                      </span>
-                      <span className="flex items-center gap-2 text-sm text-emerald-400">
-                        <span className="w-2 h-2 bg-emerald-400 rounded-full" />
-                        Online
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-300">AI Service</span>
-                      <span className="flex items-center gap-2 text-sm text-emerald-400">
-                        <span className="w-2 h-2 bg-emerald-400 rounded-full" />
-                        Running
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </>
-        )
-    }
-  }
-  const getHeaderTitle = () => {
-    const item = sidebarItems.find((i) => i.key === activeItem)
-    return item ? item.label : 'Admin Dashboard'
-  }
-  const getHeaderSubtitle = () => {
-    switch (activeItem) {
-      case 'users':
-        return 'Manage student accounts and licenses'
-      case 'exams':
-        return 'Create and manage exam papers'
-      case 'classrooms':
-        return 'Manage learning batches and schedules'
-      case 'analytics':
-        return 'Detailed platform performance metrics'
-      case 'settings':
-        return 'Configure platform preferences'
-      default:
-        return "Overview of your platform's performance and activity."
-    }
-  }
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-40">
-        {/* Logo */}
-        <div className="p-6 border-b border-slate-800">
+    <div className="space-y-8">
+      <section className="flex flex-col gap-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
+            Welcome back, Admin
+          </h1>
+          <p className="mt-2 text-sm text-slate-500 md:text-base">
+            {dateLabel} | System Status: Optimal
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
           <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 group"
-            aria-label="DriveMaster Home"
+            type="button"
+            className="rounded-xl border border-blue-200 bg-blue-100 px-5 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-200"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <CarIcon className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white">
-              Drive<span className="text-blue-500">Master</span>
-            </span>
+            View Audit Logs
+          </button>
+          <button
+            type="button"
+            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
+          >
+            Generate Report
           </button>
         </div>
+      </section>
 
-        {/* Admin Badge */}
-        <div className="px-6 py-3">
-          <span className="inline-flex items-center px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-medium rounded-full">
-            Admin Panel
-          </span>
-        </div>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {kpiCards.map((card) => {
+          const Icon = card.icon;
+          const isPositive = card.trend >= 0;
+          const TrendIcon = isPositive ? ArrowUpRight : ArrowDownRight;
 
-        {/* Navigation Items */}
-        <nav className="flex-1 p-4 space-y-1">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon
-            const isActive = activeItem === item.key
-            return (
-              <button
-                key={item.key}
-                onClick={() => navigate(adminRouteMap[item.key] || '/admin')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all relative ${isActive ? 'text-white bg-blue-600/20' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="admin-sidebar-indicator"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-500 rounded-r-full"
-                    transition={{
-                      type: 'spring',
-                      stiffness: 300,
-                      damping: 30,
-                    }}
-                  />
-                )}
-                <Icon
-                  className={`w-5 h-5 ${isActive ? 'text-blue-400' : ''}`}
-                />
-                {item.label}
-              </button>
-            )
-          })}
-        </nav>
+          return (
+            <article key={card.title} className={`${panelClasses} p-5`}>
+              <div className="flex items-start justify-between">
+                <span
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${card.iconStyle}`}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
 
-        {/* User Section */}
-        <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-red-500 flex items-center justify-center text-white font-semibold">
-              A
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                Admin User
+                <span
+                  className={`inline-flex items-center gap-1 text-xs font-bold ${
+                    isPositive ? "text-emerald-600" : "text-rose-600"
+                  }`}
+                >
+                  <TrendIcon className="h-4 w-4" />
+                  {isPositive ? "+" : ""}
+                  {card.trend}%
+                </span>
+              </div>
+
+              <p className="mt-6 text-xs font-bold tracking-[0.12em] text-slate-500">
+                {card.title}
               </p>
-              <p className="text-xs text-slate-400">Administrator</p>
-            </div>
-            <button
-              onClick={() => navigate('/')}
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-              aria-label="Log out"
-            >
-              <LogOutIcon className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </aside>
+              <p className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">
+                {card.value}
+              </p>
+            </article>
+          );
+        })}
+      </section>
 
-      {/* Main Content */}
-      <main className="ml-64 min-h-screen">
-        {/* Top Bar */}
-        <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search users, content, or analytics..."
-                className="w-full pl-11 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-              />
-            </div>
-            <div className="flex items-center gap-4">
+      <section className="grid gap-6 lg:grid-cols-3">
+        <article className={`${panelClasses} p-6 lg:col-span-2`}>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-slate-900">Monthly Registrations</h2>
+            <div className="flex items-center gap-2 text-xs font-semibold">
               <button
-                className="relative p-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                aria-label="Notifications"
+                type="button"
+                className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1 text-blue-700"
               >
-                <BellIcon className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                Monthly
+              </button>
+              <button type="button" className="rounded-md px-3 py-1 text-slate-500">
+                Yearly
               </button>
             </div>
           </div>
-        </header>
 
-        {/* Dashboard Content */}
-        <div className="p-8">
-          {/* Welcome Header */}
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 20,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            className="mb-8"
-          >
-            <h1 className="text-3xl font-bold text-white mb-2">
-              {getHeaderTitle()}
-            </h1>
-            <p className="text-slate-400">{getHeaderSubtitle()}</p>
-          </motion.div>
+          <div className="h-[290px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={monthlyRegistrationData}
+                margin={{ top: 12, right: 8, left: -24, bottom: 6 }}
+              >
+                <CartesianGrid stroke="#e2e8f0" strokeDasharray="5 5" vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }}
+                />
+                <YAxis hide domain={[90, 280]} />
+                <Tooltip
+                  cursor={{ stroke: "#93c5fd", strokeDasharray: "4 4" }}
+                  contentStyle={{
+                    borderRadius: "12px",
+                    border: "1px solid #bfdbfe",
+                    boxShadow: "0 10px 25px rgba(37,99,235,0.15)",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="registrations"
+                  stroke="#2563eb"
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 5, fill: "#1d4ed8" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </article>
 
-          {renderContent()}
+        <article className={`${panelClasses} p-6`}>
+          <h2 className="text-xl font-bold text-slate-900">Pass Rate by License</h2>
+
+          <div className="mt-6 space-y-5">
+            {passRateByLicense.map((item) => (
+              <div key={item.name}>
+                <div className="mb-2 flex items-center justify-between text-xs font-bold tracking-[0.08em] text-slate-500">
+                  <span>{item.name}</span>
+                  <span>{item.rate}%</span>
+                </div>
+                <div className="h-3 rounded-full bg-blue-100">
+                  <div
+                    className="h-3 rounded-full bg-blue-600"
+                    style={{ width: `${item.rate}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-xs leading-5 text-slate-600">
+            <p>
+              <span className="font-bold text-blue-700">Insight:</span> Class B1
+              remains our strongest category this quarter with an 8% increase in
+              first-time passes.
+            </p>
+          </div>
+        </article>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-3">
+        <article className={`${panelClasses} overflow-hidden lg:col-span-2`}>
+          <header className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+            <h2 className="text-xl font-bold text-slate-900">Recent Users</h2>
+            <button
+              type="button"
+              className="text-sm font-semibold text-blue-700 transition hover:text-blue-600"
+            >
+              View All
+            </button>
+          </header>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] text-left text-sm">
+              <thead className="bg-blue-50 text-[11px] font-bold tracking-[0.14em] text-slate-500">
+                <tr>
+                  <th className="px-6 py-4">NAME</th>
+                  <th className="px-6 py-4">EMAIL</th>
+                  <th className="px-6 py-4">LICENSE</th>
+                  <th className="px-6 py-4">DATE</th>
+                  <th className="px-6 py-4">STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentUsers.map((user) => (
+                  <tr key={user.email} className="border-t border-slate-100">
+                    <td className="px-6 py-4 font-semibold text-slate-900">{user.name}</td>
+                    <td className="px-6 py-4 text-slate-600">{user.email}</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
+                        {user.license}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">{user.date}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${statusStyles[user.status]}`}
+                      >
+                        {user.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <div className="space-y-6">
+          <article className={`${panelClasses} p-6`}>
+            <h3 className="text-sm font-bold tracking-[0.14em] text-slate-500">
+              QUICK ACTIONS
+            </h3>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+
+                return (
+                  <button
+                    key={action.label}
+                    type="button"
+                    className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-4 text-center transition hover:border-blue-300 hover:bg-white"
+                  >
+                    <Icon className="mx-auto h-5 w-5 text-blue-700" />
+                    <span className="mt-2 block text-[11px] font-bold text-slate-700">
+                      {action.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </article>
+
+          <article className={`${panelClasses} p-6`}>
+            <h3 className="text-sm font-bold tracking-[0.14em] text-slate-500">
+              SYSTEM STATUS
+            </h3>
+            <ul className="mt-5 space-y-4">
+              {systemStatus.map((item) => (
+                <li key={item.name} className="flex items-center justify-between gap-4">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                    <span className={`h-2.5 w-2.5 rounded-full ${item.dot}`} />
+                    {item.name}
+                  </span>
+                  <span
+                    className={`rounded-md px-2 py-1 text-[10px] font-bold tracking-[0.08em] ${item.badge}`}
+                  >
+                    {item.state}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </article>
         </div>
-      </main>
+      </section>
+
+      <section className={`${panelClasses} p-6`}>
+        <div className="mb-5 flex items-center gap-3">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+            <Server className="h-5 w-5" />
+          </span>
+          <h2 className="text-xl font-bold text-slate-900">Platform Alerts</h2>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          {alerts.map((alertItem) => {
+            const AlertIcon = alertItem.icon;
+
+            return (
+              <article
+                key={alertItem.title}
+                className={`flex flex-col gap-4 rounded-2xl border p-5 md:flex-row md:items-center md:justify-between ${alertItem.cardStyle}`}
+              >
+                <div className="flex items-start gap-4">
+                  <span
+                    className={`inline-flex h-11 w-11 items-center justify-center rounded-full ${alertItem.iconStyle}`}
+                  >
+                    <AlertIcon className="h-5 w-5" />
+                  </span>
+
+                  <div>
+                    <h3 className="font-bold text-slate-900">{alertItem.title}</h3>
+                    <p className="text-sm text-slate-600">{alertItem.description}</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className={`self-start text-sm font-bold transition hover:opacity-70 md:self-auto ${alertItem.actionStyle}`}
+                >
+                  {alertItem.action}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </section>
     </div>
-  )
+  );
 }
