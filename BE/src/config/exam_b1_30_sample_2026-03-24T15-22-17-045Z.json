@@ -1,0 +1,484 @@
+[
+  {
+    "questionId": 217,
+    "isCritical": false,
+    "content": "Khi điều khiển xe ô tô rẽ trái, người lái xe cần thực hiện các thao tác nào để bảo đảm an toàn?",
+    "options": [
+      "Cách chỗ rẽ một khoảng an toàn có tín hiệu rẽ trái; giảm tốc độ, quan sát đặc biệt là bên trái; điều khiển xe từ từ rẽ trái.",
+      "Cách chỗ rẽ một khoảng an toàn có tín hiệu rẽ trái, tăng tốc độ để nhanh chóng qua chỗ giao nhau."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Tương tự như rẽ phải, rẽ trái đòi hỏi quan sát kỹ hướng rẽ và đi ở tốc độ chậm.",
+    "image": null,
+    "category": "DRIVING_TECHNIQUE",
+    "isCriticalSafety": false,
+    "examPosition": 1
+  },
+  {
+    "questionId": 53,
+    "isCritical": true,
+    "content": "Người lái xe không được vượt xe khác khi gặp trường hợp nào dưới đây?",
+    "options": [
+      "Trên cầu hẹp có một làn đường; nơi đường giao nhau, đường bộ giao nhau cùng mức với đường sắt; khi gặp xe ưu tiên.",
+      "Trên cầu có từ 02 làn xe trở lên.",
+      "Trên đường có 02 làn đường được phân chia làn bằng vạch kẻ nét đứt."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Cấm vượt ở các vị trí hẹp, giao nhau phức tạp hoặc có xe ưu tiên đang làm nhiệm vụ để đảm bảo an toàn.",
+    "image": null,
+    "category": "REGULATIONS",
+    "isCriticalSafety": true,
+    "examPosition": 2
+  },
+  {
+    "questionId": 293,
+    "isCritical": false,
+    "content": "Dây đai an toàn được trang bị trên xe ô tô có tác dụng gì?",
+    "options": [
+      "Ổn định xe khi vào đường vòng.",
+      "Giữ chặt người lái và hành khách trên ghế khi xe đột ngột dừng lại."
+    ],
+    "correctAnswer": 2,
+    "explanation": "Mục đích chính là ngăn người trên xe văng về phía trước khi có va chạm.",
+    "image": null,
+    "category": "VEHICLE_REPAIR",
+    "isCriticalSafety": false,
+    "examPosition": 3
+  },
+  {
+    "questionId": 449,
+    "isCritical": false,
+    "content": "Biển nào đặt trên đường chính trước khi đến ngã ba, ngã tư để rẽ vào đường cụt?",
+    "options": [
+      "Biển 1 và 2.",
+      "Cả ba biển.",
+      "Không biển nào."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Biển 1 báo rẽ phải vào đường cụt, Biển 2 báo rẽ trái vào đường cụt.",
+    "image": "imgb1_449.jpg",
+    "category": "TRAFFIC_SIGNS",
+    "isCriticalSafety": false,
+    "examPosition": 4
+  },
+  {
+    "questionId": 590,
+    "isCritical": false,
+    "content": "Bạn xử lý như thế nào khi tránh xe đạp trên đường?",
+    "options": [
+      "Tăng tốc độ cho xe lấn sang trái.",
+      "Giảm tốc độ cho xe lấn sang trái.",
+      "Giảm tốc độ cho xe đi sát phần đường bên phải."
+    ],
+    "correctAnswer": 3,
+    "explanation": "Giảm tốc độ và dạt phải để giữ khoảng cách an toàn với xe đạp đang lưu thông cùng chiều.",
+    "image": "imgb1_590.jpg",
+    "category": "SITUATION_HANDLING",
+    "isCriticalSafety": false,
+    "examPosition": 5
+  },
+  {
+    "questionId": 418,
+    "isCritical": false,
+    "content": "Biển báo này có ý nghĩa như thế nào? (Hình chiếc thuyền)",
+    "options": [
+      "Báo trước đoạn đường có gió ngang.",
+      "Báo trước đoạn đường trơn trượt.",
+      "Báo trước sắp đến bến phà."
+    ],
+    "correctAnswer": 3,
+    "explanation": "Biển báo sắp đến bến phà để lái xe chú ý nhường đường và điều khiển xe xuống phà an toàn.",
+    "image": "imgb1_418.jpg",
+    "category": "TRAFFIC_SIGNS",
+    "isCriticalSafety": false,
+    "examPosition": 6
+  },
+  {
+    "questionId": 408,
+    "isCritical": false,
+    "content": "Biển nào sau đây báo trước gần tới đoạn đường đang tiến hành thi công sửa chữa?",
+    "options": [
+      "Biển 1.",
+      "Biển 2.",
+      "Biển 3.",
+      "Không biển nào."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Biển 1 có hình người cầm xẻng xúc đất, báo hiệu có công trường đang thi công.",
+    "image": "imgb1_408.jpg",
+    "category": "TRAFFIC_SIGNS",
+    "isCriticalSafety": false,
+    "examPosition": 7
+  },
+  {
+    "questionId": 33,
+    "isCritical": false,
+    "content": "Có bao nhiêu nhóm biển báo hiệu đường bộ?",
+    "options": [
+      "Ba nhóm: Biển báo cấm, biển báo nguy hiểm và biển hiệu lệnh.",
+      "Bốn nhóm: Biển báo cấm, biển báo nguy hiểm, biển hiệu lệnh và biển phụ.",
+      "Năm nhóm: Biển báo cấm, biển báo nguy hiểm, biển hiệu lệnh, biển chỉ dẫn, biển phụ."
+    ],
+    "correctAnswer": 3,
+    "explanation": "Hệ thống biển báo đường bộ Việt Nam gồm 5 nhóm chính theo quy chuẩn.",
+    "image": null,
+    "category": "REGULATIONS",
+    "isCriticalSafety": false,
+    "examPosition": 8
+  },
+  {
+    "questionId": 158,
+    "isCritical": false,
+    "content": "Tốc độ từ trên 80 km/h đến 100 km/h, khoảng cách an toàn tối thiểu giữa hai xe là bao nhiêu?",
+    "options": [
+      "35 m.",
+      "55 m.",
+      "70 m."
+    ],
+    "correctAnswer": 3,
+    "explanation": "Quy tắc: 80-100km/h thì cự ly tối thiểu là 70m.",
+    "image": null,
+    "category": "REGULATIONS",
+    "isCriticalSafety": false,
+    "examPosition": 9
+  },
+  {
+    "questionId": 55,
+    "isCritical": false,
+    "content": "Người lái xe không được quay đầu xe trong các trường hợp nào dưới đây?",
+    "options": [
+      "Ở phần đường dành cho người đi bộ qua đường, trên cầu, đầu cầu, trên đường cao tốc, tại nơi đường bộ giao nhau cùng mức với đường sắt, đường hẹp, đường dốc.",
+      "Ở phía trước hoặc phía sau của phần đường dành cho người đi bộ qua đường, trên đường quốc lộ.",
+      "Cả hai ý trên."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Quay đầu xe ngay trên phần đường dành cho người đi bộ hoặc trên cầu là hành vi vi phạm pháp luật và gây nguy hiểm.",
+    "image": null,
+    "category": "REGULATIONS",
+    "isCriticalSafety": false,
+    "examPosition": 10
+  },
+  {
+    "questionId": 486,
+    "isCritical": false,
+    "content": "Theo hướng mũi tên, xe nào chấp hành đúng quy tắc giao thông?",
+    "options": [
+      "Xe khách, xe tải, xe mô tô.",
+      "Xe tải, xe mô tô.",
+      "Chỉ xe con."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Dựa trên đèn tín hiệu: Đèn xanh hướng nào thì xe hướng đó được đi. Cả 3 xe đều đi đúng đèn của mình.",
+    "image": "imgb1_486.jpg",
+    "category": "SITUATION_HANDLING",
+    "isCriticalSafety": false,
+    "examPosition": 11
+  },
+  {
+    "questionId": 92,
+    "isCritical": false,
+    "content": "Tại nơi đường giao nhau có báo hiệu đi theo vòng xuyến, người lái xe phải nhường đường như thế nào là đúng quy tắc giao thông?",
+    "options": [
+      "Nhường đường cho xe đi đến từ bên phải.",
+      "Nhường đường cho xe đi đến từ bên trái.",
+      "Không phải nhường đường."
+    ],
+    "correctAnswer": 2,
+    "explanation": "Quy tắc nhường đường tại vòng xuyến (có biển báo): Nhường đường cho xe đi từ bên TRÁI.",
+    "image": null,
+    "category": "REGULATIONS",
+    "isCriticalSafety": false,
+    "examPosition": 12
+  },
+  {
+    "questionId": 414,
+    "isCritical": false,
+    "content": "Gặp biển nào người lái xe cần đề phòng gió ngang thổi mạnh gây lật xe?",
+    "options": [
+      "Biển 1.",
+      "Biển 2.",
+      "Cả hai biển."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Biển 1 có hình cái loa (túi khí báo gió) chỉ đoạn đường có gió ngang mạnh.",
+    "image": "imgb1_414.jpg",
+    "category": "TRAFFIC_SIGNS",
+    "isCriticalSafety": false,
+    "examPosition": 13
+  },
+  {
+    "questionId": 548,
+    "isCritical": false,
+    "content": "Trong hình dưới, những xe nào vi phạm quy tắc giao thông?",
+    "options": [
+      "Xe con (B), xe mô tô (C).",
+      "Xe con (A), xe mô tô (C).",
+      "Xe con (E), xe mô tô (D).",
+      "Tất cả các loại xe trên."
+    ],
+    "correctAnswer": 3,
+    "explanation": "Xe con (E) và xe mô tô (D) đi sai làn đường quy định.",
+    "image": "imgb1_548.jpg",
+    "category": "SITUATION_HANDLING",
+    "isCriticalSafety": false,
+    "examPosition": 14
+  },
+  {
+    "questionId": 591,
+    "isCritical": false,
+    "content": "Xe nào được đi trước trong trường hợp này?",
+    "options": [
+      "Xe tải.",
+      "Xe của bạn."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Xe tải đang đi trên trục đường chính ưu tiên, xe của bạn rẽ từ đường nhánh ra.",
+    "image": "imgb1_591.jpg",
+    "category": "SITUATION_HANDLING",
+    "isCriticalSafety": false,
+    "examPosition": 15
+  },
+  {
+    "questionId": 496,
+    "isCritical": false,
+    "content": "Theo hướng mũi tên, xe nào phải nhường đường đi cuối cùng qua nơi giao nhau?",
+    "options": [
+      "Xe khách.",
+      "Xe tải.",
+      "Xe con."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Xe con và xe tải đi thẳng trên trục đường ưu tiên. Xe khách rẽ trái và không nằm trên đường ưu tiên nên đi sau cùng.",
+    "image": "imgb1_496.jpg",
+    "category": "SITUATION_HANDLING",
+    "isCriticalSafety": false,
+    "examPosition": 16
+  },
+  {
+    "questionId": 441,
+    "isCritical": false,
+    "content": "Biển nào không cho phép rẽ phải?",
+    "options": [
+      "Biển 1.",
+      "Biển 2.",
+      "Biển 3.",
+      "Biển 1 và biển 3."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Biển 1 chỉ cho phép đi thẳng và rẽ trái, nên không được rẽ phải.",
+    "image": "imgb1_441.jpg",
+    "category": "TRAFFIC_SIGNS",
+    "isCriticalSafety": false,
+    "examPosition": 17
+  },
+  {
+    "questionId": 147,
+    "isCritical": false,
+    "content": "Trong khu dân cư, đường hai chiều hoặc đường một chiều có 01 làn xe, loại xe nào được chạy tối đa 50 km/h?",
+    "options": [
+      "Ô tô tải, ô tô chở người trên 28 chỗ.",
+      "Xe gắn máy, xe máy chuyên dùng.",
+      "Cả hai ý trên."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Xe gắn máy chỉ được 40km/h, nên chỉ có ô tô tải/khách mới được chạy 50km/h trong điều kiện này.",
+    "image": null,
+    "category": "REGULATIONS",
+    "isCriticalSafety": false,
+    "examPosition": 18
+  },
+  {
+    "questionId": 487,
+    "isCritical": false,
+    "content": "Theo hướng mũi tên, thứ tự các xe đi như thế nào là đúng quy tắc giao thông?",
+    "options": [
+      "Xe tải, xe khách, xe con, xe mô tô.",
+      "Xe tải, xe mô tô, xe khách, xe con.",
+      "Xe khách, xe tải, xe con, xe mô tô.",
+      "Xe mô tô, xe khách, xe tải, xe con."
+    ],
+    "correctAnswer": 2,
+    "explanation": "Xét quyền ưu tiên: Xe tải đi trên đường ưu tiên, đi thẳng -> đi đầu. Xe mô tô ưu tiên rẽ trái -> đi thứ hai.",
+    "image": "imgb1_487.jpg",
+    "category": "SITUATION_HANDLING",
+    "isCriticalSafety": false,
+    "examPosition": 19
+  },
+  {
+    "questionId": 482,
+    "isCritical": false,
+    "content": "Khi gặp vạch kẻ đường nào các xe được phép đè vạch?",
+    "options": [
+      "Vạch 1.",
+      "Vạch 2.",
+      "Vạch 3.",
+      "Vạch 1 và vạch 3."
+    ],
+    "correctAnswer": 4,
+    "explanation": "Chỉ những vạch đứt nét (Vạch 1 và 3) mới cho phép xe đè vạch để chuyển làn.",
+    "image": "imgb1_482.jpg",
+    "category": "TRAFFIC_SIGNS",
+    "isCriticalSafety": false,
+    "examPosition": 20
+  },
+  {
+    "questionId": 585,
+    "isCritical": false,
+    "content": "Xe nào phải nhường đường trong trường hợp này? (Xuống dốc)",
+    "options": [
+      "Xe của bạn.",
+      "Xe con."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Xe xuống dốc (xe của bạn) phải nhường đường cho xe đang lên dốc (xe con).",
+    "image": "imgb1_585.jpg",
+    "category": "SITUATION_HANDLING",
+    "isCriticalSafety": false,
+    "examPosition": 21
+  },
+  {
+    "questionId": 59,
+    "isCritical": false,
+    "content": "Người điều khiển phương tiện tham gia giao thông không được dừng xe, đỗ xe ở những vị trí nào sau đây?",
+    "options": [
+      "Trên miệng cống thoát nước, miệng hầm của đường điện thoại, điện cao thế, chỗ dành riêng cho xe chữa cháy lấy nước.",
+      "Trong phạm vi an toàn của đường sắt.",
+      "Cả hai ý trên."
+    ],
+    "correctAnswer": 3,
+    "explanation": "Không được dừng đỗ gây cản trở hạ tầng công cộng và hành lang an toàn giao thông đường sắt.",
+    "image": null,
+    "category": "REGULATIONS",
+    "isCriticalSafety": false,
+    "examPosition": 22
+  },
+  {
+    "questionId": 185,
+    "isCritical": false,
+    "content": "Khái niệm về văn hóa giao thông được hiểu như thế nào là đúng?",
+    "options": [
+      "Là sự hiểu biết và chấp hành nghiêm chỉnh pháp luật về giao thông, là ý thức trách nhiệm với cộng đồng khi tham gia giao thông.",
+      "Là sự tôn trọng, nhường nhịn, giúp đỡ và ứng xử có văn hóa giữa những người tham gia giao thông với nhau.",
+      "Cả hai ý trên."
+    ],
+    "correctAnswer": 3,
+    "explanation": "Văn hóa giao thông bao gồm cả hai khía cạnh: Tính pháp lý (chấp hành luật) và tính nhân văn (ứng xử giữa người với người).",
+    "image": null,
+    "category": "TRAFFIC_CULTURE",
+    "isCriticalSafety": false,
+    "examPosition": 23
+  },
+  {
+    "questionId": 541,
+    "isCritical": false,
+    "content": "Xe nào phải nhường đường là đúng quy tắc giao thông?",
+    "options": [
+      "Xe A.",
+      "Xe B."
+    ],
+    "correctAnswer": 1,
+    "explanation": "Xe B đã vào trong vòng xuyến nên được ưu tiên đi trước.",
+    "image": "imgb1_541.jpg",
+    "category": "SITUATION_HANDLING",
+    "isCriticalSafety": false,
+    "examPosition": 24
+  },
+  {
+    "questionId": 95,
+    "isCritical": false,
+    "content": "Xe ưu tiên (trừ đoàn xe tang) tham gia giao thông đường bộ khi đi làm nhiệm vụ được quyền ưu tiên nào dưới đây?",
+    "options": [
+      "Không bị hạn chế tốc độ.",
+      "Được phép đi không phụ thuộc vào tín hiệu đèn giao thông, đi vào đường ngược chiều, các đường khác có thể đi được.",
+      "Được đi ngược chiều trên làn dừng xe khẩn cấp trên đường cao tốc.",
+      "Cả ba ý trên."
+    ],
+    "correctAnswer": 4,
+    "explanation": "Xe ưu tiên đang làm nhiệm vụ khẩn cấp có quyền năng tối cao trên đường để thực hiện nhiệm vụ.",
+    "image": null,
+    "category": "REGULATIONS",
+    "isCriticalSafety": false,
+    "examPosition": 25
+  },
+  {
+    "questionId": 511,
+    "isCritical": false,
+    "content": "Theo hướng mũi tên, hướng nào xe không được phép đi?",
+    "options": [
+      "Hướng 2 và 5.",
+      "Chỉ hướng 1."
+    ],
+    "correctAnswer": 2,
+    "explanation": "Hướng 1 có biển cấm ô tô đi vào.",
+    "image": "imgb1_511.jpg",
+    "category": "SITUATION_HANDLING",
+    "isCriticalSafety": false,
+    "examPosition": 26
+  },
+  {
+    "questionId": 49,
+    "isCritical": false,
+    "content": "Khi lái xe trong khu đông dân cư, khu vực cơ sở khám bệnh, chữa bệnh trừ các khu vực có biển cấm sử dụng còi, người lái xe được sử dụng còi trong thời gian nào?",
+    "options": [
+      "Từ 22 giờ ngày hôm trước đến 05 giờ ngày hôm sau.",
+      "Từ 05 giờ đến 22 giờ.",
+      "Từ 23 giờ ngày hôm trước đến 05 giờ sáng hôm sau."
+    ],
+    "correctAnswer": 2,
+    "explanation": "Còi chỉ được dùng ban ngày (5h-22h) để tránh ô nhiễm tiếng ồn ban đêm.",
+    "image": null,
+    "category": "REGULATIONS",
+    "isCriticalSafety": false,
+    "examPosition": 27
+  },
+  {
+    "questionId": 439,
+    "isCritical": false,
+    "content": "Trong các biển dưới đây biển nào là biển 'Hết mọi lệnh cấm'?",
+    "options": [
+      "Biển 1.",
+      "Biển 2.",
+      "Biển 3.",
+      "Cả ba biển."
+    ],
+    "correctAnswer": 2,
+    "explanation": "Biển 2 là biển trắng có 5 vạch kẻ chéo màu đen.",
+    "image": "imgb1_439.jpg",
+    "category": "TRAFFIC_SIGNS",
+    "isCriticalSafety": false,
+    "examPosition": 28
+  },
+  {
+    "questionId": 370,
+    "isCritical": false,
+    "content": "Biển nào báo hiệu sắp đến chỗ giao nhau nguy hiểm?",
+    "options": [
+      "Biển 1.",
+      "Biển 1 và biển 2.",
+      "Biển 2 và biển 3.",
+      "Cả ba biển."
+    ],
+    "correctAnswer": 4,
+    "explanation": "Cả ba biển: giao với đường sắt, giao nhau ngã tư, giao nhau có đèn tín hiệu đều là giao nhau nguy hiểm.",
+    "image": "imgb1_370.jpg",
+    "category": "TRAFFIC_SIGNS",
+    "isCriticalSafety": false,
+    "examPosition": 29
+  },
+  {
+    "questionId": 427,
+    "isCritical": false,
+    "content": "Biển nào báo hiệu phương tiện phải tuân thủ tốc độ tối đa trên từng làn đường?",
+    "options": [
+      "Biển 1.",
+      "Biển 2.",
+      "Cả hai biển."
+    ],
+    "correctAnswer": 2,
+    "explanation": "Biển 2 ghi rõ tốc độ cho từng loại phương tiện trên mỗi làn.",
+    "image": "imgb1_427.jpg",
+    "category": "TRAFFIC_SIGNS",
+    "isCriticalSafety": false,
+    "examPosition": 30
+  }
+]

@@ -4,10 +4,11 @@ import helmet from 'helmet'
 import dotenv from 'dotenv'
 import 'express-async-errors'
 import { fileURLToPath } from 'url'
-import { dirname } from 'path'
+import { dirname, resolve } from 'path'
 import { logger } from './utils/logger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import userRoutes from './routes/userRoutes.js'
+import questionRoutes from './routes/questionRoutes.js'
 import { testConnection } from './config/database.js'
 
 // Load environment variables
@@ -16,6 +17,7 @@ dotenv.config()
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+const QUESTION_IMAGES_DIR = resolve(__dirname, '../questions')
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -42,6 +44,9 @@ app.use(
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
+// Static files for question images
+app.use('/static/questions', express.static(QUESTION_IMAGES_DIR))
+
 // Request Logging
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.path}`)
@@ -59,6 +64,7 @@ app.get('/api/v1/health', (req, res) => {
 
 // API Routes
 app.use('/api/v1/users', userRoutes)
+app.use('/api/v1/questions', questionRoutes)
 
 // 404 Handler
 app.use((req, res) => {
