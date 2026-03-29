@@ -13,7 +13,6 @@ import {
   Info,
 } from "lucide-react";
 
-import { TopHeaderLearner } from "@/components/TopHeaderLearner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -42,8 +41,6 @@ const FOOTER_LINKS = ["SAFETY PROTOCOLS", "PRIVACY POLICY", "SUPPORT"];
 export const DashboardLearner = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
-      <TopHeaderLearner />
-
       <main className="flex-1 w-full max-w-screen-xl mx-auto p-10 space-y-12">
         {/* 1. Hero Section */}
         <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">

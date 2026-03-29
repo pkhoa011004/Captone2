@@ -4,7 +4,8 @@ import Layout from "./components/Layout";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import { LearnerLayout } from "./components/learner/LearnerLayout";
 import { LandingPage } from "./pages/Home_Login/LandingPage";
-import { LoginPage } from "./pages/Home_Login/Login";
+import { LogInLearner } from "./pages/Home_Login/LoginNew";
+import RegisterLearner from "./pages/Home_Login/SignupNew";
 import VerifyEmail from "./pages/Home_Login/VerifyEmail";
 import ResendVerification from "./pages/Home_Login/ResendVerification";
 import { AdminDashboardPage } from "./pages/Admin/AdminDashboardPage";
@@ -32,7 +33,8 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<LogInLearner />} />
+        <Route path="/signup" element={<RegisterLearner />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/resend-verification" element={<ResendVerification />} />
         <Route path="/dashboard" element={<Navigate to="/learner" replace />} />
