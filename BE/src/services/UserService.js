@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { UserModel } from '../models/UserModel.js'
 import { logger } from '../utils/logger.js'
+import emailService from './EmailService.js'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
@@ -20,7 +21,7 @@ export class UserService {
     // Hash password
     const passwordHash = await bcrypt.hash(password, PASSWORD_HASH_ROUNDS)
 
-    // Create user
+    // Create user (email_verified defaults to false)
     const user = await UserModel.create({
       email,
       passwordHash,
@@ -29,8 +30,34 @@ export class UserService {
       licenseType,
     })
 
-    logger.info(`User registered: ${email}`)
-    return user
+    try {
+      // Generate verification token
+      const verificationToken = UserModel.generateVerificationToken()
+      
+      // Set verification token with 24-hour expiry
+      await UserModel.setVerificationToken(user.id, verificationToken)
+      
+      // Send verification email
+      await emailService.sendVerificationEmail(email, name, verificationToken)
+      
+      logger.info(`User registered: ${email}`)
+      
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        message: 'Registration successful! Please check your email to verify your account.'
+      }
+    } catch (emailError) {
+      // If email fails, still return success but log the error
+      logger.warn(`User registered but email failed to send: ${email}`, emailError.message)
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        message: 'Registration successful but verification email failed to send. Please use "Resend Verification Email".'
+      }
+    }
   }
 
   static async login(email, password) {
@@ -54,6 +81,13 @@ export class UserService {
     if (!isPasswordValid) {
       const error = new Error('Invalid email or password')
       error.statusCode = 401
+      throw error
+    }
+
+    // Check if email is verified
+    if (!user.email_verified) {
+      const error = new Error('Please verify your email before logging in. Check your email for the verification link.')
+      error.statusCode = 403
       throw error
     }
 
@@ -138,6 +172,76 @@ export class UserService {
     await UserModel.delete(id)
     logger.info(`User deleted: ${id}`)
     return true
+  }
+
+  static async verifyEmail(token) {
+    try {
+      // Find user by verification token
+      const user = await UserModel.findByVerificationToken(token)
+      
+      if (!user) {
+        const error = new Error('Invalid or expired verification token')
+        error.statusCode = 400
+        throw error
+      }
+
+      // Mark email as verified
+      await UserModel.verifyEmail(user.id)
+
+      logger.info(`Email verified for user: ${user.email}`)
+      
+      return {
+        success: true,
+        message: 'Email verified successfully! You can now login.', 
+        email: user.email
+      }
+    } catch (error) {
+      if (error.statusCode) throw error
+      logger.error('Error verifying email:', error)
+      throw error
+    }
+  }
+
+  static async resendVerificationEmail(email) {
+    try {
+      // Find user by email
+      const user = await UserModel.findByEmail(email)
+      
+      if (!user) {
+        const error = new Error('User not found')
+        error.statusCode = 404
+        throw error
+      }
+
+      // If already verified, return success (don't expose this info)
+      if (user.email_verified) {
+        logger.info(`Resend verification requested for already-verified user: ${email}`)
+        return {
+          success: true,
+          message: 'If an account exists, a verification email will be sent.'
+        }
+      }
+
+      // Generate new verification token
+      const verificationToken = UserModel.generateVerificationToken()
+      
+      // Set new token with 24-hour expiry
+      await UserModel.setVerificationToken(user.id, verificationToken)
+      
+      // Send verification email
+      await emailService.sendResendVerificationEmail(email, user.name, verificationToken)
+      
+      logger.info(`Resend verification email sent to: ${email}`)
+      
+      return {
+        success: true,
+        message: 'Verification email sent! Check your email for the link.',
+        email
+      }
+    } catch (error) {
+      logger.error('Error resending verification email:', error)
+      throw error
+    }
   }
 }
 
