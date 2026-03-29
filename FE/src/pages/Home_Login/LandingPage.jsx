@@ -34,7 +34,7 @@ const platformFeatures = [
     title: "Theory Learning",
     items: [
       "Interactive digital handbook",
-      "Updated for 2024 regulations",
+      "Updated for 2026 regulations",
       "Quick-glance summary cards",
     ],
   },
@@ -397,7 +397,7 @@ export const LandingPage = () => {
           </div>
           <Separator className="bg-gray-700 mb-6" />
           <p className="text-center text-gray-500 text-xs">
-            © 2024 DriveMaster. All rights reserved.
+            © 2026 DriveMaster. All rights reserved.
           </p>
         </div>
       </footer>
