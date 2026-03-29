@@ -10,6 +10,8 @@ import AiLearner from "./pages/Learner/AiLearner";
 import SimulatorLearner from "./pages/Learner/SimulatorLearner";
 import ScheduleLearner from "./pages/Learner/ScheduleLearner";
 import AccountSettings from "./pages/Learner/AccountSettings";
+import LoginNew from "./pages/Home_Login/LoginNew";
+import SignupNew from "./pages/Home_Login/SignupNew";
 
 const App = () => {
   return (
@@ -17,6 +19,8 @@ const App = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/loginnew" element={<LoginNew />} />
+        <Route path="/signupnew" element={<SignupNew />} />
         <Route path="/dashboardlearner" element={<DashboardLearner />} />
         <Route path="/practicelearner" element={<PracticeTests />} />
         <Route path="/ailearner" element={<AiLearner />} />
