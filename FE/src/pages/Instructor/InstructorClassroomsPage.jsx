@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const stats = [
   {
@@ -96,7 +97,7 @@ function StatCard({ item }) {
   );
 }
 
-function ClassCard({ item }) {
+function ClassCard({ item, navigate }) {
   return (
     <article className="rounded-xl border border-blue-100 bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.05)]">
       <div className="relative overflow-hidden rounded-lg">
@@ -122,6 +123,7 @@ function ClassCard({ item }) {
 
       <button
         type="button"
+        onClick={() => navigate(`/instructor/classrooms/${item.title.toLowerCase().replace(/\s+/g, '-')}`)}
         className="mt-4 inline-flex w-full items-center justify-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
       >
         Manage Class
@@ -132,6 +134,8 @@ function ClassCard({ item }) {
 }
 
 export function InstructorClassroomsPage() {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-5">
       <section className="flex flex-wrap items-end justify-between gap-3">
@@ -218,7 +222,7 @@ export function InstructorClassroomsPage() {
 
         <div className="mt-5 grid gap-4 lg:grid-cols-3">
           {classes.map((item) => (
-            <ClassCard key={item.title} item={item} />
+            <ClassCard key={item.title} item={item} navigate={navigate} />
           ))}
         </div>
       </section>

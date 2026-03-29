@@ -4,6 +4,8 @@ import { authenticate, authorize } from '../middleware/authMiddleware.js'
 import {
   register,
   login,
+  verifyEmail,
+  resendVerificationEmail,
   getProfile,
   getAllUsers,
   getUserById,
@@ -23,6 +25,8 @@ const router = express.Router()
 // Public routes
 router.post('/register', validateRequest(registerSchema), register)
 router.post('/login', validateRequest(loginSchema), login)
+router.get('/verify-email', verifyEmail)
+router.post('/resend-verification-email', resendVerificationEmail)
 
 // Protected routes
 router.get('/profile', authenticate, getProfile)

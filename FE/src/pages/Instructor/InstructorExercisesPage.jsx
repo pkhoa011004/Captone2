@@ -12,6 +12,7 @@ import {
   Trash2,
   TrendingUp,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const summaryCards = [
   {
@@ -95,6 +96,12 @@ const statusStyles = {
 };
 
 export function InstructorExercisesPage() {
+  const navigate = useNavigate();
+
+  const handleEditExam = (examId) => {
+    navigate(`/instructor/exercises/${examId}`);
+  };
+
   return (
     <div className="space-y-5">
       <section className="flex flex-wrap items-end justify-between gap-3">
@@ -211,6 +218,7 @@ export function InstructorExercisesPage() {
                     <div className="inline-flex items-center gap-2 text-slate-400">
                       <button
                         type="button"
+                        onClick={() => handleEditExam(row.id)}
                         className="rounded p-1 hover:bg-blue-50 hover:text-blue-600"
                         aria-label={`Edit ${row.id}`}
                       >
@@ -218,6 +226,7 @@ export function InstructorExercisesPage() {
                       </button>
                       <button
                         type="button"
+                        onClick={() => navigate(`/instructor/exercises/${row.id}/duplicate`)}
                         className="rounded p-1 hover:bg-blue-50 hover:text-blue-600"
                         aria-label={`Duplicate ${row.id}`}
                       >
