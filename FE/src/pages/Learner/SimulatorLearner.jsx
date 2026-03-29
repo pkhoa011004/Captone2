@@ -17,7 +17,7 @@ import {
   Gamepad2,
 } from "lucide-react";
 
-import { TopNavigationBarSection } from "../../components/TopNavigationBarSection";
+import { TopHeaderLearner } from "../../components/TopHeaderLearner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -115,7 +115,7 @@ const PERFORMANCE_BARS = [
 export const SimulatorLearner = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans pb-20">
-      <TopNavigationBarSection />
+      <TopHeaderLearner />
 
       {/* Floating AI Button */}
       <div className="fixed bottom-8 right-8 z-50">

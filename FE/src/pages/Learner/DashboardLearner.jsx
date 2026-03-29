@@ -13,7 +13,7 @@ import {
   Info,
 } from "lucide-react";
 
-import { TopNavigationBarSection } from "@/components/TopNavigationBarSection";
+import { TopHeaderLearner } from "@/components/TopHeaderLearner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +42,7 @@ const FOOTER_LINKS = ["SAFETY PROTOCOLS", "PRIVACY POLICY", "SUPPORT"];
 export const DashboardLearner = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
-      <TopNavigationBarSection />
+      <TopHeaderLearner />
 
       <main className="flex-1 w-full max-w-screen-xl mx-auto p-10 space-y-12">
         {/* 1. Hero Section */}
@@ -250,7 +250,7 @@ export const DashboardLearner = () => {
       {/* Footer */}
       <footer className="w-full max-w-screen-xl mx-auto px-10 py-12 flex flex-col md:flex-row justify-between items-center gap-8 border-t border-slate-100 mt-20">
         <p className="text-sm font-medium text-slate-400">
-          © 2024 DriveMaster Technologies. All rights reserved.
+          © 2026 DriveMaster Technologies. All rights reserved.
         </p>
         <nav className="flex gap-8">
           {FOOTER_LINKS.map((link) => (
