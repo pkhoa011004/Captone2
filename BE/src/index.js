@@ -10,6 +10,7 @@ import { errorHandler } from './middleware/errorHandler.js'
 import userRoutes from './routes/userRoutes.js'
 import questionRoutes from './routes/questionRoutes.js'
 import { testConnection } from './config/database.js'
+import emailService from './services/EmailService.js'
 
 // Load environment variables
 dotenv.config()
@@ -89,6 +90,9 @@ const server = app.listen(PORT, async () => {
   
   // Test database connection
   await testConnection()
+  
+  // Initialize email service
+  await emailService.init()
 })
 
 // Handle Unhandled Rejections

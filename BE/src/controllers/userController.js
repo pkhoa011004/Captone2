@@ -33,6 +33,36 @@ export const login = async (req, res, next) => {
   }
 }
 
+export const verifyEmail = async (req, res, next) => {
+  try {
+    const { token } = req.query
+
+    if (!token) {
+      return errorResponse(res, 'Verification token is required', 400)
+    }
+
+    const result = await UserService.verifyEmail(token)
+    successResponse(res, result, result.message)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const resendVerificationEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body
+
+    if (!email) {
+      return errorResponse(res, 'Email is required', 400)
+    }
+
+    const result = await UserService.resendVerificationEmail(email)
+    successResponse(res, result, result.message)
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const getProfile = async (req, res, next) => {
   try {
     const user = await UserService.getUserById(req.user.id)
@@ -105,6 +135,8 @@ export const deleteUser = async (req, res, next) => {
 export default {
   register,
   login,
+  verifyEmail,
+  resendVerificationEmail,
   getProfile,
   getAllUsers,
   getUserById,

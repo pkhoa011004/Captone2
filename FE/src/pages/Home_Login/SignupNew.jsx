@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   GraduationCap,
   ShieldCheck,
@@ -7,6 +8,9 @@ import {
   Mail,
   Lock,
   ArrowRight,
+  AlertCircle,
+  Loader,
+  Check,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,14 +28,18 @@ import {
 } from "@/components/ui/select";
 
 export const RegisterLearner = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    licenseType: "B2",
+    licenseType: "A1",
     agreeToTerms: false,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const footerLinks = [
     "Privacy Policy",
@@ -40,9 +48,79 @@ export const RegisterLearner = () => {
     "Contact",
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
+    setError("");
+    setSuccess(false);
+
+    // Validation
+    if (!formData.fullName || !formData.email || !formData.password) {
+      setError("Please fill in all required fields");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    if (!formData.agreeToTerms) {
+      setError("You must agree to the Terms of Service");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/v1/users/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: formData.fullName,
+            email: formData.email,
+            password: formData.password,
+            licenseType: formData.licenseType,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Registration failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Registration success
+      setSuccess(true);
+      setFormData({
+        fullName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        licenseType: "A1",
+        agreeToTerms: false,
+      });
+
+      // Redirect to verify email page after 2 seconds
+      setTimeout(() => {
+        navigate(`/verify-email?email=${formData.email}`);
+      }, 2000);
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError("An error occurred. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -86,6 +164,7 @@ export const RegisterLearner = () => {
               <TabsList className="grid w-full grid-cols-2 bg-slate-100/50 p-1 rounded-xl">
                 <TabsTrigger
                   value="login"
+                  onClick={() => navigate("/login")}
                   className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
                 >
                   Log In
@@ -100,6 +179,22 @@ export const RegisterLearner = () => {
             </Tabs>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm font-semibold text-red-700">{error}</p>
+                </div>
+              )}
+
+              {success && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-green-700">Registration successful!</p>
+                    <p className="text-xs text-green-600 mt-1">Redirecting to verify email...</p>
+                  </div>
+                </div>
+              )}
               {/* Full Name */}
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold text-slate-400 tracking-[1.5px] uppercase ml-1">
@@ -173,15 +268,13 @@ export const RegisterLearner = () => {
                 <Label className="text-[10px] font-bold text-slate-400 tracking-[1.5px] uppercase ml-1">
                   License Type
                 </Label>
-                <Select defaultValue="B2">
+                <Select defaultValue="A1" onValueChange={(value) => setFormData({ ...formData, licenseType: value })}>
                   <SelectTrigger className="h-12 bg-[#f1f3ff] border-none rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
                     <SelectValue placeholder="Select license type" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                    <SelectItem value="B2">B2 - Automatic Car</SelectItem>
+                    <SelectItem value="A1">A1 - Lightest motorcycle</SelectItem>
                     <SelectItem value="B1">B1 - Manual Car</SelectItem>
-                    <SelectItem value="A2">A2 - Motorcycle</SelectItem>
-                    <SelectItem value="C">C - Truck</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -214,9 +307,14 @@ export const RegisterLearner = () => {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-14 bg-blue-600 hover:bg-blue-700 rounded-2xl text-lg font-bold shadow-xl shadow-blue-200 transition-all active:scale-[0.98] mt-4"
+                disabled={loading || success}
+                className="w-full h-14 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl text-lg font-bold shadow-xl shadow-blue-200 transition-all active:scale-[0.98] mt-4"
               >
-                Create Account
+                {loading ? (
+                  <Loader className="h-5 w-5 animate-spin" />
+                ) : (
+                  "Create Account"
+                )}
               </Button>
             </form>
 
