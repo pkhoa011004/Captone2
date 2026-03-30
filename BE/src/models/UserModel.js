@@ -3,6 +3,45 @@ import { logger } from '../utils/logger.js'
 import crypto from 'crypto'
 
 export class UserModel {
+  static async resolveDefaultRoleId(connection) {
+    const [preferredRoles] = await connection.execute(
+      `SELECT id
+       FROM roles
+       WHERE LOWER(name) IN ('user', 'learner')
+       ORDER BY FIELD(LOWER(name), 'user', 'learner')
+       LIMIT 1`
+    )
+
+    if (preferredRoles.length > 0) {
+      return Number(preferredRoles[0].id)
+    }
+
+    const [fallbackRoles] = await connection.execute(
+      'SELECT id FROM roles ORDER BY id ASC LIMIT 1'
+    )
+
+    if (fallbackRoles.length > 0) {
+      return Number(fallbackRoles[0].id)
+    }
+
+    await connection.execute(
+      `INSERT INTO roles (name, description, created_at, updated_at)
+       VALUES ('user', 'Auto-created default role', NOW(), NOW())`
+    )
+
+    const [createdRoles] = await connection.execute(
+      `SELECT id FROM roles WHERE LOWER(name) = 'user' LIMIT 1`
+    )
+
+    if (createdRoles.length > 0) {
+      return Number(createdRoles[0].id)
+    }
+
+    const error = new Error('No roles found. Please seed table roles before registering users.')
+    error.statusCode = 500
+    throw error
+  }
+
   static async findAll(filters = {}) {
     try {
       let query = 'SELECT id, email, name, phone, license_type, role_id, email_verified, created_at, updated_at FROM users WHERE 1=1'
@@ -62,15 +101,18 @@ export class UserModel {
   }
 
   static async create(data) {
+    let connection
+
     try {
-      const { email, passwordHash, name, phone = '', licenseType = 'A1', roleId = 1 } = data
+      const { email, passwordHash, name, phone = '', licenseType = 'A1', roleId } = data
 
       // Validate required fields
       if (!email || !passwordHash || !name) {
         throw new Error('Missing required fields: email, passwordHash, name')
       }
 
-      const connection = await pool.getConnection()
+      connection = await pool.getConnection()
+      const resolvedRoleId = roleId ?? await this.resolveDefaultRoleId(connection)
 
       const [result] = await connection.execute(
         'INSERT INTO users (email, password_hash, name, phone, license_type, role_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
@@ -80,11 +122,9 @@ export class UserModel {
           String(name || ''),
           String(phone || ''),
           String(licenseType || 'A1'),
-          parseInt(roleId || 1)
+          Number(resolvedRoleId)
         ]
       )
-
-      connection.release()
 
       logger.info(`User created with id: ${result.insertId}`)
       return {
@@ -93,10 +133,15 @@ export class UserModel {
         name,
         phone: phone || '',
         license_type: licenseType || 'A1',
+        role_id: Number(resolvedRoleId),
       }
     } catch (error) {
       logger.error('Error creating user:', error)
       throw error
+    } finally {
+      if (connection) {
+        connection.release()
+      }
     }
   }
 
