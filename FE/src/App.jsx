@@ -19,12 +19,13 @@ import { AdminExamManagement } from "./pages/Admin/AdminExamManagement";
 import { AdminClassrooms } from "./pages/Admin/AdminClassrooms";
 import { AdminAnalytics } from "./pages/Admin/AdminAnalytics";
 import { AdminSettings } from "./pages/Admin/AdminSettings";
-import { DashboardPage } from "./pages/Learner/DashboardPage";
 import { InstructorLayout } from "./components/instructor/InstructorLayout";
 import { InstructorDashboardPage } from "./pages/Instructor/InstructorDashboardPage";
 import { InstructorExercisesPage } from "./pages/Instructor/InstructorExercisesPage";
 import { InstructorClassroomsPage } from "./pages/Instructor/InstructorClassroomsPage";
 import { InstructorProfilePage } from "./pages/Instructor/InstructorProfilePage";
+import QuizLearner from "./pages/Learner/QuizLearner";
+import CreateExamLearner from "./pages/Learner/CreateExamLearner";
 
 const App = () => {
   return (
@@ -39,9 +40,11 @@ const App = () => {
         <Route path="/ailearner" element={<AiLearner />} />
         <Route path="/simulatorlearner" element={<SimulatorLearner />} />
         <Route path="/schedulelearner" element={<ScheduleLearner />} />
+        <Route path="/create-exam" element={<CreateExamLearner />} />
+        <Route path="/quizlearner" element={<QuizLearner />} />
+
         <Route path="/accountsettings" element={<AccountSettings />} />
         <Route path="/admin" element={<DashboardAdmin />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
 
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboardPage />} />
@@ -52,7 +55,10 @@ const App = () => {
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 
-        <Route path="/admin-dashboard" element={<Navigate to="/admin" replace />} />
+        <Route
+          path="/admin-dashboard"
+          element={<Navigate to="/admin" replace />}
+        />
 
         <Route path="/instructor" element={<InstructorLayout />}>
           <Route index element={<InstructorDashboardPage />} />

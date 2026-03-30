@@ -24,7 +24,11 @@ const PORT = process.env.PORT || 5000
 const NODE_ENV = process.env.NODE_ENV || 'development'
 
 // Security Middleware
-app.use(helmet())
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+)
 
 // CORS Configuration - Allow localhost on any port for development
 const allowedOrigins = NODE_ENV === 'development' 
