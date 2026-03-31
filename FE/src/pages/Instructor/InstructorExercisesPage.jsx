@@ -106,8 +106,12 @@ export function InstructorExercisesPage() {
     <div className="space-y-5">
       <section className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Exercises &amp; Exams</h1>
-          <p className="mt-1 text-sm text-slate-500">Create and manage practice tests and exercises</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+            Exercises &amp; Exams
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Create and manage practice tests and exercises
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -119,6 +123,7 @@ export function InstructorExercisesPage() {
           </button>
           <button
             type="button"
+            onClick={() => navigate("/instructor/create-exam")}
             className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"
           >
             <CirclePlus className="h-3.5 w-3.5" />
@@ -131,17 +136,26 @@ export function InstructorExercisesPage() {
         {summaryCards.map((card) => {
           const Icon = card.icon;
           return (
-            <article key={card.label} className="rounded-xl border border-blue-100 bg-white p-4">
+            <article
+              key={card.label}
+              className="rounded-xl border border-blue-100 bg-white p-4"
+            >
               <div className="mb-4 flex items-center justify-between">
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-blue-50 text-blue-600">
                   <Icon className="h-4 w-4" />
                 </span>
                 {card.trend ? (
-                  <span className={`text-[10px] font-bold ${card.trendClass}`}>{card.trend}</span>
+                  <span className={`text-[10px] font-bold ${card.trendClass}`}>
+                    {card.trend}
+                  </span>
                 ) : null}
               </div>
-              <p className="text-[11px] font-semibold text-slate-500">{card.label}</p>
-              <p className="mt-1 text-4xl font-extrabold tracking-tight text-slate-900">{card.value}</p>
+              <p className="text-[11px] font-semibold text-slate-500">
+                {card.label}
+              </p>
+              <p className="mt-1 text-4xl font-extrabold tracking-tight text-slate-900">
+                {card.value}
+              </p>
             </article>
           );
         })}
@@ -192,26 +206,44 @@ export function InstructorExercisesPage() {
             <tbody>
               {examRows.map((row) => (
                 <tr key={row.id} className="border-b border-slate-100">
-                  <td className="px-3 py-4 text-xs font-semibold text-slate-400">{row.id}</td>
-                  <td className="px-3 py-4">
-                    <p className="text-sm font-semibold text-slate-800">{row.title}</p>
-                    <p className="mt-0.5 text-[10px] text-slate-400">{row.lastEdit}</p>
+                  <td className="px-3 py-4 text-xs font-semibold text-slate-400">
+                    {row.id}
                   </td>
                   <td className="px-3 py-4">
-                    <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${row.licenseClass}`}>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {row.title}
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-slate-400">
+                      {row.lastEdit}
+                    </p>
+                  </td>
+                  <td className="px-3 py-4">
+                    <span
+                      className={`rounded-full px-2 py-1 text-[10px] font-bold ${row.licenseClass}`}
+                    >
                       {row.license}
                     </span>
                   </td>
-                  <td className="px-3 py-4 text-xs font-semibold text-slate-700">{row.questions}</td>
-                  <td className="px-3 py-4 text-xs font-semibold text-slate-700">{row.time}</td>
+                  <td className="px-3 py-4 text-xs font-semibold text-slate-700">
+                    {row.questions}
+                  </td>
+                  <td className="px-3 py-4 text-xs font-semibold text-slate-700">
+                    {row.time}
+                  </td>
                   <td className="px-3 py-4">
-                    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${statusStyles[row.status]}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${row.status === "Active" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                    <span
+                      className={`inline-flex items-center gap-1 text-xs font-semibold ${statusStyles[row.status]}`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${row.status === "Active" ? "bg-emerald-500" : "bg-amber-500"}`}
+                      />
                       {row.status}
                     </span>
                   </td>
                   <td className="px-3 py-4">
-                    <p className="text-xs font-bold text-slate-700">{row.passRate}</p>
+                    <p className="text-xs font-bold text-slate-700">
+                      {row.passRate}
+                    </p>
                     <p className="text-[10px] text-slate-400">{row.attempts}</p>
                   </td>
                   <td className="px-3 py-4">
@@ -226,7 +258,9 @@ export function InstructorExercisesPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => navigate(`/instructor/exercises/${row.id}/duplicate`)}
+                        onClick={() =>
+                          navigate(`/instructor/exercises/${row.id}/duplicate`)
+                        }
                         className="rounded p-1 hover:bg-blue-50 hover:text-blue-600"
                         aria-label={`Duplicate ${row.id}`}
                       >
@@ -262,7 +296,9 @@ export function InstructorExercisesPage() {
                 key={page}
                 type="button"
                 className={`h-7 w-7 rounded-md text-xs font-semibold ${
-                  page === 1 ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-blue-50"
+                  page === 1
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-600 hover:bg-blue-50"
                 }`}
               >
                 {page}

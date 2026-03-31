@@ -15,7 +15,6 @@ import {
   Info,
 } from "lucide-react";
 
-import { TopHeaderLearner } from "../../components/TopHeaderLearner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,9 +70,7 @@ export const AiLearner = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
-      <TopHeaderLearner />
-
-      <main className="flex-1 w-full max-w-screen-xl mx-auto p-8 mt-16 flex flex-col gap-8">
+      <main className="flex-1 w-full max-w-screen-xl mx-auto p-8 flex flex-col gap-8">
         {/* 1. Header & Stats */}
         <section className="space-y-6">
           <div>

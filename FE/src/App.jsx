@@ -50,18 +50,45 @@ const App = () => {
           <Route path="simulator" element={<SimulatorLearner />} />
           <Route path="schedule" element={<ScheduleLearner />} />
           <Route path="account-settings" element={<AccountSettings />} />
-          <Route path="create-exam" element={<CreateExamLearner />} />
           <Route path="quiz" element={<QuizLearner />} />
         </Route>
 
-        <Route path="/dashboardlearner" element={<Navigate to="/learner" replace />} />
-        <Route path="/practicelearner" element={<Navigate to="/learner/practice-tests" replace />} />
-        <Route path="/ailearner" element={<Navigate to="/learner/ai-assistant" replace />} />
-        <Route path="/simulatorlearner" element={<Navigate to="/learner/simulator" replace />} />
-        <Route path="/schedulelearner" element={<Navigate to="/learner/schedule" replace />} />
-        <Route path="/accountsettings" element={<Navigate to="/learner/account-settings" replace />} />
-        <Route path="/create-exam" element={<Navigate to="/learner/create-exam" replace />} />
-        <Route path="/quizlearner" element={<Navigate to="/learner/quiz" replace />} />
+        <Route
+          path="/dashboardlearner"
+          element={<Navigate to="/learner" replace />}
+        />
+        <Route
+          path="/practicelearner"
+          element={<Navigate to="/learner/practice-tests" replace />}
+        />
+        <Route
+          path="/ailearner"
+          element={<Navigate to="/learner/ai-assistant" replace />}
+        />
+        <Route
+          path="/simulatorlearner"
+          element={<Navigate to="/learner/simulator" replace />}
+        />
+        <Route
+          path="/schedulelearner"
+          element={<Navigate to="/learner/schedule" replace />}
+        />
+        <Route
+          path="/accountsettings"
+          element={<Navigate to="/learner/account-settings" replace />}
+        />
+        <Route
+          path="/create-exam"
+          element={<Navigate to="/instructor/create-exam" replace />}
+        />
+        <Route
+          path="/learner/create-exam"
+          element={<Navigate to="/instructor/create-exam" replace />}
+        />
+        <Route
+          path="/quizlearner"
+          element={<Navigate to="/learner/quiz" replace />}
+        />
 
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboardPage />} />
@@ -80,9 +107,16 @@ const App = () => {
         <Route path="/instructor" element={<InstructorLayout />}>
           <Route index element={<InstructorDashboardPage />} />
           <Route path="exercises" element={<InstructorExercisesPage />} />
-          <Route path="exercises/:examId" element={<InstructorExerciseDetailsPage />} />
+          <Route path="create-exam" element={<CreateExamLearner />} />
+          <Route
+            path="exercises/:examId"
+            element={<InstructorExerciseDetailsPage />}
+          />
           <Route path="classrooms" element={<InstructorClassroomsPage />} />
-          <Route path="classrooms/:classId" element={<InstructorClassroomDetailsPage />} />
+          <Route
+            path="classrooms/:classId"
+            element={<InstructorClassroomDetailsPage />}
+          />
           <Route path="profile" element={<InstructorProfilePage />} />
         </Route>
 

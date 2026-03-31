@@ -42,22 +42,21 @@ export const LogInLearner = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/users/login`,
+        `${import.meta.env.VITE_API_URL}/users/login`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email, password }),
-        }
+        },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
         setError(
-          data.message ||
-            "Login failed. Please check your credentials."
+          data.message || "Login failed. Please check your credentials.",
         );
         setLoading(false);
         return;
@@ -66,7 +65,7 @@ export const LogInLearner = () => {
       // Login success - save token and redirect
       localStorage.setItem("token", data.data.token);
       localStorage.setItem("user", JSON.stringify(data.data.user));
-      
+
       // Redirect to learner dashboard
       navigate("/learner");
     } catch (err) {
@@ -143,7 +142,9 @@ export const LogInLearner = () => {
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-semibold text-red-700">{error}</p>
+                    <p className="text-sm font-semibold text-red-700">
+                      {error}
+                    </p>
                     {error.includes("verify your email") && (
                       <button
                         onClick={() => navigate("/resend-verification")}
