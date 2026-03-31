@@ -1,5 +1,5 @@
-import React from "react";
-import { Search, Bell, Car, CircleUser } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Search, Bell, Car, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,31 @@ const navItems = [
 export const TopHeaderLearner = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileMenuRef = useRef(null);
+
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem("user"));
+    setUser(userData);
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -79,25 +104,53 @@ export const TopHeaderLearner = () => {
 
           <div className="h-8 w-px bg-slate-100 mx-2" />
 
-          {/* User Profile */}
-          <div 
-            className="flex items-center gap-3 pl-2 cursor-pointer group"
-            onClick={() => navigate("/learner/account-settings")}
-          >
-            <div className="flex flex-col items-end">
-              <span className="text-xs font-bold text-[#141b2b] group-hover:text-blue-600 transition-colors">
-                Thai Kim Ngoc
-              </span>
-              <span className="text-[10px] font-bold text-slate-400 tracking-tight">
-                ID: 051104
-              </span>
-            </div>
-            <Avatar className="w-10 h-10 border-2 border-white shadow-sm group-hover:border-blue-100 transition-all">
-              <AvatarImage src="/user-profile.png" alt="Profile" />
-              <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-xs">
-                TN
-              </AvatarFallback>
-            </Avatar>
+          {/* User Profile Dropdown */}
+          <div ref={profileMenuRef} className="relative">
+            <button
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center gap-3 pl-2 cursor-pointer group hover:opacity-80 transition-opacity"
+            >
+              <div className="flex flex-col items-end">
+                <span className="text-xs font-bold text-[#141b2b] group-hover:text-blue-600 transition-colors">
+                  {user?.name || 'User'}
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 tracking-tight">
+                  ID: {user?.id || '12345'}
+                </span>
+              </div>
+              <Avatar className="w-10 h-10 border-2 border-white shadow-sm group-hover:border-blue-100 transition-all">
+                <AvatarImage src="/user-profile.png" alt="Profile" />
+                <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-xs">
+                  {user?.name?.substring(0, 2).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+
+            {isProfileOpen && (
+              <div className="absolute right-0 top-12 w-44 rounded-xl border border-blue-100 bg-white p-1.5 shadow-[0_10px_30px_rgba(15,23,42,0.12)] z-50">
+                <p className="px-2 py-1 text-[11px] font-semibold text-slate-400">Profile - learner</p>
+                <button
+                  onClick={() => {
+                    navigate("/learner/profile");
+                    setIsProfileOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <LogOut className="h-4 w-4 rotate-180" />
+                  Profile
+                </button>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsProfileOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

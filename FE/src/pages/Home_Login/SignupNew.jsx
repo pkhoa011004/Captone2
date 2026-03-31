@@ -90,7 +90,7 @@ export const RegisterLearner = () => {
             password: formData.password,
             licenseType: formData.licenseType,
           }),
-        },
+        }
       );
 
       const data = await response.json();
@@ -190,12 +190,8 @@ export const RegisterLearner = () => {
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
                   <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-semibold text-green-700">
-                      Registration successful!
-                    </p>
-                    <p className="text-xs text-green-600 mt-1">
-                      Redirecting to verify email...
-                    </p>
+                    <p className="text-sm font-semibold text-green-700">Registration successful!</p>
+                    <p className="text-xs text-green-600 mt-1">Redirecting to verify email...</p>
                   </div>
                 </div>
               )}
@@ -272,12 +268,7 @@ export const RegisterLearner = () => {
                 <Label className="text-[10px] font-bold text-slate-400 tracking-[1.5px] uppercase ml-1">
                   License Type
                 </Label>
-                <Select
-                  defaultValue="A1"
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, licenseType: value })
-                  }
-                >
+                <Select defaultValue="A1" onValueChange={(value) => setFormData({ ...formData, licenseType: value })}>
                   <SelectTrigger className="h-12 bg-[#f1f3ff] border-none rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
                     <SelectValue placeholder="Select license type" />
                   </SelectTrigger>

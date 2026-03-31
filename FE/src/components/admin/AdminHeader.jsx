@@ -19,6 +19,12 @@ export function AdminHeader() {
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem("user"));
+    setUser(userData);
+  }, []);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -30,6 +36,12 @@ export function AdminHeader() {
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-20 border-b border-blue-100 bg-white/95 backdrop-blur">
@@ -101,11 +113,11 @@ export function AdminHeader() {
 
             {isProfileOpen ? (
               <div className="absolute right-0 top-12 w-44 rounded-xl border border-blue-100 bg-white p-1.5 shadow-[0_10px_30px_rgba(15,23,42,0.12)]">
-                <p className="px-2 py-1 text-[11px] font-semibold text-slate-400">Profile - admin</p>
+                <p className="px-2 py-1 text-[11px] font-semibold text-slate-400">Profile - {user?.name?.toLowerCase()}</p>
                 <button
                   type="button"
                   onClick={() => {
-                    navigate("/admin/settings");
+                    navigate("/admin/profile");
                     setIsProfileOpen(false);
                   }}
                   className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
@@ -115,11 +127,14 @@ export function AdminHeader() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsProfileOpen(false)}
-                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                  onClick={() => {
+                    handleLogout();
+                    setIsProfileOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                 >
                   <LogOut className="h-4 w-4" />
-                  Close
+                  Logout
                 </button>
               </div>
             ) : null}

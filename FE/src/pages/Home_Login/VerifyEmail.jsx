@@ -22,7 +22,7 @@ export default function VerifyEmail() {
             headers: {
               "Content-Type": "application/json",
             },
-          },
+          }
         );
 
         // Redirect to login regardless of result

@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { pool } from '../config/database.js'
 import { UserModel } from '../models/UserModel.js'
 import { logger } from '../utils/logger.js'
 import emailService from './EmailService.js'
@@ -103,10 +104,30 @@ export class UserService {
       { expiresIn: JWT_EXPIRES_IN }
     )
 
+    // Query role name from roles table
+    let roleName = 'user'
+    try {
+      const connection = await pool.getConnection()
+      const [roleRows] = await connection.execute(
+        'SELECT name FROM roles WHERE id = ? LIMIT 1',
+        [user.role_id]
+      )
+      if (roleRows.length > 0) {
+        roleName = roleRows[0].name
+      }
+      connection.release()
+    } catch (roleError) {
+      logger.warn(`Failed to fetch role name for user ${email}:`, roleError.message)
+    }
+
     logger.info(`User logged in: ${email}`)
 
+    const userData = UserModel.excludePassword(user)
     return {
-      user: UserModel.excludePassword(user),
+      user: {
+        ...userData,
+        role: roleName,
+      },
       token,
     }
   }

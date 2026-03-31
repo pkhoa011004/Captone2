@@ -21,7 +21,7 @@ export default function ResendVerification() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email }),
-        },
+        }
       );
 
       const data = await response.json();
@@ -29,7 +29,7 @@ export default function ResendVerification() {
       if (response.ok) {
         setStatus("success");
         setMessage(
-          "Verification email sent! Check your email and click the verification link.",
+          "Verification email sent! Check your email and click the verification link."
         );
         setTimeout(() => navigate("/login"), 3000);
       } else {
@@ -48,9 +48,13 @@ export default function ResendVerification() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md text-center">
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Email Sent!</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Email Sent!
+          </h2>
           <p className="text-gray-600 mb-2">{message}</p>
-          <p className="text-sm text-gray-500">Redirecting to login page...</p>
+          <p className="text-sm text-gray-500">
+            Redirecting to login page...
+          </p>
         </div>
       </div>
     );
