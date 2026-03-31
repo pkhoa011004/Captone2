@@ -15,7 +15,6 @@ import {
   Filter,
 } from "lucide-react";
 
-import { TopHeaderLearner } from "../../components/TopHeaderLearner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -95,9 +94,7 @@ const SESSIONS = [
 export const ScheduleLearner = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans pb-20">
-      <TopHeaderLearner />
-
-      <main className="flex-1 w-full max-w-[1440px] mx-auto p-8 grid grid-cols-12 gap-10 mt-20">
+      <main className="flex-1 w-full max-w-[1440px] mx-auto p-8 grid grid-cols-12 gap-10">
         {/* LEFT SIDEBAR (4/12) */}
         <aside className="col-span-12 lg:col-span-4 space-y-8">
           {/* 1. Mini Calendar */}

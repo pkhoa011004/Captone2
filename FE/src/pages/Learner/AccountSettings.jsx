@@ -15,8 +15,6 @@ import {
   Phone,
   ChevronRight,
 } from "lucide-react";
-
-import { TopHeaderLearner } from "../../components/TopHeaderLearner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,9 +51,7 @@ export const AccountSettings = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans pb-20">
-      <TopHeaderLearner />
-
-      <main className="flex-1 w-full max-w-[1440px] mx-auto p-8 grid grid-cols-12 gap-8 mt-16">
+      <main className="flex-1 w-full max-w-[1440px] mx-auto p-8 grid grid-cols-12 gap-8">
         {/* --- CỘT TRÁI: PROFILE & NAV (3/12) --- */}
         <aside className="col-span-12 lg:col-span-3 space-y-6">
           <Card className="border-none shadow-sm overflow-hidden text-center">

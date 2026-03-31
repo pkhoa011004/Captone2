@@ -1,6 +1,49 @@
 import { useCallback, useEffect, useState } from "react";
 import { quizLearnerApi } from "@/services/api/Quizlearner";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "";
+const BACKEND_ORIGIN = (API_BASE_URL || "http://localhost:5000").replace(
+  /\/api(?:\/v\d+)?\/?$/i,
+  "",
+);
+
+const resolveQuestionImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+
+  const rawPath = String(imagePath).trim();
+  if (!rawPath) return null;
+
+  if (/^https?:\/\//i.test(rawPath)) {
+    return rawPath;
+  }
+
+  const normalizedPath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+  return `${BACKEND_ORIGIN}${normalizedPath}`;
+};
+
+const normalizeExamQuestion = (question) => {
+  const normalizedOptions = Array.isArray(question?.options)
+    ? question.options
+        .map((option, index) => ({
+          optionId: Number(option?.optionId ?? option?.option_id ?? index + 1),
+          optionText: option?.optionText ?? option?.option_text ?? "",
+        }))
+        .filter(
+          (option) => Number.isFinite(option.optionId) && option.optionText,
+        )
+    : [];
+
+  return {
+    ...question,
+    id: Number(question?.id ?? question?.question_id),
+    questionText: question?.questionText ?? question?.question_text ?? "",
+    isFatal: Boolean(question?.isFatal ?? question?.is_fatal),
+    image: resolveQuestionImageUrl(question?.image),
+    options: normalizedOptions,
+  };
+};
+
 const shuffleArray = (items = []) => {
   const copied = [...items];
 
@@ -167,6 +210,8 @@ export const useQuizQuestions = ({
   licenseType = "A1",
   questionCount = 25,
   generationMode = "structured",
+  examsSource = "exam_250",
+  selectedCategories = [],
 } = {}) => {
   const [questions, setQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -177,30 +222,70 @@ export const useQuizQuestions = ({
     setError(null);
 
     try {
-      const data = await quizLearnerApi.getQuestions({
-        licenseType,
-        includeAnswer: false,
-      });
+      let data;
 
-      const validQuestions = data.filter(
+      // Use new API for exam_250 and exam_600
+      if (examsSource === "exam_250") {
+        const params = new URLSearchParams({ licenseType });
+        if (Array.isArray(selectedCategories) && selectedCategories.length) {
+          params.set("categories", selectedCategories.join(","));
+        }
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"}/api/v1/exams/250?${params.toString()}`,
+        );
+        if (!response.ok) throw new Error("Failed to fetch exam_250");
+        const result = await response.json();
+        data = result.data || result;
+      } else if (examsSource === "exam_600") {
+        const params = new URLSearchParams({ licenseType });
+        if (Array.isArray(selectedCategories) && selectedCategories.length) {
+          params.set("categories", selectedCategories.join(","));
+        }
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"}/api/v1/exams/600?${params.toString()}`,
+        );
+        if (!response.ok) throw new Error("Failed to fetch exam_600");
+        const result = await response.json();
+        data = result.data || result;
+      } else {
+        // Fallback to legacy API
+        data = await quizLearnerApi.getQuestions({
+          licenseType,
+          includeAnswer: false,
+        });
+      }
+
+      // Handle API response format
+      const questions_array = data?.questions || data || [];
+      const normalizedQuestions = questions_array.map(normalizeExamQuestion);
+      const validQuestions = normalizedQuestions.filter(
         (item) =>
           item.questionText &&
           Array.isArray(item.options) &&
           item.options.length >= 2,
       );
 
-      const selectedQuestions =
-        generationMode === "structured"
-          ? pickStructuredQuestions({
-              validQuestions,
-              licenseType,
-              questionCount,
-            })
-          : typeof questionCount === "number" && questionCount > 0
-            ? shuffleArray(validQuestions).slice(0, questionCount)
-            : validQuestions;
+      // If examsSource is provided, questions are already structured from backend
+      if (
+        examsSource &&
+        (examsSource === "exam_250" || examsSource === "exam_600")
+      ) {
+        setQuestions(validQuestions);
+      } else {
+        // Legacy structured picking for backward compatibility
+        const selectedQuestions =
+          generationMode === "structured"
+            ? pickStructuredQuestions({
+                validQuestions,
+                licenseType,
+                questionCount,
+              })
+            : typeof questionCount === "number" && questionCount > 0
+              ? shuffleArray(validQuestions).slice(0, questionCount)
+              : validQuestions;
 
-      setQuestions(selectedQuestions);
+        setQuestions(selectedQuestions);
+      }
     } catch (err) {
       const message =
         err?.response?.data?.message ||
@@ -211,7 +296,13 @@ export const useQuizQuestions = ({
     } finally {
       setIsLoading(false);
     }
-  }, [licenseType, questionCount, generationMode]);
+  }, [
+    licenseType,
+    questionCount,
+    generationMode,
+    examsSource,
+    JSON.stringify(selectedCategories),
+  ]);
 
   useEffect(() => {
     fetchQuestions();

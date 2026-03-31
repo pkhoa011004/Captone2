@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { TopHeaderLearner } from "@/components/TopHeaderLearner";
 import {
   Card,
   CardContent,
@@ -22,6 +21,8 @@ const DEFAULT_EXAM_CONFIG = {
   questionCount: 25,
   examName: "Đề A1 - 25 câu",
   generationMode: "structured",
+  examsSource: "exam_250",
+  selectedCategories: [],
 };
 
 const normalizeExamConfig = (config = {}) => {
@@ -30,9 +31,20 @@ const normalizeExamConfig = (config = {}) => {
     .toUpperCase();
   const licenseType = rawLicense === "B1" ? "B1" : "A1";
 
-  const defaultCount = licenseType === "B1" ? 30 : 25;
-  const minCount = licenseType === "B1" ? 15 : 10;
-  const maxCount = licenseType === "B1" ? 35 : 30;
+  const examsSource = config?.examsSource || "exam_250";
+  const selectedCategories = Array.isArray(config?.selectedCategories)
+    ? [
+        ...new Set(
+          config.selectedCategories
+            .map((item) => String(item).trim().toUpperCase())
+            .filter(Boolean),
+        ),
+      ]
+    : [];
+
+  const defaultCount = examsSource === "exam_600" ? 35 : 25;
+  const minCount = examsSource === "exam_600" ? 20 : 10;
+  const maxCount = examsSource === "exam_600" ? 50 : 30;
 
   const parsedCount = Number(config?.questionCount);
   const questionCount = Number.isFinite(parsedCount)
@@ -53,6 +65,8 @@ const normalizeExamConfig = (config = {}) => {
         ? config.examName.trim()
         : `Đề ${licenseType} - ${questionCount} câu`,
     generationMode,
+    examsSource,
+    selectedCategories,
   };
 };
 
@@ -61,8 +75,16 @@ const parseExamConfigFromSearch = (search = "") => {
   const licenseType = params.get("licenseType");
   const questionCount = params.get("questionCount");
   const generationMode = params.get("mode");
+  const examsSource = params.get("examsSource");
+  const categories = params.get("categories");
 
-  if (!licenseType && !questionCount && !generationMode) {
+  if (
+    !licenseType &&
+    !questionCount &&
+    !generationMode &&
+    !examsSource &&
+    !categories
+  ) {
     return null;
   }
 
@@ -70,15 +92,23 @@ const parseExamConfigFromSearch = (search = "") => {
     licenseType,
     questionCount,
     generationMode,
+    examsSource,
+    selectedCategories: categories
+      ? categories
+          .split(",")
+          .map((item) =>
+            String(item || "")
+              .trim()
+              .toUpperCase(),
+          )
+          .filter(Boolean)
+      : [],
   });
 };
 
 const QuizShell = ({ children }) => (
-  <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans pb-12">
-    <TopHeaderLearner />
-    <main className="flex-1 w-full max-w-5xl mx-auto p-8 mt-16">
-      {children}
-    </main>
+  <div className="flex flex-col bg-[#f9f9ff] font-sans pb-12">
+    <main className="flex-1 w-full max-w-5xl mx-auto p-8">{children}</main>
   </div>
 );
 
@@ -113,7 +143,10 @@ export default function QuizLearner() {
         prev.licenseType === nextConfig.licenseType &&
         prev.questionCount === nextConfig.questionCount &&
         prev.examName === nextConfig.examName &&
-        prev.generationMode === nextConfig.generationMode
+        prev.generationMode === nextConfig.generationMode &&
+        prev.examsSource === nextConfig.examsSource &&
+        JSON.stringify(prev.selectedCategories || []) ===
+          JSON.stringify(nextConfig.selectedCategories || [])
       ) {
         return prev;
       }
@@ -133,6 +166,8 @@ export default function QuizLearner() {
     licenseType: examConfig.licenseType,
     questionCount: examConfig.questionCount,
     generationMode: examConfig.generationMode,
+    examsSource: examConfig.examsSource,
+    selectedCategories: examConfig.selectedCategories,
   });
 
   const {
@@ -141,7 +176,10 @@ export default function QuizLearner() {
     error: gradingError,
     submitExam,
     resetGrading,
-  } = useQuizGrading({ licenseType: examConfig.licenseType });
+  } = useQuizGrading({
+    licenseType: examConfig.licenseType,
+    examsSource: examConfig.examsSource,
+  });
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -151,6 +189,7 @@ export default function QuizLearner() {
 
   const question = questions[currentQuestion] || null;
   const totalQuestions = questions.length;
+  const isImageOnRight = currentQuestion % 2 === 0;
 
   useEffect(() => {
     setCurrentQuestion(0);
@@ -188,7 +227,7 @@ export default function QuizLearner() {
     }));
     const questionIds = questions.map((item) => item.id);
 
-    await submitExam({ answers, questionIds });
+    await submitExam({ answers, questionIds, questions });
     setIsFinished(true);
   };
 
@@ -310,9 +349,9 @@ export default function QuizLearner() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => navigate("/create-exam")}
+                onClick={() => navigate("/learner/practice-tests")}
               >
-                Tạo đề khác
+                Chọn đề khác
               </Button>
             </div>
           </CardContent>
@@ -336,8 +375,11 @@ export default function QuizLearner() {
               <Badge variant="outline">{examConfig.examName}</Badge>
             </div>
           </div>
-          <Button variant="outline" onClick={() => navigate("/create-exam")}>
-            Tạo đề khác
+          <Button
+            variant="outline"
+            onClick={() => navigate("/learner/practice-tests")}
+          >
+            Chọn đề khác
           </Button>
         </div>
 
@@ -365,52 +407,69 @@ export default function QuizLearner() {
                 </Badge>
               )}
             </div>
-            <CardTitle className="text-2xl leading-relaxed text-[#141b2b]">
-              {question.questionText}
+            <CardTitle className="text-base font-semibold text-slate-500">
+              Chọn đáp án đúng nhất cho câu hỏi bên dưới
             </CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-5">
-            {question.image && (
-              <div className="rounded-2xl overflow-hidden border border-slate-100 bg-slate-50">
-                <img
-                  src={question.image}
-                  alt="Question"
-                  className="w-full h-72 object-cover"
-                />
-              </div>
-            )}
-
-            <RadioGroup
-              value={selectedOption?.toString()}
-              onValueChange={(val) =>
-                !isSubmitted && setSelectedOption(parseInt(val, 10))
-              }
-              className="grid gap-3"
+            <div
+              className={`grid gap-6 ${question.image ? "lg:grid-cols-2" : "grid-cols-1"}`}
             >
-              {question.options.map((option) => (
-                <Label
-                  key={option.optionId}
-                  className={`border p-4 rounded-xl cursor-pointer transition-all flex items-start gap-3 ${
-                    selectedOption === option.optionId
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-slate-200 bg-white hover:border-blue-300"
-                  } ${isSubmitted ? "opacity-80" : ""}`}
+              <div
+                className={`space-y-5 ${question.image && !isImageOnRight ? "lg:order-2" : "lg:order-1"}`}
+              >
+                <h2 className="text-2xl leading-relaxed font-black text-[#141b2b]">
+                  {question.questionText}
+                </h2>
+
+                <RadioGroup
+                  value={selectedOption?.toString()}
+                  onValueChange={(val) =>
+                    !isSubmitted && setSelectedOption(parseInt(val, 10))
+                  }
+                  className="grid gap-3"
                 >
-                  <RadioGroupItem
-                    value={option.optionId.toString()}
-                    disabled={isSubmitted}
-                    className="sr-only"
+                  {question.options.map((option) => (
+                    <Label
+                      key={option.optionId}
+                      className={`border p-4 rounded-xl cursor-pointer transition-all flex items-start gap-3 ${
+                        selectedOption === option.optionId
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-slate-200 bg-white hover:border-blue-300"
+                      } ${isSubmitted ? "opacity-80" : ""}`}
+                    >
+                      <RadioGroupItem
+                        value={option.optionId.toString()}
+                        disabled={isSubmitted}
+                        className="sr-only"
+                      />
+                      <span className="shrink-0 w-8 h-8 rounded-full border border-slate-300 bg-white flex items-center justify-center text-sm font-extrabold text-slate-600">
+                        {String.fromCharCode(64 + option.optionId)}
+                      </span>
+                      <span className="grow text-sm md:text-base font-medium text-slate-700">
+                        {option.optionText}
+                      </span>
+                    </Label>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {question.image && (
+                <div
+                  className={`rounded-2xl border border-slate-200 bg-slate-50 p-3 flex items-center justify-center min-h-80 ${
+                    isImageOnRight ? "lg:order-2" : "lg:order-1"
+                  }`}
+                >
+                  <img
+                    src={question.image}
+                    alt={`Hình minh họa câu ${question.id}`}
+                    className="w-full h-auto max-h-130 object-contain rounded-xl"
+                    loading="lazy"
                   />
-                  <span className="shrink-0 w-8 h-8 rounded-full border border-slate-300 bg-white flex items-center justify-center text-sm font-extrabold text-slate-600">
-                    {String.fromCharCode(64 + option.optionId)}
-                  </span>
-                  <span className="grow text-sm md:text-base font-medium text-slate-700">
-                    {option.optionText}
-                  </span>
-                </Label>
-              ))}
-            </RadioGroup>
+                </div>
+              )}
+            </div>
           </CardContent>
 
           <CardFooter className="flex flex-col sm:flex-row justify-between gap-3 border-t border-slate-100 bg-slate-50/50 p-6">

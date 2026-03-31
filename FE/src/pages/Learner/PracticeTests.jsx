@@ -14,7 +14,6 @@ import {
   Shield,
 } from "lucide-react";
 
-import { TopHeaderLearner } from "@/components/TopHeaderLearner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -116,8 +115,6 @@ const getDifficultyStyles = (level) => {
 export const PracticeTests = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
-      <TopHeaderLearner />
-
       <main className="flex-1 w-full max-w-screen-2xl mx-auto p-8 space-y-10">
         {/* 1. Header */}
         <header className="space-y-1">

@@ -9,7 +9,9 @@ import { logger } from './utils/logger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import userRoutes from './routes/userRoutes.js'
 import questionRoutes from './routes/questionRoutes.js'
+import examRoutes from './routes/examRoutes.js'
 import { testConnection } from './config/database.js'
+import { ensureUsersEmailVerificationSchema } from './config/migrations.js'
 import emailService from './services/EmailService.js'
 
 // Load environment variables
@@ -70,6 +72,7 @@ app.get('/api/v1/health', (req, res) => {
 // API Routes
 app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/questions', questionRoutes)
+app.use('/api/v1/exams', examRoutes)
 
 // 404 Handler
 app.use((req, res) => {
@@ -89,7 +92,11 @@ const server = app.listen(PORT, async () => {
   logger.info(`Environment: ${NODE_ENV}`)
   
   // Test database connection
-  await testConnection()
+  const dbConnected = await testConnection()
+
+  if (dbConnected) {
+    await ensureUsersEmailVerificationSchema()
+  }
   
   // Initialize email service
   await emailService.init()
