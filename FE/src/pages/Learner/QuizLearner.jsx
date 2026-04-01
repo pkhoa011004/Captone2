@@ -17,12 +17,56 @@ import { useQuizQuestions } from "@/hooks/useQuizQuestions";
 import { useQuizGrading } from "@/hooks/useQuizGrading";
 
 const DEFAULT_EXAM_CONFIG = {
+  topicId: null,
   licenseType: "A1",
   questionCount: 25,
   examName: "Đề A1 - 25 câu",
   generationMode: "structured",
   examsSource: "exam_250",
   selectedCategories: [],
+};
+
+const PRACTICE_RESULTS_STORAGE_KEY = "practiceTopicResults";
+
+const savePracticeResult = ({ topicId, examName, totalQuestions, result }) => {
+  if (!result || typeof result !== "object") return;
+
+  const scorePercent = Number(result?.score_percent ?? 0);
+  if (!Number.isFinite(scorePercent)) return;
+
+  const key = topicId || examName;
+  if (!key) return;
+
+  try {
+    const raw = localStorage.getItem(PRACTICE_RESULTS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const safeStore = parsed && typeof parsed === "object" ? parsed : {};
+    const prev = safeStore[key] || {};
+
+    safeStore[key] = {
+      topicId: topicId || prev.topicId || null,
+      examName: examName || prev.examName || "Quiz",
+      bestScore: Math.max(
+        Number(prev?.bestScore || 0),
+        Math.round(scorePercent),
+      ),
+      latestScore: Math.round(scorePercent),
+      attemptCount: Number(prev?.attemptCount || 0) + 1,
+      totalQuestions: Number(totalQuestions || prev?.totalQuestions || 0),
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (topicId && examName) {
+      safeStore[examName] = safeStore[key];
+    }
+
+    localStorage.setItem(
+      PRACTICE_RESULTS_STORAGE_KEY,
+      JSON.stringify(safeStore),
+    );
+  } catch {
+    // Ignore storage errors (private mode/quota) and continue user flow.
+  }
 };
 
 const normalizeExamConfig = (config = {}) => {
@@ -57,6 +101,10 @@ const normalizeExamConfig = (config = {}) => {
       : "structured";
 
   return {
+    topicId:
+      typeof config?.topicId === "string" && config.topicId.trim()
+        ? config.topicId.trim()
+        : null,
     licenseType,
     questionCount:
       generationMode === "structured" ? defaultCount : questionCount,
@@ -77,13 +125,15 @@ const parseExamConfigFromSearch = (search = "") => {
   const generationMode = params.get("mode");
   const examsSource = params.get("examsSource");
   const categories = params.get("categories");
+  const examName = params.get("examName");
 
   if (
     !licenseType &&
     !questionCount &&
     !generationMode &&
     !examsSource &&
-    !categories
+    !categories &&
+    !examName
   ) {
     return null;
   }
@@ -93,6 +143,7 @@ const parseExamConfigFromSearch = (search = "") => {
     questionCount,
     generationMode,
     examsSource,
+    examName,
     selectedCategories: categories
       ? categories
           .split(",")
@@ -140,6 +191,7 @@ export default function QuizLearner() {
 
     setExamConfig((prev) => {
       if (
+        prev.topicId === nextConfig.topicId &&
         prev.licenseType === nextConfig.licenseType &&
         prev.questionCount === nextConfig.questionCount &&
         prev.examName === nextConfig.examName &&
@@ -227,7 +279,13 @@ export default function QuizLearner() {
     }));
     const questionIds = questions.map((item) => item.id);
 
-    await submitExam({ answers, questionIds, questions });
+    const result = await submitExam({ answers, questionIds, questions });
+    savePracticeResult({
+      topicId: examConfig.topicId,
+      examName: examConfig.examName,
+      totalQuestions,
+      result,
+    });
     setIsFinished(true);
   };
 
@@ -305,7 +363,7 @@ export default function QuizLearner() {
               <Trophy size={30} />
             </div>
             <h1 className="text-3xl font-black text-[#141b2b]">
-              Kết quả bài quiz
+              Kết quả: {examConfig.examName}
             </h1>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
