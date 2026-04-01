@@ -270,7 +270,12 @@ export const useQuizQuestions = ({
         examsSource &&
         (examsSource === "exam_250" || examsSource === "exam_600")
       ) {
-        setQuestions(validQuestions);
+        const hasRequestedCount =
+          typeof questionCount === "number" && questionCount > 0;
+        const prepared = shuffleArray(validQuestions);
+        setQuestions(
+          hasRequestedCount ? prepared.slice(0, questionCount) : prepared,
+        );
       } else {
         // Legacy structured picking for backward compatibility
         const selectedQuestions =

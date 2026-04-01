@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FileText,
   Trophy,
@@ -6,10 +7,8 @@ import {
   Activity,
   RotateCcw,
   Play,
-  Search,
   Filter,
   TrendingUp,
-  AlertTriangle,
   CloudRain,
   Shield,
 } from "lucide-react";
@@ -19,85 +18,102 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
-// --- Dữ liệu Thống kê Tổng quan ---
-const STATS_SUMMARY = [
-  {
-    label: "Tests Completed",
-    value: "12",
-    icon: <FileText size={20} />,
-    badge: "OVERALL",
-    color: "bg-slate-100",
-  },
-  {
-    label: "Average Score",
-    value: "85%",
-    icon: <Trophy size={20} />,
-    trend: "+2%",
-    color: "bg-blue-100",
-    highlight: true,
-  },
-  {
-    label: "Questions Answered",
-    value: "340",
-    icon: <HelpCircle size={20} />,
-    color: "bg-slate-100",
-  },
-  {
-    label: "Readiness Score",
-    value: "High",
-    icon: <Activity size={20} />,
-    color: "bg-slate-100",
-    textColor: "text-blue-600",
-  },
-];
-
 // --- Dữ liệu Các Bài Kiểm tra ---
 const PRACTICE_TOPICS = [
   {
-    title: "Traffic Signs & Signals",
+    id: "traffic-signs-signals",
     difficulty: "EASY",
     questions: 25,
-    bestScore: 92,
-    attempted: true,
+    selectedCategories: ["TRAFFIC_SIGNS"],
   },
   {
-    title: "Right of Way Rules",
+    id: "right-of-way-rules",
     difficulty: "MEDIUM",
     questions: 20,
-    bestScore: 78,
-    attempted: true,
+    selectedCategories: ["REGULATIONS", "TRAFFIC_CULTURE"],
   },
   {
-    title: "Speed Limits & Zones",
+    id: "speed-limits-zones",
     difficulty: "EASY",
     questions: 15,
-    bestScore: 65,
-    attempted: true,
+    selectedCategories: ["REGULATIONS"],
   },
   {
-    title: "Parking Regulations",
+    id: "parking-regulations",
     difficulty: "MEDIUM",
     questions: 30,
-    bestScore: 88,
-    attempted: true,
+    selectedCategories: ["REGULATIONS", "DRIVING_TECHNIQUE"],
   },
   {
-    title: "Emergency Procedures",
+    id: "emergency-procedures",
     difficulty: "HARD",
     questions: 15,
-    bestScore: null,
-    attempted: false,
+    selectedCategories: ["SITUATION_HANDLING"],
     decoIcon: <Shield />,
   },
   {
-    title: "Night & Weather Driving",
+    id: "night-weather-driving",
     difficulty: "HARD",
     questions: 20,
-    bestScore: null,
-    attempted: false,
+    selectedCategories: ["DRIVING_TECHNIQUE", "SITUATION_HANDLING"],
     decoIcon: <CloudRain />,
   },
 ];
+
+const CATEGORY_LABELS = {
+  REGULATIONS: "Khái niệm & quy tắc",
+  TRAFFIC_CULTURE: "Văn hóa giao thông",
+  DRIVING_TECHNIQUE: "Kỹ thuật lái xe",
+  VEHICLE_REPAIR: "Cấu tạo & sửa chữa",
+  TRAFFIC_SIGNS: "Biển báo đường bộ",
+  SITUATION_HANDLING: "Sa hình & tình huống",
+};
+
+const LEGACY_TOPIC_TITLES = {
+  "traffic-signs-signals": "Traffic Signs & Signals",
+  "right-of-way-rules": "Right of Way Rules",
+  "speed-limits-zones": "Speed Limits & Zones",
+  "parking-regulations": "Parking Regulations",
+  "emergency-procedures": "Emergency Procedures",
+  "night-weather-driving": "Night & Weather Driving",
+};
+
+const buildTopicTitle = (topic, index) => {
+  const labels = (topic.selectedCategories || [])
+    .map((category) => CATEGORY_LABELS[category] || category)
+    .filter(Boolean);
+
+  if (!labels.length) {
+    return `Đề ${index + 1} - ${topic.questions} câu`;
+  }
+
+  const shortLabel = labels.slice(0, 2).join(" + ");
+  return `Đề ${index + 1}: ${shortLabel}`;
+};
+
+const PRACTICE_RESULTS_STORAGE_KEY = "practiceTopicResults";
+
+const readPracticeResults = () => {
+  try {
+    const raw = localStorage.getItem(PRACTICE_RESULTS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const getQuizConfigForTopic = (topic) => ({
+  topicId: topic.id,
+  licenseType: "A1",
+  questionCount: topic.questions,
+  examName: topic.title,
+  generationMode: "random",
+  examsSource: "exam_250",
+  selectedCategories: Array.isArray(topic.selectedCategories)
+    ? topic.selectedCategories
+    : [],
+});
 
 const getDifficultyStyles = (level) => {
   switch (level) {
@@ -113,6 +129,111 @@ const getDifficultyStyles = (level) => {
 };
 
 export const PracticeTests = () => {
+  const navigate = useNavigate();
+  const [storedResults] = useState(() => readPracticeResults());
+
+  const topicsWithResults = useMemo(
+    () =>
+      PRACTICE_TOPICS.map((topic, index) => {
+        const topicTitle = buildTopicTitle(topic, index);
+        const result =
+          storedResults[topic.id] ||
+          storedResults[topicTitle] ||
+          storedResults[LEGACY_TOPIC_TITLES[topic.id]] ||
+          null;
+        const bestScore = Number.isFinite(Number(result?.bestScore))
+          ? Number(result.bestScore)
+          : null;
+
+        return {
+          ...topic,
+          title: topicTitle,
+          bestScore,
+          attempted: bestScore !== null,
+          attemptCount: Number(result?.attemptCount || 0),
+        };
+      }),
+    [storedResults],
+  );
+
+  const handleStartOrRetake = (topic) => {
+    const examConfig = getQuizConfigForTopic(topic);
+    sessionStorage.setItem("quizExamConfig", JSON.stringify(examConfig));
+    navigate("/learner/quiz", {
+      state: { examConfig },
+    });
+  };
+
+  const statsSummary = useMemo(() => {
+    const attemptedTopics = topicsWithResults.filter(
+      (topic) => topic.attempted,
+    );
+    const testsCompleted = topicsWithResults.reduce(
+      (sum, topic) => sum + Number(topic.attemptCount || 0),
+      0,
+    );
+
+    const averageScore = attemptedTopics.length
+      ? Math.round(
+          attemptedTopics.reduce((sum, topic) => {
+            const result =
+              storedResults[topic.id] ||
+              storedResults[topic.title] ||
+              storedResults[LEGACY_TOPIC_TITLES[topic.id]] ||
+              null;
+            const score = Number(result?.latestScore ?? topic.bestScore ?? 0);
+            return sum + (Number.isFinite(score) ? score : 0);
+          }, 0) / attemptedTopics.length,
+        )
+      : 0;
+
+    const questionsAnswered = topicsWithResults.reduce((sum, topic) => {
+      const result =
+        storedResults[topic.id] ||
+        storedResults[topic.title] ||
+        storedResults[LEGACY_TOPIC_TITLES[topic.id]] ||
+        null;
+      const attemptCount = Number(result?.attemptCount || 0);
+      const totalQuestions = Number(
+        result?.totalQuestions || topic.questions || 0,
+      );
+      return sum + attemptCount * totalQuestions;
+    }, 0);
+
+    const readinessScore =
+      averageScore >= 80 ? "High" : averageScore >= 60 ? "Medium" : "Low";
+
+    return [
+      {
+        label: "Tests Completed",
+        value: String(testsCompleted),
+        icon: <FileText size={20} />,
+        badge: "OVERALL",
+        color: "bg-slate-100",
+      },
+      {
+        label: "Average Score",
+        value: `${averageScore}%`,
+        icon: <Trophy size={20} />,
+        color: "bg-blue-100",
+        highlight: true,
+      },
+      {
+        label: "Questions Answered",
+        value: String(questionsAnswered),
+        icon: <HelpCircle size={20} />,
+        color: "bg-slate-100",
+      },
+      {
+        label: "Readiness Score",
+        value: readinessScore,
+        icon: <Activity size={20} />,
+        color: "bg-slate-100",
+        textColor: "text-blue-600",
+      },
+    ];
+  }, [topicsWithResults, storedResults]);
+
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
       <main className="flex-1 w-full max-w-screen-2xl mx-auto p-8 space-y-10">
@@ -128,7 +249,7 @@ export const PracticeTests = () => {
 
         {/* 2. Overall Stats Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {STATS_SUMMARY.map((stat, idx) => (
+          {statsSummary.map((stat, idx) => (
             <Card
               key={idx}
               className={`border-none shadow-sm transition-all hover:shadow-md ${stat.highlight ? "border-l-4 border-l-blue-600" : ""}`}
@@ -187,12 +308,21 @@ export const PracticeTests = () => {
 
         {/* 4. Topics Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {PRACTICE_TOPICS.map((topic, idx) => (
+          {topicsWithResults.map((topic, idx) => (
             <Card
               key={idx}
-              className="border-none shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-300"
+              className="border-none shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-300 cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onClick={() => handleStartOrRetake(topic)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleStartOrRetake(topic);
+                }
+              }}
             >
-              <CardContent className="p-8 flex flex-col h-full min-h-[274px]">
+              <CardContent className="p-8 flex flex-col h-full min-h-68.5">
                 {/* Topic Header */}
                 <div className="flex justify-between items-start mb-6">
                   <Badge
@@ -242,11 +372,21 @@ export const PracticeTests = () => {
                     <Button
                       variant="outline"
                       className="w-full rounded-xl bg-[#e1e8fd] border-none text-blue-700 font-bold gap-2 hover:bg-blue-200"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleStartOrRetake(topic);
+                      }}
                     >
                       <RotateCcw size={16} /> Retake
                     </Button>
                   ) : (
-                    <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2 shadow-lg shadow-blue-100">
+                    <Button
+                      className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2 shadow-lg shadow-blue-100"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleStartOrRetake(topic);
+                      }}
+                    >
                       <Play size={16} fill="currentColor" /> Start Test
                     </Button>
                   )}
