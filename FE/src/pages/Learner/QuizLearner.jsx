@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, RotateCcw, Trophy } from "lucide-react";
+import { ChevronRight, RotateCcw, Trophy, Sparkles, Loader } from "lucide-react";
 import { useQuizQuestions } from "@/hooks/useQuizQuestions";
 import { useQuizGrading } from "@/hooks/useQuizGrading";
 
@@ -238,6 +238,7 @@ export default function QuizLearner() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [answersByQuestion, setAnswersByQuestion] = useState({});
   const [isFinished, setIsFinished] = useState(false);
+  const [sendingToAI, setSendingToAI] = useState(false);
 
   const question = questions[currentQuestion] || null;
   const totalQuestions = questions.length;
@@ -307,6 +308,118 @@ export default function QuizLearner() {
     setAnswersByQuestion({});
     setIsFinished(false);
     resetGrading();
+  };
+
+  const handleSendToAI = async () => {
+    setSendingToAI(true);
+    try {
+      console.log("\n📤 HANDLE_SEND_TO_AI STARTED");
+      console.log("\n📊 STEP 1: Available data check");
+      console.log("   - gradingResult exists:", !!gradingResult);
+      if (gradingResult) {
+        console.log("   - gradingResult keys:", Object.keys(gradingResult));
+        console.log("   - gradingResult full object:", gradingResult);
+        console.log("     • correct_count:", gradingResult.correct_count);
+        console.log("     • score_percent:", gradingResult.score_percent);
+        console.log("     • wrong_answers:", gradingResult.wrong_answers);
+        console.log("     • Type of wrong_answers:", typeof gradingResult.wrong_answers);
+      } else {
+        console.log("   ❌ PROBLEM: gradingResult is missing!");
+      }
+      console.log("   - questions count:", questions?.length);
+      if (questions && questions.length > 0) {
+        console.log("     First question ID:", questions[0].id);
+        console.log("     Question IDs:", questions.map(q => q.id));
+      }
+      console.log("   - answersByQuestion:", answersByQuestion);
+      console.log("     Keys:", Object.keys(answersByQuestion || {}));
+      console.log("   - examConfig:", examConfig);
+      console.log("   - totalQuestions:", totalQuestions);
+      
+      // Lấy danh sách câu sai
+      console.log("\n📊 STEP 2: Extract wrong answers");
+      const wrongAnswers = gradingResult?.wrong_answers || [];
+      console.log("   - wrongAnswers array:", wrongAnswers);
+      console.log("   - wrongAnswers length:", wrongAnswers.length);
+      console.log("   - wrongAnswers type:", typeof wrongAnswers);
+      if (Array.isArray(wrongAnswers)) {
+        console.log("   ✅ wrongAnswers is an array");
+      } else {
+        console.log("   ❌ wrongAnswers is NOT an array! Type:", typeof wrongAnswers);
+      }
+      
+      console.log("\n📊 STEP 3: Filter questions");
+      const wrongQuestions = questions.filter((q) => {
+        const isWrong = wrongAnswers.includes(q.id);
+        console.log(`   Q${q.id}: ${isWrong ? '❌ WRONG' : '✅ CORRECT'}`);
+        return isWrong;
+      });
+      
+      console.log("\n📊 STEP 4: Filter results");
+      console.log("   - Input questions count:", questions.length);
+      console.log("   - Input wrongAnswers count:", wrongAnswers.length);
+      console.log("   - Output wrongQuestions count:", wrongQuestions.length);
+      console.log("   - Filtered wrongQuestions IDs:", wrongQuestions.map(q => q.id));
+
+      // Lưu dữ liệu chi tiết vào sessionStorage
+      console.log("\n📊 STEP 5: Build analysisData");
+      const analysisData = {
+        examName: examConfig.examName,
+        score: `${gradingResult?.correct_count}/${totalQuestions}`,
+        percentage: gradingResult?.score_percent,
+        licenseType: examConfig.licenseType,
+        wrongQuestions: wrongQuestions.map((q) => {
+          console.log(`   Processing Q${q.id}:`, {
+            question_text: q.question_text?.substring(0, 30),
+            user_answer: answersByQuestion[q.id],
+            correct_answer: q.correct_answer,
+          });
+          
+          return {
+            id: q.id,
+            question_text: q.question_text,
+            correct_answer: q.correct_answer,
+            user_answer: answersByQuestion[q.id],
+            options: q.options,
+            explanation: q.explanation,
+            category: q.category,
+          };
+        }),
+        totalWrong: wrongQuestions.length,
+        answersByQuestion: answersByQuestion,
+      };
+
+      console.log("\n💾 Final analysisData to save:");
+      console.log("   - examName:", analysisData.examName);
+      console.log("   - score:", analysisData.score);
+      console.log("   - percentage:", analysisData.percentage);
+      console.log("   - licenseType:", analysisData.licenseType);
+      console.log("   - totalWrong:", analysisData.totalWrong);
+      console.log("   - wrongQuestions count:", analysisData.wrongQuestions.length);
+      console.log("   - Full analysisData:", analysisData);
+
+      console.log("\n📊 STEP 6: Save to sessionStorage");
+      sessionStorage.setItem("quizAnalysis", JSON.stringify(analysisData));
+      console.log("✅ Saved to sessionStorage");
+      
+      console.log("\n📊 STEP 7: Verify read back");
+      const verify = sessionStorage.getItem("quizAnalysis");
+      const verifyData = JSON.parse(verify);
+      console.log("✅ Verified from sessionStorage:");
+      console.log("   - wrongQuestions count:", verifyData.wrongQuestions.length);
+      console.log("   - Data matches:", JSON.stringify(analysisData) === JSON.stringify(verifyData) ? "✅ YES" : "❌ NO");
+      
+      console.log("\n🚀 STEP 8: Navigate");
+      console.log("🚀 Navigating to /learner/ai-assistant");
+      navigate("/learner/ai-assistant");
+    } catch (error) {
+      console.error("❌ Error in handleSendToAI:", error);
+      console.error("   - Type:", error.constructor.name);
+      console.error("   - Message:", error.message);
+      console.error("   - Stack:", error.stack);
+    } finally {
+      setSendingToAI(false);
+    }
   };
 
   if (isLoadingQuestions) {
@@ -408,8 +521,24 @@ export default function QuizLearner() {
               <Button
                 variant="outline"
                 onClick={() => navigate("/learner/practice-tests")}
+                className="rounded-xl"
               >
                 Chọn đề khác
+              </Button>
+              <Button
+                onClick={handleSendToAI}
+                disabled={sendingToAI}
+                className="rounded-xl bg-blue-600 hover:bg-blue-700"
+              >
+                {sendingToAI ? (
+                  <>
+                    <Loader size={16} className="mr-2 animate-spin" /> Đang gửi...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} className="mr-2" /> Phân tích với AI
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>

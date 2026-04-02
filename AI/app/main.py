@@ -33,12 +33,12 @@ app.include_router(api_router)
 @app.on_event("startup")
 async def startup_event():
     """Startup event"""
-    log_info(f"🚀 Application starting - {settings.APP_TITLE}")
+    log_info(f"[START] Application starting - {settings.APP_TITLE}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Shutdown event"""
-    log_info("👋 Application shutting down")
+    log_info("[STOP] Application shutting down")
 
 if __name__ == "__main__":
     import uvicorn
