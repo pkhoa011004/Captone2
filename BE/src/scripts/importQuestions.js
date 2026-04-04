@@ -12,6 +12,28 @@ const QUESTION_SOURCES = [
   { fileName: 'question_b1.json', licenseType: 'B1' },
 ]
 
+function toBoolean(value) {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number') return value === 1
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    return ['1', 'true', 'yes', 'y'].includes(normalized)
+  }
+  return false
+}
+
+function resolveFatalFlag(raw = {}) {
+  return toBoolean(
+    raw.isCritical
+      ?? raw.is_critical
+      ?? raw.isFatal
+      ?? raw.is_fatal
+      ?? raw.fatal
+      ?? raw.critical
+      ?? false
+  )
+}
+
 function normalizeImagePath(rawImage) {
   const value = rawImage ? String(rawImage).trim() : ''
   if (!value) return null
@@ -26,6 +48,7 @@ function normalizeImagePath(rawImage) {
 function normalizeQuestion(raw, certificateId) {
   const rawImage = raw.image ? String(raw.image).trim() : null
   const normalizedImage = normalizeImagePath(rawImage)
+  const isFatal = resolveFatalFlag(raw)
 
   const options = Array.isArray(raw.options)
     ? raw.options.map((text) => String(text || '').trim())
@@ -36,16 +59,47 @@ function normalizeQuestion(raw, certificateId) {
     certificate_id: Number(certificateId),
     question_text: String(raw.content || '').trim(),
     image_url: normalizedImage,
-    is_fatal: Boolean(raw.isCritical),
+    is_fatal: isFatal,
     explanation: raw.explanation ?? null,
     option_a: options[0] || null,
     option_b: options[1] || null,
     option_c: options[2] || null,
     option_d: options[3] || null,
     correct_answer: Number(raw.correctAnswer),
-    complexity_level: raw.isCritical ? 'critical' : 'medium',
+    complexity_level: isFatal ? 'critical' : 'medium',
     question_bank_id: 1,
   }
+}
+
+async function logFatalSummary(connection) {
+  const [rows] = await connection.execute(
+    `SELECT certificate_id,
+            COUNT(*) AS total,
+            SUM(CASE WHEN is_fatal = 1 THEN 1 ELSE 0 END) AS fatal_total
+     FROM questions
+     WHERE is_active = 1
+     GROUP BY certificate_id
+     ORDER BY certificate_id ASC`
+  )
+
+  if (!rows.length) {
+    logger.warn('No active questions found after import')
+    return
+  }
+
+  rows.forEach((row) => {
+    const certificateId = Number(row.certificate_id)
+    const total = Number(row.total || 0)
+    const fatalTotal = Number(row.fatal_total || 0)
+
+    logger.info(`[IMPORT SUMMARY] certificate_id=${certificateId}, total=${total}, fatal_total=${fatalTotal}`)
+
+    if (fatalTotal === 0) {
+      logger.warn(
+        `[IMPORT SUMMARY] certificate_id=${certificateId} has 0 fatal questions. Check source field mapping (isCritical/is_fatal/isFatal...)`
+      )
+    }
+  })
 }
 
 async function resolveCertificateIds(connection) {
@@ -196,6 +250,7 @@ async function importQuestions() {
     }
 
     await connection.commit()
+    await logFatalSummary(connection)
     logger.info(`Imported questions successfully: inserted=${inserted}, updated=${updated}, total=${data.length}`)
   } catch (error) {
     await connection.rollback()

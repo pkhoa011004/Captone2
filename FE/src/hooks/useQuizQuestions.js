@@ -39,6 +39,12 @@ const normalizeExamQuestion = (question) => {
     id: Number(question?.id ?? question?.question_id),
     questionText: question?.questionText ?? question?.question_text ?? "",
     isFatal: Boolean(question?.isFatal ?? question?.is_fatal),
+    correctAnswer: Number(
+      question?.correctAnswer ??
+        question?.correct_answer ??
+        question?.correctOption ??
+        question?.correct_option,
+    ),
     image: resolveQuestionImageUrl(question?.image),
     options: normalizedOptions,
   };
@@ -211,6 +217,7 @@ export const useQuizQuestions = ({
   questionCount = 25,
   generationMode = "structured",
   examsSource = "exam_250",
+  fatalOnly = false,
   selectedCategories = [],
 } = {}) => {
   const [questions, setQuestions] = useState([]);
@@ -230,6 +237,9 @@ export const useQuizQuestions = ({
         if (Array.isArray(selectedCategories) && selectedCategories.length) {
           params.set("categories", selectedCategories.join(","));
         }
+        if (fatalOnly) {
+          params.set("fatalOnly", "true");
+        }
         const response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"}/api/v1/exams/250?${params.toString()}`,
         );
@@ -240,6 +250,9 @@ export const useQuizQuestions = ({
         const params = new URLSearchParams({ licenseType });
         if (Array.isArray(selectedCategories) && selectedCategories.length) {
           params.set("categories", selectedCategories.join(","));
+        }
+        if (fatalOnly) {
+          params.set("fatalOnly", "true");
         }
         const response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"}/api/v1/exams/600?${params.toString()}`,
@@ -265,6 +278,11 @@ export const useQuizQuestions = ({
           item.options.length >= 2,
       );
 
+      const questionPool = fatalOnly
+        ? validQuestions.filter((item) => item.isFatal)
+        : validQuestions;
+      const effectivePool = questionPool.length ? questionPool : validQuestions;
+
       // If examsSource is provided, questions are already structured from backend
       if (
         examsSource &&
@@ -272,22 +290,31 @@ export const useQuizQuestions = ({
       ) {
         const hasRequestedCount =
           typeof questionCount === "number" && questionCount > 0;
-        const prepared = shuffleArray(validQuestions);
-        setQuestions(
-          hasRequestedCount ? prepared.slice(0, questionCount) : prepared,
-        );
+        const prepared = shuffleArray(effectivePool);
+        let selectedQuestions = hasRequestedCount
+          ? prepared.slice(0, questionCount)
+          : prepared;
+
+        if (!fatalOnly) {
+          selectedQuestions = ensureAtLeastOneFatal(
+            selectedQuestions,
+            prepared,
+          );
+        }
+
+        setQuestions(selectedQuestions);
       } else {
         // Legacy structured picking for backward compatibility
         const selectedQuestions =
           generationMode === "structured"
             ? pickStructuredQuestions({
-                validQuestions,
+                validQuestions: effectivePool,
                 licenseType,
                 questionCount,
               })
             : typeof questionCount === "number" && questionCount > 0
-              ? shuffleArray(validQuestions).slice(0, questionCount)
-              : validQuestions;
+              ? shuffleArray(effectivePool).slice(0, questionCount)
+              : effectivePool;
 
         setQuestions(selectedQuestions);
       }
@@ -306,6 +333,7 @@ export const useQuizQuestions = ({
     questionCount,
     generationMode,
     examsSource,
+    fatalOnly,
     JSON.stringify(selectedCategories),
   ]);
 
