@@ -8,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 const navItems = [
   { label: "Dashboard", path: "/learner", active: true },
   { label: "Practice Tests", path: "/learner/practice-tests", active: false },
+  { label: "Tạo đề", path: "/learner/create-exam", active: false },
   { label: "AI Assistant", path: "/learner/ai-assistant", active: false },
   { label: "Simulation", path: "/learner/simulator", active: false },
   { label: "Schedule", path: "/learner/schedule", active: false },
@@ -47,7 +48,7 @@ export const TopHeaderLearner = () => {
   };
   return (
     <div className="w-full h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center px-8 sticky top-0 z-50 shadow-sm">
-      <div className="max-w-[1440px] w-full mx-auto flex items-center justify-between">
+      <div className="max-w-360 w-full mx-auto flex items-center justify-between">
         {/* LEFT: Logo & Search */}
         <div className="flex items-center gap-8">
           {/* Logo */}
@@ -81,7 +82,7 @@ export const TopHeaderLearner = () => {
               onClick={() => navigate(item.path)}
               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                 isActive(item.path)
-                  ? "text-blue-600 relative after:content-[''] after:absolute after:bottom-[-22px] after:left-0 after:w-full after:h-0.5 after:bg-blue-600"
+                  ? "text-blue-600 relative after:content-[''] after:absolute after:-bottom-5.5 after:left-0 after:w-full after:h-0.5 after:bg-blue-600"
                   : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >

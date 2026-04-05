@@ -21,6 +21,15 @@ import { Card, CardContent } from "@/components/ui/card";
 // --- Dữ liệu Các Bài Kiểm tra ---
 const PRACTICE_TOPICS = [
   {
+    id: "fatal-questions-only",
+    difficulty: "HARD",
+    questions: 10,
+    selectedCategories: ["REGULATIONS", "TRAFFIC_SIGNS", "SITUATION_HANDLING"],
+    fatalOnly: true,
+    titleOverride: "Đề điểm liệt (thử nghiệm)",
+    decoIcon: <Shield />,
+  },
+  {
     id: "traffic-signs-signals",
     difficulty: "EASY",
     questions: 25,
@@ -70,6 +79,7 @@ const CATEGORY_LABELS = {
 };
 
 const LEGACY_TOPIC_TITLES = {
+  "fatal-questions-only": "Fatal Questions Only",
   "traffic-signs-signals": "Traffic Signs & Signals",
   "right-of-way-rules": "Right of Way Rules",
   "speed-limits-zones": "Speed Limits & Zones",
@@ -79,6 +89,10 @@ const LEGACY_TOPIC_TITLES = {
 };
 
 const buildTopicTitle = (topic, index) => {
+  if (topic.titleOverride) {
+    return topic.titleOverride;
+  }
+
   const labels = (topic.selectedCategories || [])
     .map((category) => CATEGORY_LABELS[category] || category)
     .filter(Boolean);
@@ -92,6 +106,7 @@ const buildTopicTitle = (topic, index) => {
 };
 
 const PRACTICE_RESULTS_STORAGE_KEY = "practiceTopicResults";
+const CUSTOM_PRACTICE_TOPICS_STORAGE_KEY = "learnerCustomPracticeTopics";
 
 const readPracticeResults = () => {
   try {
@@ -103,13 +118,59 @@ const readPracticeResults = () => {
   }
 };
 
+const readCustomPracticeTopics = () => {
+  try {
+    const raw = localStorage.getItem(CUSTOM_PRACTICE_TOPICS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((item) => item && typeof item === "object")
+      .map((item) => ({
+        id: String(item.id || `custom-${Date.now()}`),
+        difficulty: item.difficulty || "MEDIUM",
+        questions: Number(item.questions || item.questionCount || 25),
+        questionCount: Number(item.questionCount || item.questions || 25),
+        selectedCategories: Array.isArray(item.selectedCategories)
+          ? item.selectedCategories
+          : [],
+        fatalOnly: Boolean(item.fatalOnly),
+        titleOverride:
+          typeof item.titleOverride === "string" && item.titleOverride.trim()
+            ? item.titleOverride.trim()
+            : typeof item.examName === "string" && item.examName.trim()
+              ? item.examName.trim()
+              : "Đề tự tạo",
+        licenseType:
+          String(item.licenseType || "A1").trim().toUpperCase() === "B1"
+            ? "B1"
+            : "A1",
+        examsSource:
+          String(item.examsSource || "exam_250").trim().toLowerCase() ===
+          "exam_600"
+            ? "exam_600"
+            : "exam_250",
+        isCustom: true,
+        createdAt: item.createdAt || null,
+      }))
+      .sort((a, b) => {
+        const timeA = Date.parse(a.createdAt || 0);
+        const timeB = Date.parse(b.createdAt || 0);
+        return timeB - timeA;
+      });
+  } catch {
+    return [];
+  }
+};
+
 const getQuizConfigForTopic = (topic) => ({
   topicId: topic.id,
-  licenseType: "A1",
-  questionCount: topic.questions,
+  licenseType: topic.licenseType || "A1",
+  questionCount: Number(topic.questionCount || topic.questions || 25),
   examName: topic.title,
   generationMode: "random",
-  examsSource: "exam_250",
+  examsSource: topic.examsSource || "exam_250",
+  fatalOnly: Boolean(topic.fatalOnly),
   selectedCategories: Array.isArray(topic.selectedCategories)
     ? topic.selectedCategories
     : [],
@@ -131,10 +192,17 @@ const getDifficultyStyles = (level) => {
 export const PracticeTests = () => {
   const navigate = useNavigate();
   const [storedResults] = useState(() => readPracticeResults());
+  const [customTopics] = useState(() => readCustomPracticeTopics());
+
+  const allPracticeTopics = useMemo(() => {
+    const staticIds = new Set(PRACTICE_TOPICS.map((item) => item.id));
+    const sanitizedCustom = customTopics.filter((item) => !staticIds.has(item.id));
+    return [...sanitizedCustom, ...PRACTICE_TOPICS];
+  }, [customTopics]);
 
   const topicsWithResults = useMemo(
     () =>
-      PRACTICE_TOPICS.map((topic, index) => {
+      allPracticeTopics.map((topic, index) => {
         const topicTitle = buildTopicTitle(topic, index);
         const result =
           storedResults[topic.id] ||
@@ -153,7 +221,7 @@ export const PracticeTests = () => {
           attemptCount: Number(result?.attemptCount || 0),
         };
       }),
-    [storedResults],
+    [allPracticeTopics, storedResults],
   );
 
   const handleStartOrRetake = (topic) => {

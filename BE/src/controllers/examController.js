@@ -12,14 +12,20 @@ const parseCategoriesQuery = (value) => {
     .filter(Boolean)
 }
 
+const parseBooleanQuery = (value) => {
+  if (value === undefined || value === null) return false
+  return ['1', 'true', 'yes', 'y'].includes(String(value).trim().toLowerCase())
+}
+
 /**
  * Get random exam từ 250 hoặc 600 câu
  * Query: ?licenseType=A1&examsSource=exam_250
  */
 export const getRandomExam = async (req, res, next) => {
   try {
-    const { licenseType = 'A1', examsSource = 'exam_250', categories } = req.query
+    const { licenseType = 'A1', examsSource = 'exam_250', categories, fatalOnly } = req.query
     const selectedCategories = parseCategoriesQuery(categories)
+    const options = { fatalOnly: parseBooleanQuery(fatalOnly) }
 
     if (!['exam_250', 'exam_600'].includes(examsSource)) {
       const error = new Error('Invalid examsSource. Must be exam_250 or exam_600')
@@ -33,7 +39,7 @@ export const getRandomExam = async (req, res, next) => {
       throw error
     }
 
-    const exam = await ExamService.getRandomExam(licenseType, examsSource, selectedCategories)
+    const exam = await ExamService.getRandomExam(licenseType, examsSource, selectedCategories, options)
     successResponse(res, exam, 'Random exam generated successfully')
   } catch (error) {
     next(error)
@@ -48,8 +54,9 @@ export const getExamFrom250 = async (req, res, next) => {
   try {
     const licenseType = req.query.licenseType || 'A1'
     const selectedCategories = parseCategoriesQuery(req.query.categories)
+    const options = { fatalOnly: parseBooleanQuery(req.query.fatalOnly) }
 
-    const exam = await ExamService.getRandomExamFrom250(licenseType, selectedCategories)
+    const exam = await ExamService.getRandomExamFrom250(licenseType, selectedCategories, options)
     successResponse(res, exam, 'Exam from 250 questions generated successfully')
   } catch (error) {
     next(error)
@@ -64,6 +71,7 @@ export const getExamFrom600 = async (req, res, next) => {
   try {
     const licenseType = req.query.licenseType || 'B1'
     const selectedCategories = parseCategoriesQuery(req.query.categories)
+    const options = { fatalOnly: parseBooleanQuery(req.query.fatalOnly) }
 
     if (licenseType !== 'B1') {
       const error = new Error('Only B1 license type is supported for 600 questions exam')
@@ -71,7 +79,7 @@ export const getExamFrom600 = async (req, res, next) => {
       throw error
     }
 
-    const exam = await ExamService.getRandomExamFrom600(licenseType, selectedCategories)
+    const exam = await ExamService.getRandomExamFrom600(licenseType, selectedCategories, options)
     successResponse(res, exam, 'Exam from 600 questions generated successfully')
   } catch (error) {
     next(error)

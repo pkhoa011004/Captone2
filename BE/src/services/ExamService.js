@@ -175,22 +175,54 @@ export class ExamService {
     return this.shuffleArray(selectedQuestions).slice(0, targetTotal)
   }
 
+  static ensureAtLeastOneFatalQuestion(selectedQuestions = [], pool = []) {
+    if (!Array.isArray(selectedQuestions) || !selectedQuestions.length) {
+      return selectedQuestions
+    }
+
+    if (selectedQuestions.some((question) => Boolean(question?.is_fatal))) {
+      return selectedQuestions
+    }
+
+    const selectedIds = new Set(selectedQuestions.map((question) => Number(question?.id)))
+    const fatalCandidate = this.shuffleArray(
+      (pool || []).filter(
+        (question) => Boolean(question?.is_fatal) && !selectedIds.has(Number(question?.id))
+      )
+    )[0]
+
+    if (!fatalCandidate) {
+      return selectedQuestions
+    }
+
+    const replaceIndex = selectedQuestions.findIndex((question) => !Boolean(question?.is_fatal))
+    if (replaceIndex < 0) {
+      return selectedQuestions
+    }
+
+    const next = [...selectedQuestions]
+    next[replaceIndex] = fatalCandidate
+    return next
+  }
+
   /**
    * Get exam từ 250 câu (25 câu)
    */
-  static async getRandomExamFrom250(licenseType = 'A1', selectedCategories = []) {
+  static async getRandomExamFrom250(licenseType = 'A1', selectedCategories = [], options = {}) {
     try {
       const examConfig = this.EXAM_250_STRUCTURE[licenseType]
       if (!examConfig) {
         throw new Error(`Invalid licenseType: ${licenseType}`)
       }
 
+      const fatalOnly = Boolean(options?.fatalOnly)
+
       // Lấy tất cả câu từ 1-250
       const allQuestions = await QuestionModel.findAll({
         includeAnswer: false,
       })
 
-      const filtered = allQuestions
+      let filtered = allQuestions
         .filter((q) => {
           const id = Number(q.id)
           return id >= 1 && id <= 250
@@ -200,21 +232,39 @@ export class ExamService {
           categoryInferred: this.inferCategoryFrom250(q.id),
         }))
 
+      if (fatalOnly) {
+        filtered = filtered.filter((q) => Boolean(q.is_fatal))
+      }
+
+      if (!filtered.length) {
+        throw new Error(
+          fatalOnly
+            ? 'No fatal questions available for selected criteria in exam_250'
+            : 'No questions available for selected criteria in exam_250'
+        )
+      }
+
       const structure = this.buildSelectedStructure(
         examConfig.structure,
         selectedCategories,
         examConfig.questionsPerExam
       )
-      const selectedQuestions = this.pickQuestionsByStructure(
+      let selectedQuestions = this.pickQuestionsByStructure(
         filtered,
         structure,
         examConfig.questionsPerExam
       )
 
+      if (!fatalOnly) {
+        selectedQuestions = this.ensureAtLeastOneFatalQuestion(selectedQuestions, filtered)
+      }
+
       return {
         totalQuestions: examConfig.questionsPerExam,
         licenseType,
         examsSource: 'exam_250',
+        fatalOnly,
+        fatalCount: selectedQuestions.filter((question) => Boolean(question?.is_fatal)).length,
         selectedCategories: Object.keys(structure),
         categories: structure,
         questions: selectedQuestions,
@@ -228,19 +278,21 @@ export class ExamService {
   /**
    * Get exam từ 600 câu (35 câu)
    */
-  static async getRandomExamFrom600(licenseType = 'B1', selectedCategories = []) {
+  static async getRandomExamFrom600(licenseType = 'B1', selectedCategories = [], options = {}) {
     try {
       const examConfig = this.EXAM_600_STRUCTURE[licenseType]
       if (!examConfig) {
         throw new Error(`Invalid licenseType for 600: ${licenseType}`)
       }
 
+      const fatalOnly = Boolean(options?.fatalOnly)
+
       // Lấy tất cả câu từ 1-600
       const allQuestions = await QuestionModel.findAll({
         includeAnswer: false,
       })
 
-      const filtered = allQuestions
+      let filtered = allQuestions
         .filter((q) => {
           const id = Number(q.id)
           return id >= 1 && id <= 600
@@ -250,21 +302,39 @@ export class ExamService {
           categoryInferred: this.inferCategoryFrom600(q.id),
         }))
 
+      if (fatalOnly) {
+        filtered = filtered.filter((q) => Boolean(q.is_fatal))
+      }
+
+      if (!filtered.length) {
+        throw new Error(
+          fatalOnly
+            ? 'No fatal questions available for selected criteria in exam_600'
+            : 'No questions available for selected criteria in exam_600'
+        )
+      }
+
       const structure = this.buildSelectedStructure(
         examConfig.structure,
         selectedCategories,
         examConfig.questionsPerExam
       )
-      const selectedQuestions = this.pickQuestionsByStructure(
+      let selectedQuestions = this.pickQuestionsByStructure(
         filtered,
         structure,
         examConfig.questionsPerExam
       )
 
+      if (!fatalOnly) {
+        selectedQuestions = this.ensureAtLeastOneFatalQuestion(selectedQuestions, filtered)
+      }
+
       return {
         totalQuestions: examConfig.questionsPerExam,
         licenseType,
         examsSource: 'exam_600',
+        fatalOnly,
+        fatalCount: selectedQuestions.filter((question) => Boolean(question?.is_fatal)).length,
         selectedCategories: Object.keys(structure),
         categories: structure,
         questions: selectedQuestions,
@@ -278,12 +348,12 @@ export class ExamService {
   /**
    * Get random exam (250 hoặc 600)
    */
-  static async getRandomExam(licenseType, examsSource, selectedCategories = []) {
+  static async getRandomExam(licenseType, examsSource, selectedCategories = [], options = {}) {
     try {
       if (examsSource === 'exam_600') {
-        return await this.getRandomExamFrom600(licenseType, selectedCategories)
+        return await this.getRandomExamFrom600(licenseType, selectedCategories, options)
       } else {
-        return await this.getRandomExamFrom250(licenseType, selectedCategories)
+        return await this.getRandomExamFrom250(licenseType, selectedCategories, options)
       }
     } catch (error) {
       logger.error(`Error generating random exam: ${error.message}`)
