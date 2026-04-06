@@ -82,10 +82,7 @@ const App = () => {
           path="/create-exam"
           element={<Navigate to="/learner/create-exam" replace />}
         />
-        <Route
-          path="/learner/create-exam"
-          element={<CustomExamBuilder />}
-        />
+        <Route path="/learner/create-exam" element={<CustomExamBuilder />} />
         <Route
           path="/quizlearner"
           element={<Navigate to="/learner/quiz" replace />}
