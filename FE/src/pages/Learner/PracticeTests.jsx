@@ -89,6 +89,12 @@ const LEGACY_TOPIC_TITLES = {
 };
 
 const buildTopicTitle = (topic, index) => {
+  if (topic?.isCustom) {
+    const customTitle =
+      topic.titleOverride || topic.examName || topic.title || "Đề tự tạo";
+    return String(customTitle).trim() || "Đề tự tạo";
+  }
+
   if (topic.titleOverride) {
     return topic.titleOverride;
   }
@@ -135,19 +141,37 @@ const readCustomPracticeTopics = () => {
           ? item.selectedCategories
           : [],
         fatalOnly: Boolean(item.fatalOnly),
+        title: typeof item.title === "string" && item.title.trim()
+          ? item.title.trim()
+          : typeof item.examName === "string" && item.examName.trim()
+            ? item.examName.trim()
+            : typeof item.titleOverride === "string" && item.titleOverride.trim()
+              ? item.titleOverride.trim()
+              : "Đề tự tạo",
+        examName:
+          typeof item.examName === "string" && item.examName.trim()
+            ? item.examName.trim()
+            : typeof item.title === "string" && item.title.trim()
+              ? item.title.trim()
+              : "Đề tự tạo",
         titleOverride:
           typeof item.titleOverride === "string" && item.titleOverride.trim()
             ? item.titleOverride.trim()
             : typeof item.examName === "string" && item.examName.trim()
               ? item.examName.trim()
+              : typeof item.title === "string" && item.title.trim()
+                ? item.title.trim()
               : "Đề tự tạo",
         licenseType:
-          String(item.licenseType || "A1").trim().toUpperCase() === "B1"
+          String(item.licenseType || "A1")
+            .trim()
+            .toUpperCase() === "B1"
             ? "B1"
             : "A1",
         examsSource:
-          String(item.examsSource || "exam_250").trim().toLowerCase() ===
-          "exam_600"
+          String(item.examsSource || "exam_250")
+            .trim()
+            .toLowerCase() === "exam_600"
             ? "exam_600"
             : "exam_250",
         isCustom: true,
@@ -167,7 +191,7 @@ const getQuizConfigForTopic = (topic) => ({
   topicId: topic.id,
   licenseType: topic.licenseType || "A1",
   questionCount: Number(topic.questionCount || topic.questions || 25),
-  examName: topic.title,
+  examName: topic.titleOverride || topic.examName || topic.title || "Đề tự tạo",
   generationMode: "random",
   examsSource: topic.examsSource || "exam_250",
   fatalOnly: Boolean(topic.fatalOnly),
@@ -196,7 +220,9 @@ export const PracticeTests = () => {
 
   const allPracticeTopics = useMemo(() => {
     const staticIds = new Set(PRACTICE_TOPICS.map((item) => item.id));
-    const sanitizedCustom = customTopics.filter((item) => !staticIds.has(item.id));
+    const sanitizedCustom = customTopics.filter(
+      (item) => !staticIds.has(item.id),
+    );
     return [...sanitizedCustom, ...PRACTICE_TOPICS];
   }, [customTopics]);
 

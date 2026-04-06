@@ -8,7 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 const navItems = [
   { label: "Dashboard", path: "/learner", active: true },
   { label: "Practice Tests", path: "/learner/practice-tests", active: false },
-  { label: "Tạo đề", path: "/learner/create-exam", active: false },
+  { label: "Create topic", path: "/learner/create-exam", active: false },
   { label: "AI Assistant", path: "/learner/ai-assistant", active: false },
   { label: "Simulation", path: "/learner/simulator", active: false },
   { label: "Schedule", path: "/learner/schedule", active: false },
@@ -28,7 +28,10 @@ export const TopHeaderLearner = () => {
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
         setIsProfileOpen(false);
       }
     };
@@ -52,7 +55,7 @@ export const TopHeaderLearner = () => {
         {/* LEFT: Logo & Search */}
         <div className="flex items-center gap-8">
           {/* Logo */}
-          <div 
+          <div
             className="flex items-center gap-3 group cursor-pointer"
             onClick={() => navigate("/learner")}
           >
@@ -113,23 +116,25 @@ export const TopHeaderLearner = () => {
             >
               <div className="flex flex-col items-end">
                 <span className="text-xs font-bold text-[#141b2b] group-hover:text-blue-600 transition-colors">
-                  {user?.name || 'User'}
+                  {user?.name || "User"}
                 </span>
                 <span className="text-[10px] font-bold text-slate-400 tracking-tight">
-                  ID: {user?.id || '12345'}
+                  ID: {user?.id || "12345"}
                 </span>
               </div>
               <Avatar className="w-10 h-10 border-2 border-white shadow-sm group-hover:border-blue-100 transition-all">
                 <AvatarImage src="/user-profile.png" alt="Profile" />
                 <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-xs">
-                  {user?.name?.substring(0, 2).toUpperCase() || 'U'}
+                  {user?.name?.substring(0, 2).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
             </button>
 
             {isProfileOpen && (
               <div className="absolute right-0 top-12 w-44 rounded-xl border border-blue-100 bg-white p-1.5 shadow-[0_10px_30px_rgba(15,23,42,0.12)] z-50">
-                <p className="px-2 py-1 text-[11px] font-semibold text-slate-400">Profile - learner</p>
+                <p className="px-2 py-1 text-[11px] font-semibold text-slate-400">
+                  Profile - learner
+                </p>
                 <button
                   onClick={() => {
                     navigate("/learner/profile");
