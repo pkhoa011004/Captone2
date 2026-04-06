@@ -141,13 +141,15 @@ const readCustomPracticeTopics = () => {
           ? item.selectedCategories
           : [],
         fatalOnly: Boolean(item.fatalOnly),
-        title: typeof item.title === "string" && item.title.trim()
-          ? item.title.trim()
-          : typeof item.examName === "string" && item.examName.trim()
-            ? item.examName.trim()
-            : typeof item.titleOverride === "string" && item.titleOverride.trim()
-              ? item.titleOverride.trim()
-              : "Đề tự tạo",
+        title:
+          typeof item.title === "string" && item.title.trim()
+            ? item.title.trim()
+            : typeof item.examName === "string" && item.examName.trim()
+              ? item.examName.trim()
+              : typeof item.titleOverride === "string" &&
+                  item.titleOverride.trim()
+                ? item.titleOverride.trim()
+                : "Đề tự tạo",
         examName:
           typeof item.examName === "string" && item.examName.trim()
             ? item.examName.trim()
@@ -161,7 +163,7 @@ const readCustomPracticeTopics = () => {
               ? item.examName.trim()
               : typeof item.title === "string" && item.title.trim()
                 ? item.title.trim()
-              : "Đề tự tạo",
+                : "Đề tự tạo",
         licenseType:
           String(item.licenseType || "A1")
             .trim()
