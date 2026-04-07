@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Play, RefreshCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -82,28 +82,50 @@ const ALL_CATEGORY_KEYS = CATEGORY_META.map((item) => item.key);
 
 export default function CustomExamBuilder() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [licenseType, setLicenseType] = useState("A1");
   const [selectedCategories, setSelectedCategories] =
     useState(ALL_CATEGORY_KEYS);
   const [examName, setExamName] = useState(DEFAULT_TITLE.A1);
+  const [weakTopicName, setWeakTopicName] = useState("");
+
+  // Check if we're coming from weak topic practice
+  useEffect(() => {
+    if (location.state?.weakTopic && location.state?.topicName) {
+      setWeakTopicName(location.state.topicName);
+      if (location.state?.selectedCategories) {
+        setSelectedCategories(location.state.selectedCategories);
+      }
+    }
+  }, [location.state]);
 
   const preset = LICENSE_OPTIONS[licenseType];
   const questionCount = preset.defaultCount;
 
   useEffect(() => {
-    setSelectedCategories(ALL_CATEGORY_KEYS);
+    // Don't reset if coming from weak topic practice
+    if (!weakTopicName) {
+      setSelectedCategories(ALL_CATEGORY_KEYS);
+    }
+    
     setExamName((prev) => {
+      // Use weak topic name if available
+      if (weakTopicName) {
+        return `Luyện: ${weakTopicName}`;
+      }
+      
       if (
         prev &&
         prev.trim() &&
         prev !== DEFAULT_TITLE.A1 &&
-        prev !== DEFAULT_TITLE.B1
+        prev !== DEFAULT_TITLE.B1 &&
+        !prev.startsWith("Luyện:")
       ) {
         return prev;
       }
       return DEFAULT_TITLE[licenseType];
     });
-  }, [licenseType]);
+  }, [licenseType, weakTopicName]);
 
   const isExamNameValid = examName.trim().length > 0;
 

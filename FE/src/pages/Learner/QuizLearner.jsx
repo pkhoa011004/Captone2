@@ -84,6 +84,77 @@ const clearQuizDraft = (storageKey) => {
   }
 };
 
+const getOptionTextByAnswer = (options = [], answerValue) => {
+  const normalizedAnswer = Number(answerValue);
+  if (!Number.isFinite(normalizedAnswer) || !Array.isArray(options)) {
+    return "Không xác định";
+  }
+
+  const normalizedLetter = (() => {
+    const key = String(answerValue ?? "").trim().toUpperCase();
+    return ["A", "B", "C", "D"].includes(key) ? key : null;
+  })();
+
+  if (normalizedLetter) {
+    const byKey = options.find((option) => {
+      const optionKey = String(
+        option?.option_key ?? option?.optionKey ?? option?.key ?? "",
+      )
+        .trim()
+        .toUpperCase();
+      return optionKey === normalizedLetter;
+    });
+
+    if (byKey) {
+      return (
+        byKey.optionText ??
+        byKey.option_text ??
+        byKey.text ??
+        String(byKey.label ?? "Không xác định")
+      );
+    }
+  }
+
+  const matchedOption = options.find((option) => {
+    const optionId = Number(
+      option?.optionId ?? option?.option_id ?? option?.id ?? option?.value,
+    );
+    return Number.isFinite(optionId) && optionId === normalizedAnswer;
+  });
+
+  if (matchedOption) {
+    return (
+      matchedOption.optionText ??
+      matchedOption.option_text ??
+      matchedOption.text ??
+      String(matchedOption.label ?? "Không xác định")
+    );
+  }
+
+  if (normalizedAnswer >= 1 && normalizedAnswer <= options.length) {
+    const oneBasedOption = options[normalizedAnswer - 1];
+    if (oneBasedOption) {
+      return (
+        oneBasedOption.optionText ??
+        oneBasedOption.option_text ??
+        oneBasedOption.text ??
+        String(oneBasedOption.label ?? "Không xác định")
+      );
+    }
+  }
+
+  // Legacy fallback for string-array options.
+  if (
+    normalizedAnswer >= 0 &&
+    normalizedAnswer < options.length &&
+    typeof options[normalizedAnswer] === "string"
+  ) {
+    return options[normalizedAnswer];
+  }
+
+  return "Không xác định";
+};
+
 const savePracticeResult = ({ topicId, examName, totalQuestions, result }) => {
   if (!result || typeof result !== "object") return;
 
@@ -684,6 +755,11 @@ export default function QuizLearner() {
       // Lấy danh sách câu sai
       console.log("\n📊 STEP 2: Extract wrong answers");
       const wrongAnswers = gradingResult?.wrong_answers || [];
+      const wrongAnswerIds = new Set(
+        (Array.isArray(wrongAnswers) ? wrongAnswers : [])
+          .map((id) => Number(id))
+          .filter((id) => Number.isFinite(id)),
+      );
       console.log("   - wrongAnswers array:", wrongAnswers);
       console.log("   - wrongAnswers length:", wrongAnswers.length);
       console.log("   - wrongAnswers type:", typeof wrongAnswers);
@@ -698,7 +774,8 @@ export default function QuizLearner() {
 
       console.log("\n📊 STEP 3: Filter questions");
       const wrongQuestions = questions.filter((q) => {
-        const isWrong = wrongAnswers.includes(q.id);
+        const questionId = Number(q.id);
+        const isWrong = wrongAnswerIds.has(questionId);
         console.log(`   Q${q.id}: ${isWrong ? "❌ WRONG" : "✅ CORRECT"}`);
         return isWrong;
       });
@@ -720,20 +797,33 @@ export default function QuizLearner() {
         percentage: gradingResult?.score_percent,
         licenseType: examConfig.licenseType,
         wrongQuestions: wrongQuestions.map((q) => {
+          const userAnswerValue = Number(answersByQuestion[q.id]);
+          const correctAnswerValue = Number(q.correctAnswer ?? q.correct_answer);
+          const userAnswerText = Number.isFinite(userAnswerValue)
+            ? getOptionTextByAnswer(q.options, userAnswerValue)
+            : "Không chọn";
+          const correctAnswerText = Number.isFinite(correctAnswerValue)
+            ? getOptionTextByAnswer(q.options, correctAnswerValue)
+            : "Không xác định";
+
           console.log(`   Processing Q${q.id}:`, {
-            question_text: q.question_text?.substring(0, 30),
-            user_answer: answersByQuestion[q.id],
-            correct_answer: q.correct_answer,
+            question_text: (q.questionText ?? q.question_text)?.substring(0, 30),
+            user_answer: userAnswerValue,
+            correct_answer: correctAnswerValue,
           });
 
           return {
             id: q.id,
-            question_text: q.question_text,
-            correct_answer: q.correct_answer,
-            user_answer: answersByQuestion[q.id],
+            question_text: q.questionText ?? q.question_text ?? "",
+            correct_answer: Number.isFinite(correctAnswerValue)
+              ? correctAnswerValue
+              : null,
+            user_answer: Number.isFinite(userAnswerValue) ? userAnswerValue : null,
+            correct_answer_text: correctAnswerText,
+            user_answer_text: userAnswerText,
             options: q.options,
             explanation: q.explanation,
-            category: q.category,
+            category: q.category ?? q.categoryInferred ?? "OTHER",
           };
         }),
         totalWrong: wrongQuestions.length,
@@ -773,7 +863,12 @@ export default function QuizLearner() {
 
       console.log("\n🚀 STEP 8: Navigate");
       console.log("🚀 Navigating to /learner/ai-assistant");
-      navigate("/learner/ai-assistant");
+      navigate("/learner/ai-assistant", {
+        state: {
+          quizAnalysis: analysisData,
+          autoAnalyze: true,
+        },
+      });
     } catch (error) {
       console.error("❌ Error in handleSendToAI:", error);
       console.error("   - Type:", error.constructor.name);
