@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   User,
   Shield,
@@ -47,7 +47,106 @@ const SIDEBAR_NAV = [
 ];
 
 export const AccountSettings = () => {
-  const [email, setEmail] = useState("thaikimngoc511@email.com");
+  const parseJsonSafe = (value) => {
+    try {
+      return JSON.parse(value || "null");
+    } catch {
+      return null;
+    }
+  };
+
+  const normalizeProfile = (raw) => {
+    if (!raw || typeof raw !== "object") return null;
+
+    return {
+      id: raw.id ?? raw.user_id ?? null,
+      name:
+        raw.name ?? raw.full_name ?? raw.fullName ?? raw.username ?? "",
+      email: raw.email ?? raw.email_address ?? "",
+      phone: raw.phone ?? raw.phone_number ?? raw.phoneNumber ?? "",
+      license_type:
+        raw.license_type ?? raw.licenseType ?? raw.license ?? "",
+      created_at:
+        raw.created_at ?? raw.createdAt ?? raw.joined_at ?? raw.joinedAt ?? "",
+    };
+  };
+
+  const initialLocalProfile = normalizeProfile(
+    parseJsonSafe(localStorage.getItem("user")) ||
+      parseJsonSafe(localStorage.getItem("userInfo")),
+  );
+
+  const [profile, setProfile] = useState(initialLocalProfile);
+  const [email, setEmail] = useState("");
+
+  const apiBaseUrl =
+    import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+
+  useEffect(() => {
+    if (initialLocalProfile?.email) {
+      setEmail(initialLocalProfile.email);
+    }
+
+    const fetchProfile = async () => {
+      try {
+        const userInfo = parseJsonSafe(localStorage.getItem("userInfo"));
+        const token = localStorage.getItem("token") || userInfo?.accessToken;
+        if (!token) return;
+
+        const response = await fetch(`${apiBaseUrl}/users/profile`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load profile");
+        }
+
+        const payload = await response.json();
+        const userDataRaw = payload?.data?.user || payload?.data || payload;
+        const userData = normalizeProfile(userDataRaw);
+
+        setProfile(userData);
+        setEmail(userData?.email || "");
+
+        // Keep local user cache in sync for other screens using localStorage user.
+        const existingUser = JSON.parse(localStorage.getItem("user") || "{}");
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...existingUser,
+            ...userData,
+          }),
+        );
+      } catch (err) {
+        console.error("Failed to fetch learner profile:", err);
+      }
+    };
+
+    void fetchProfile();
+  }, [apiBaseUrl]);
+
+  const joinedLabel = useMemo(() => {
+    const rawDate = profile?.created_at;
+    if (!rawDate) return "N/A";
+
+    const parsed = new Date(rawDate);
+    if (Number.isNaN(parsed.getTime())) return "N/A";
+
+    return parsed.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }, [profile]);
+
+  const learnerName = profile?.name || "User";
+  const learnerEmail = profile?.email || "";
+  const learnerPhone = profile?.phone || "";
+  const learnerLicense = profile?.license_type || "N/A";
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans pb-20">
@@ -70,10 +169,10 @@ export const AccountSettings = () => {
 
               <div>
                 <h3 className="text-xl font-bold text-[#141b2b]">
-                  Thai Kim Ngoc
+                  {learnerName}
                 </h3>
                 <p className="text-sm text-slate-500 font-medium">
-                  thaikimngoc511@email.com
+                  {learnerEmail || "No email"}
                 </p>
               </div>
 
@@ -83,7 +182,7 @@ export const AccountSettings = () => {
                     License Type
                   </span>
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md text-[10px] font-bold">
-                    B2
+                    {learnerLicense}
                   </span>
                 </div>
                 <div className="flex justify-between items-center px-4">
@@ -91,7 +190,7 @@ export const AccountSettings = () => {
                     Joined
                   </span>
                   <span className="text-xs font-bold text-[#141b2b]">
-                    March 9, 2026
+                    {joinedLabel}
                   </span>
                 </div>
               </div>
@@ -144,7 +243,8 @@ export const AccountSettings = () => {
                     Full Name
                   </Label>
                   <Input
-                    defaultValue="Thai Kim Ngoc"
+                    value={learnerName}
+                    readOnly
                     className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
                   />
                 </div>
@@ -163,7 +263,8 @@ export const AccountSettings = () => {
                     Phone Number
                   </Label>
                   <Input
-                    defaultValue="+84 931 969 053"
+                    value={learnerPhone}
+                    readOnly
                     className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
                   />
                 </div>

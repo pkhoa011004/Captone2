@@ -36,6 +36,22 @@ Your role is to:
 
 Always respond in the same language the user uses. If they ask in Vietnamese, respond in Vietnamese.
 Keep responses under 500 words and use bullet points for clarity when needed."""
+        self.analysis_prompt = """You are a strict driving-exam review tutor.
+When the user provides quiz results, analyze only the wrong questions from that input.
+Do not mention questions outside the provided list.
+Do not answer generically.
+    Do not output phrases like 'Đáp án đúng: Không xác định'.
+
+Return exactly 4 Markdown sections in Vietnamese:
+1. Điểm yếu chính
+2. Phân tích từng câu sai
+3. Hướng dẫn ôn tập cụ thể
+4. Chủ đề cần ôn thêm
+
+    For each wrong question, include: why it is wrong, the correct driving principle, why that principle is correct, and a short memory trick.
+    If exact option text is missing, infer from the explanation and focus on principle-level correction.
+    Do not re-list all options/answers of the original question set.
+Keep the response practical, specific, and step-by-step."""
         
         # Check if API key is valid (Groq keys start with gsk_)
         self.use_mock = not settings.GROQ_API_KEY or not settings.GROQ_API_KEY.startswith("gsk_")
@@ -66,23 +82,29 @@ Keep responses under 500 words and use bullet points for clarity when needed."""
             return mock_resp
         
         try:
+            is_analysis_request = any(marker in user_message for marker in [
+                "📊 THÔNG TIN CHUNG",
+                "❌ CÁC CÂU SAI",
+                "YÊU CẦU PHÂN TÍCH",
+            ])
+
             messages = []
             
             # Add system message first
             messages.append({
                 "role": "system",
-                "content": self.system_prompt
+                "content": self.analysis_prompt if is_analysis_request else self.system_prompt
             })
             
-            # Add conversation history if provided
-            if conversation_history:
+            # Add conversation history if provided for regular chat only
+            if conversation_history and not is_analysis_request:
                 log_info(f"📚 Adding {len(conversation_history)} messages from conversation history")
                 messages.extend(conversation_history)
             
-            # Add current user message
+            # Add current user message without truncation so long quiz analysis prompts keep full context
             messages.append({
                 "role": "user",
-                "content": user_message[:100] + "..." if len(user_message) > 100 else user_message
+                "content": user_message
             })
             
             # Call Groq API
@@ -98,7 +120,7 @@ Keep responses under 500 words and use bullet points for clarity when needed."""
                 model="llama-3.1-8b-instant",
                 messages=messages,
                 max_tokens=2048,
-                temperature=0.7,
+                temperature=0.2 if is_analysis_request else 0.7,
             )
             
             ai_response = response.choices[0].message.content
