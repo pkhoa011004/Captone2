@@ -41,6 +41,7 @@ export const TopHeaderLearner = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userInfo");
     localStorage.removeItem("user");
     navigate("/login");
   };

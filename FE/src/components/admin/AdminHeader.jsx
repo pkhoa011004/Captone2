@@ -28,7 +28,10 @@ export function AdminHeader() {
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
         setIsProfileOpen(false);
       }
     };
@@ -39,6 +42,7 @@ export function AdminHeader() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userInfo");
     localStorage.removeItem("user");
     navigate("/login");
   };
@@ -105,7 +109,9 @@ export function AdminHeader() {
 
             {isProfileOpen ? (
               <div className="absolute right-0 top-12 w-44 rounded-xl border border-blue-100 bg-white p-1.5 shadow-[0_10px_30px_rgba(15,23,42,0.12)]">
-                <p className="px-2 py-1 text-[11px] font-semibold text-slate-400">Profile - {user?.name?.toLowerCase()}</p>
+                <p className="px-2 py-1 text-[11px] font-semibold text-slate-400">
+                  Profile - {user?.name?.toLowerCase()}
+                </p>
                 <button
                   type="button"
                   onClick={() => {

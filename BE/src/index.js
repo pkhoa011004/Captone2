@@ -10,6 +10,7 @@ import { errorHandler } from './middleware/errorHandler.js'
 import userRoutes from './routes/userRoutes.js'
 import questionRoutes from './routes/questionRoutes.js'
 import examRoutes from './routes/examRoutes.js'
+import learnerRoutes from './routes/learnerRoutes.js'
 import { testConnection } from './config/database.js'
 import { ensureUsersEmailVerificationSchema } from './config/migrations.js'
 import emailService from './services/EmailService.js'
@@ -73,6 +74,7 @@ app.get('/api/v1/health', (req, res) => {
 app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/questions', questionRoutes)
 app.use('/api/v1/exams', examRoutes)
+app.use('/api/v1/learners', learnerRoutes)
 
 // 404 Handler
 app.use((req, res) => {

@@ -219,6 +219,9 @@ export const PracticeTests = () => {
   const navigate = useNavigate();
   const [storedResults] = useState(() => readPracticeResults());
   const [customTopics] = useState(() => readCustomPracticeTopics());
+  const [showFilters, setShowFilters] = useState(false);
+  const [difficultyFilter, setDifficultyFilter] = useState("ALL");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
 
   const allPracticeTopics = useMemo(() => {
     const staticIds = new Set(PRACTICE_TOPICS.map((item) => item.id));
@@ -228,9 +231,34 @@ export const PracticeTests = () => {
     return [...sanitizedCustom, ...PRACTICE_TOPICS];
   }, [customTopics]);
 
+  const availableCategories = useMemo(() => {
+    const categories = new Set();
+
+    allPracticeTopics.forEach((topic) => {
+      (topic.selectedCategories || []).forEach((category) => {
+        if (category) categories.add(category);
+      });
+    });
+
+    return ["ALL", ...Array.from(categories)];
+  }, [allPracticeTopics]);
+
+  const filteredPracticeTopics = useMemo(() => {
+    return allPracticeTopics.filter((topic) => {
+      const matchesDifficulty =
+        difficultyFilter === "ALL" || topic.difficulty === difficultyFilter;
+
+      const matchesCategory =
+        categoryFilter === "ALL" ||
+        (topic.selectedCategories || []).includes(categoryFilter);
+
+      return matchesDifficulty && matchesCategory;
+    });
+  }, [allPracticeTopics, difficultyFilter, categoryFilter]);
+
   const topicsWithResults = useMemo(
     () =>
-      allPracticeTopics.map((topic, index) => {
+      filteredPracticeTopics.map((topic, index) => {
         const topicTitle = buildTopicTitle(topic, index);
         const result =
           storedResults[topic.id] ||
@@ -249,7 +277,7 @@ export const PracticeTests = () => {
           attemptCount: Number(result?.attemptCount || 0),
         };
       }),
-    [allPracticeTopics, storedResults],
+    [filteredPracticeTopics, storedResults],
   );
 
   const handleStartOrRetake = (topic) => {
@@ -390,7 +418,14 @@ export const PracticeTests = () => {
             Choose a Practice Test
           </h2>
           <div className="flex gap-2">
-            <Button className="rounded-xl bg-[#e1e8fd] text-blue-700 hover:bg-blue-100 font-bold px-6 border-none">
+            <Button
+              type="button"
+              onClick={() => {
+                setDifficultyFilter("ALL");
+                setCategoryFilter("ALL");
+              }}
+              className="rounded-xl bg-[#e1e8fd] text-blue-700 hover:bg-blue-100 font-bold px-6 border-none"
+            >
               All Topics
             </Button>
             <Button
@@ -407,6 +442,90 @@ export const PracticeTests = () => {
             </Button>
           </div>
         </section>
+
+        {showFilters && (
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4 shadow-sm">
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-[#141b2b]">
+                Lọc theo độ khó
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: "ALL", label: "All" },
+                  { value: "EASY", label: "Easy" },
+                  { value: "MEDIUM", label: "Medium" },
+                  { value: "HARD", label: "Hard" },
+                ].map((item) => {
+                  const active = difficultyFilter === item.value;
+
+                  return (
+                    <Button
+                      key={item.value}
+                      type="button"
+                      variant={active ? "default" : "outline"}
+                      onClick={() => setDifficultyFilter(item.value)}
+                      className={`rounded-full px-4 font-bold ${
+                        active
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {item.label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-[#141b2b]">
+                Lọc theo chủ đề
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {availableCategories.map((category) => {
+                  const active = categoryFilter === category;
+                  const label =
+                    category === "ALL"
+                      ? "All categories"
+                      : CATEGORY_LABELS[category] || category;
+
+                  return (
+                    <Button
+                      key={category}
+                      type="button"
+                      variant={active ? "default" : "outline"}
+                      onClick={() => setCategoryFilter(category)}
+                      className={`rounded-full px-4 font-bold ${
+                        active
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <p className="text-sm text-slate-500 font-medium">
+                Showing <b>{topicsWithResults.length}</b> topic(s)
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setDifficultyFilter("ALL");
+                  setCategoryFilter("ALL");
+                }}
+                className="rounded-xl text-slate-500 font-bold"
+              >
+                Reset filters
+              </Button>
+            </div>
+          </section>
+        )}
 
         {/* 4. Topics Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
