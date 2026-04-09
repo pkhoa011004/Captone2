@@ -59,14 +59,6 @@ export function AdminHeader() {
           </span>
         </button>
 
-        <div className="relative order-3 w-full md:order-none md:max-w-[220px] lg:max-w-[240px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Quick search..."
-            className="h-10 w-full rounded-full border border-blue-100 bg-blue-50/60 pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
-          />
-        </div>
 
         <nav className="order-4 flex w-full min-w-0 items-center gap-1 overflow-x-auto pb-1 md:order-none md:w-auto md:flex-1 md:justify-center md:overflow-visible md:pb-0">
           {navigationItems.map((item) => {

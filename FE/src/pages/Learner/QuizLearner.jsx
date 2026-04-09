@@ -1009,8 +1009,8 @@ export default function QuizLearner() {
             )}
 
             <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <Button onClick={handleRestart} className="rounded-xl">
-                <RotateCcw size={16} className="mr-2" /> Làm lại
+              <Button onClick={handleRestart} className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700">
+                Làm lại
               </Button>
               <Button
                 variant="outline"
@@ -1022,16 +1022,15 @@ export default function QuizLearner() {
               <Button
                 onClick={handleSendToAI}
                 disabled={sendingToAI}
-                className="rounded-xl bg-blue-600 hover:bg-blue-700"
+                className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
               >
                 {sendingToAI ? (
                   <>
-                    <Loader size={16} className="mr-2 animate-spin" /> Đang
-                    gửi...
+                    Đang gửi...
                   </>
                 ) : (
                   <>
-                    <Sparkles size={16} className="mr-2" /> Phân tích với AI
+                    Phân tích với AI
                   </>
                 )}
               </Button>
@@ -1062,8 +1061,8 @@ export default function QuizLearner() {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <Button onClick={handleRestart} className="rounded-xl">
-                <RotateCcw size={16} className="mr-2" /> Làm lại
+              <Button onClick={handleRestart} className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700">
+                Làm lại
               </Button>
               <Button
                 variant="outline"
@@ -1197,19 +1196,23 @@ export default function QuizLearner() {
               )}
             </CardHeader>
 
-            <CardContent className="flex-1 overflow-hidden px-4 pb-4 pt-0">
-              <div className="grid lg:grid-cols-2 gap-6 h-full items-start">
+            <CardContent className="flex-1 overflow-hidden px-4 pb-4 pt-0 h-[500px]">
+              <div className="grid lg:grid-cols-2 gap-6 h-full items-start overflow-auto">
                 {/* Left: Question Text + Image */}
-                <div className="space-y-2 flex flex-col self-start">
-                  <p className="text-base font-semibold text-slate-600">
-                    Câu {currentQuestion + 1}
-                  </p>
-                  <h2 className="text-2xl leading-snug font-black text-[#141b2b] mt-0">
-                    {question.questionText}
-                  </h2>
+                <div className="flex flex-col self-start max-h-[500px]">
+                  {/* Question Text Section - Limited Height */}
+                  <div className="space-y-2 mb-4">
+                    <p className="text-base font-semibold text-slate-600">
+                      Câu {currentQuestion + 1}
+                    </p>
+                    <h2 className="text-xl leading-snug font-black text-[#141b2b] mt-0">
+                      {question.questionText}
+                    </h2>
+                  </div>
 
+                  {/* Image Section - Aligned with Answers */}
                   {question.image && (
-                    <div className="w-full max-w-130 mx-auto h-90 rounded-2xl border-2 border-slate-200 bg-slate-50 p-3 flex items-center justify-center overflow-hidden mt-1">
+                    <div className="w-full max-w-130 mx-auto h-80 rounded-2xl border-2 border-slate-200 bg-slate-50 p-3 flex items-center justify-center overflow-hidden shrink-0 mt-8">
                       <img
                         src={question.image}
                         alt={`Hình minh họa câu ${question.id}`}
@@ -1221,7 +1224,7 @@ export default function QuizLearner() {
                 </div>
 
                 {/* Right: Answer Options */}
-                <div className="space-y-3 flex flex-col justify-center h-full pt-0">
+                <div className="space-y-3 flex flex-col justify-start h-[500px] pt-32">
                   <RadioGroup
                     value={selectedOption?.toString()}
                     onValueChange={handleSelectOption}

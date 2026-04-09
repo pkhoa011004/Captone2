@@ -394,6 +394,12 @@ export const PracticeTests = () => {
               All Topics
             </Button>
             <Button
+              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 border-none"
+              onClick={() => navigate("/learner/create-exam")}
+            >
+              Create Exam
+            </Button>
+            <Button
               variant="ghost"
               className="rounded-xl text-slate-500 font-bold px-6 gap-2"
             >

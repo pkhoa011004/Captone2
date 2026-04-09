@@ -198,10 +198,10 @@ export const LandingPage = () => {
         </div>
         <div className="flex-1 flex justify-center">
           <img
-            src="https://cdn.tienphong.vn/images/acaaf3972f12824005b323aa5fc6b75acb277a106057a929e86390352c549fb012bfebe359ae2201e862072b764c9bfe286fa63a088a42939baf39d021f587b7/bmw_m4_lrwa.jpg"
+            src="https://image.infographics.vn/media//1200/2022/11/19/664894d0-22b0-467f-9b58-204b9474bf1e.jpeg"
             alt="Car dashboard"
             className="w-full max-w-sm rounded-xl object-cover shadow-lg"
-            style={{ maxHeight: "260px", objectFit: "cover" }}
+            style={{ maxHeight: "315px", objectFit: "cover" }}
           />
         </div>
       </section>

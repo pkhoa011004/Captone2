@@ -80,6 +80,8 @@ export const LogInLearner = () => {
       const userRole = data.data.user?.role?.toLowerCase() || 'user';
       if (userRole === 'admin') {
         navigate("/admin");
+      } else if (userRole === 'instructor') {
+        navigate("/instructor");
       } else {
         navigate("/learner");
       }
