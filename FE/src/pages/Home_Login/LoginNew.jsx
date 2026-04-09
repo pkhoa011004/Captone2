@@ -49,15 +49,14 @@ export const LogInLearner = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email, password }),
-        }
+        },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
         setError(
-          data.message ||
-            "Login failed. Please check your credentials."
+          data.message || "Login failed. Please check your credentials.",
         );
         setLoading(false);
         return;
@@ -66,10 +65,17 @@ export const LogInLearner = () => {
       // Login success - save token and user
       localStorage.setItem("token", data.data.token);
       localStorage.setItem("user", JSON.stringify(data.data.user));
-      
+      localStorage.setItem(
+        "userInfo",
+        JSON.stringify({
+          accessToken: data.data.token,
+          user: data.data.user,
+        }),
+      );
+
       // Redirect based on user role
-      const userRole = data.data.user?.role?.toLowerCase() || 'user';
-      if (userRole === 'admin') {
+      const userRole = data.data.user?.role?.toLowerCase() || "user";
+      if (userRole === "admin") {
         navigate("/admin");
       } else {
         navigate("/learner");
@@ -148,7 +154,9 @@ export const LogInLearner = () => {
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-semibold text-red-700">{error}</p>
+                    <p className="text-sm font-semibold text-red-700">
+                      {error}
+                    </p>
                     {error.includes("verify your email") && (
                       <button
                         onClick={() => navigate("/resend-verification")}

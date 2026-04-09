@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useQuizQuestions } from "@/hooks/useQuizQuestions";
 import { useQuizGrading } from "@/hooks/useQuizGrading";
+import { learnerDashboardApi } from "@/services/api/learnerDashboard";
 
 const DEFAULT_EXAM_CONFIG = {
   topicId: null,
@@ -123,6 +124,28 @@ const savePracticeResult = ({ topicId, examName, totalQuestions, result }) => {
   } catch {
     // Ignore storage errors (private mode/quota) and continue user flow.
   }
+};
+
+const CATEGORY_LABELS = {
+  REGULATIONS: "Regulations",
+  TRAFFIC_CULTURE: "Traffic culture",
+  DRIVING_TECHNIQUE: "Driving technique",
+  VEHICLE_REPAIR: "Vehicle repair",
+  TRAFFIC_SIGNS: "Traffic signs",
+  SITUATION_HANDLING: "Situation handling",
+};
+
+const resolveAiMessage = ({ focusTopic, scorePercent }) => {
+  const safeScore = Number(scorePercent || 0);
+  if (safeScore >= 85) {
+    return "Excellent consistency. Keep momentum and maintain your strengths.";
+  }
+
+  if (!focusTopic) {
+    return "Keep practicing daily to improve weak areas and raise your score.";
+  }
+
+  return `You should review ${focusTopic.toLowerCase()} to improve your next attempt.`;
 };
 
 const normalizeExamConfig = (config = {}) => {
@@ -481,6 +504,68 @@ export default function QuizLearner() {
     const questionIds = questions.map((item) => item.id);
 
     const result = await submitExam({ answers, questionIds, questions });
+
+    if (result) {
+      try {
+        const details = Array.isArray(result?.details) ? result.details : [];
+        const fallbackWrongIds = Array.isArray(result?.wrong_answers)
+          ? result.wrong_answers
+          : [];
+
+        const wrongQuestionIds = details.length
+          ? details
+              .filter((item) => !item?.is_correct)
+              .map((item) => Number(item?.question_id))
+              .filter((id) => Number.isFinite(id))
+          : fallbackWrongIds
+              .map((id) => Number(id))
+              .filter((id) => Number.isFinite(id));
+
+        const categoryCounter = wrongQuestionIds.reduce((acc, questionId) => {
+          const matched = questions.find(
+            (question) => Number(question?.id) === Number(questionId),
+          );
+          const category = String(
+            matched?.categoryInferred || matched?.category || "REGULATIONS",
+          ).toUpperCase();
+          acc[category] = (acc[category] || 0) + 1;
+          return acc;
+        }, {});
+
+        const focusCategory = Object.entries(categoryCounter).sort(
+          (a, b) => b[1] - a[1],
+        )[0]?.[0];
+
+        const focusTopic = focusCategory
+          ? CATEGORY_LABELS[focusCategory] || focusCategory
+          : "Traffic rules";
+
+        const scorePercent = Number(result?.score_percent || 0);
+
+        await learnerDashboardApi.updateLearnerDashboard({
+          licenseType: examConfig.licenseType,
+          examsSource: examConfig.examsSource,
+          knowledgeTheory: {
+            progressIncrement: Number(
+              result?.total_questions || totalQuestions,
+            ),
+            totalQuestions: examConfig.examsSource === "exam_600" ? 600 : 250,
+          },
+          latestTest: {
+            name: examConfig.examName || "Practice Exam",
+            correctAnswers: Number(result?.correct_count || 0),
+            totalQuestions: Number(result?.total_questions || totalQuestions),
+          },
+          aiLearningBridge: {
+            focusTopic,
+            message: resolveAiMessage({ focusTopic, scorePercent }),
+          },
+        });
+      } catch (error) {
+        console.warn("Failed to sync learner dashboard:", error);
+      }
+    }
+
     savePracticeResult({
       topicId: examConfig.topicId,
       examName: examConfig.examName,
@@ -837,8 +922,10 @@ export default function QuizLearner() {
       typeof gradingResult?.passed === "boolean" ? gradingResult.passed : null;
     const isPassedExam =
       backendPassed === null ? computedPassed : backendPassed && computedPassed;
-    const displayCorrectCount = isPassedExam ? correctCount : 0;
-    const displayScorePercent = isPassedExam ? scorePercent : 0;
+    const displayCorrectCount = Number(correctCount) || 0;
+    const displayScorePercent = Number.isFinite(Number(scorePercent))
+      ? Number(scorePercent)
+      : 0;
     const missingScore = Math.max(
       Number(passThreshold) - Number(correctCount),
       0,
