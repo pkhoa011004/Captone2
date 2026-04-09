@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
-  MessageSquare,
-  BookOpen,
-  Flame,
   ChevronRight,
   Sparkles,
   Mic,
@@ -45,41 +43,132 @@ const QUICK_SUGGESTIONS = [
   "Emergency procedures",
 ];
 
-const STATS = [
-  {
-    label: "QUESTIONS ASKED",
-    value: "47",
-    icon: MessageSquare,
-    color: "bg-blue-50 text-blue-600",
-  },
-  {
-    label: "TOPICS COVERED",
-    value: "8",
-    icon: BookOpen,
-    color: "bg-purple-50 text-purple-600",
-  },
-  {
-    label: "STUDY STREAK",
-    value: "5 days",
-    icon: Flame,
-    color: "bg-orange-50 text-orange-600",
-  },
-];
+const TOPIC_PROMPTS = {
+  "Traffic Signs": "Giải thích giúp tôi các nhóm biển báo giao thông quan trọng và mẹo nhớ nhanh.",
+  "Right of Way": "Cho tôi quy tắc nhường đường trong các tình huống thường gặp khi thi bằng lái.",
+  "Speed Limits": "Tóm tắt giới hạn tốc độ thường gặp và các lỗi dễ bị mất điểm liên quan tốc độ.",
+  "Parking Rules": "Hướng dẫn các quy tắc đỗ xe quan trọng và các lỗi đỗ xe hay gặp trong đề thi.",
+  Emergency: "Cho tôi các nguyên tắc xử lý tình huống khẩn cấp khi lái xe máy an toàn.",
+  "Vehicle Maintenance": "Những kiểm tra bảo dưỡng xe cơ bản cần nhớ trước khi tham gia giao thông là gì?",
+};
+
+// Category code to readable label mapping
+const CATEGORY_MAP = {
+  REGULATIONS: "Luật và hành vi bị cấm",
+  TRAFFIC_SIGNS: "Biển báo giao thông",
+  DRIVING_TECHNIQUE: "Kỹ thuật lái xe",
+  SITUATION_HANDLING: "Sa hình & tình huống",
+  VEHICLE_MAINTENANCE: "Bảo dưỡng xe",
+  SAFETY: "An toàn giao thông",
+  TRAFFIC_CULTURE: "Văn hóa giao thông",
+};
+
+  // Function to compute weak topics from quiz analysis
+const computeWeakTopics = (quizAnalysis) => {
+  if (!quizAnalysis || !Array.isArray(quizAnalysis.wrongQuestions)) {
+    return [];
+  }
+
+  const categoryStats = {};
+
+  // Group wrong questions by category
+  quizAnalysis.wrongQuestions.forEach((question) => {
+    const category = question.category || "UNKNOWN";
+    if (!categoryStats[category]) {
+      categoryStats[category] = {
+        count: 0,
+        fatalCount: 0,
+        questions: [],
+      };
+    }
+    categoryStats[category].count += 1;
+    categoryStats[category].questions.push(question);
+    // Assume questions with explanation length > 100 or marked as critical are fatal
+    if (question.explanation && question.explanation.length > 100) {
+      categoryStats[category].fatalCount += 1;
+    }
+  });
+
+  // Calculate weighted score (frequency + 2x weight for fatal questions)
+  const weakTopics = Object.entries(categoryStats)
+    .map(([category, stats]) => {
+      const weightedScore = stats.count + stats.fatalCount * 2;
+      return {
+        category,
+        display: CATEGORY_MAP[category] || category,
+        errorCount: stats.count,
+        fatalCount: stats.fatalCount,
+        weightedScore,
+        questions: stats.questions,
+        priority:
+          weightedScore >= 8 ? "Cao" : weightedScore >= 4 ? "Trung" : "Thấp",
+      };
+    })
+    .sort((a, b) => b.weightedScore - a.weightedScore)
+    .slice(0, 5); // Top 5 weak topics
+
+  console.log("📊 Weak Topics Computed:", weakTopics);
+  return weakTopics;
+};
 
 export const AiLearner = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const chatEndRef = useRef(null);
+  const autoAnalysisRanRef = useRef(false);
+  const learnerName = useMemo(() => {
+    try {
+      const rawUser = localStorage.getItem("user");
+      if (rawUser) {
+        const parsedUser = JSON.parse(rawUser);
+        const nameFromUser =
+          parsedUser?.name ||
+          parsedUser?.fullName ||
+          parsedUser?.username ||
+          "";
+
+        if (String(nameFromUser).trim()) {
+          return String(nameFromUser).trim();
+        }
+      }
+
+      const rawUserInfo = localStorage.getItem("userInfo");
+      if (rawUserInfo) {
+        const parsedUserInfo = JSON.parse(rawUserInfo);
+        const nameFromUserInfo =
+          parsedUserInfo?.name ||
+          parsedUserInfo?.fullName ||
+          parsedUserInfo?.username ||
+          "";
+
+        if (String(nameFromUserInfo).trim()) {
+          return String(nameFromUserInfo).trim();
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to read learner name from localStorage:", err);
+    }
+
+    return "there";
+  }, []);
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState([
     {
       role: "assistant",
       content:
-        "Hi Thai! I'm your AI driving assistant. I can help explain traffic rules, clarify practice test questions, or give you tips for your upcoming exam. What would you like to learn today?",
+        `Hi ${learnerName}! I'm your AI driving assistant. I can help explain traffic rules, clarify practice test questions, or give you tips for your upcoming exam. What would you like to learn today?`,
     },
   ]);
   const [conversationId, setConversationId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [quizAnalysis, setQuizAnalysis] = useState(null);
-  const [debugMode, setDebugMode] = useState(true); // Debug mode enabled
+  const [quizAnalysis, setQuizAnalysis] = useState(
+    location.state?.quizAnalysis || null,
+  );
+  const [autoAnalyzePending, setAutoAnalyzePending] = useState(
+    Boolean(location.state?.autoAnalyze && location.state?.quizAnalysis),
+  );
+  const [weakTopics, setWeakTopics] = useState([]);
 
   // Log state changes
   useEffect(() => {
@@ -94,9 +183,20 @@ export const AiLearner = () => {
     }
   }, [messages, loading, error, conversationId, quizAnalysis]);
 
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, loading, quizAnalysis]);
+
   // Auto-send quiz analysis if coming from Quiz page
   useEffect(() => {
     console.log("🔍 Checking sessionStorage for quizAnalysis...");
+    if (location.state?.quizAnalysis) {
+      console.log("✅ Found quizAnalysis from route state");
+      setQuizAnalysis(location.state.quizAnalysis);
+      setAutoAnalyzePending(Boolean(location.state?.autoAnalyze));
+      return;
+    }
+
     const analysisData = sessionStorage.getItem("quizAnalysis");
     if (analysisData) {
       console.log("✅ Found quizAnalysis in sessionStorage");
@@ -122,6 +222,7 @@ export const AiLearner = () => {
         console.log("   - answersByQuestion keys:", Object.keys(data.answersByQuestion || {}));
         console.log("📋 FULL DATA:", JSON.stringify(data, null, 2));
         setQuizAnalysis(data);
+        setAutoAnalyzePending(true);
         sessionStorage.removeItem("quizAnalysis");
         console.log("✅ Removed quizAnalysis from sessionStorage");
       } catch (err) {
@@ -133,43 +234,25 @@ export const AiLearner = () => {
     } else {
       console.log("⚠️ No quizAnalysis in sessionStorage");
     }
-  }, []);
+  }, [location.state]);
 
-  // Test function to debug AI API
-  const testAiApi = async () => {
-    const testMessage = "Hello, this is a test message";
-    try {
-      console.log("🧪 Testing AI API...");
-      const response = await fetch(
-        `${import.meta.env.VITE_AI_API_URL}/chat/message`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: testMessage,
-            conversation_id: "test-" + Date.now(),
-          }),
-        }
-      );
-      
-      console.log("Response status:", response.status);
-      const data = await response.json();
-      console.log("Response data:", data);
-      
-      if (data.ai_response) {
-        setMessages(prev => [
-          ...prev,
-          { role: "user", content: testMessage },
-          { role: "assistant", content: data.ai_response }
-        ]);
-        alert("✅ AI API test successful!");
-      }
-    } catch (err) {
-      console.error("API test failed:", err);
-      alert("❌ API test failed: " + err.message);
-    }
+  const handlePracticeByChapter = (topic) => {
+    console.log("📚 Starting 15-question practice for chapter:", topic);
+    // Navigate to quiz with specific category preset
+    navigate("/learner/quiz", {
+      state: {
+        examConfig: {
+          topicId: null,
+          licenseType: "A1",
+          questionCount: 15,
+          examName: `Ôn tập: ${topic.display}`,
+          generationMode: "structured",
+          examsSource: "exam_250",
+          fatalOnly: false,
+          selectedCategories: [topic.category],
+        },
+      },
+    });
   };
 
   const handleSendMessage = async (e, messageText = null) => {
@@ -255,11 +338,19 @@ export const AiLearner = () => {
     console.log("\n🔄 AUTO-SEND useEffect triggered");
     console.log("   quizAnalysis:", quizAnalysis);
     console.log("   loading:", loading);
-    
-    if (!quizAnalysis) {
-      console.log("⚠️ quizAnalysis is null, skipping");
+
+    if (autoAnalysisRanRef.current) {
+      console.log("⚠️ Auto analysis already ran, skipping");
       return;
     }
+
+    if (!quizAnalysis || !autoAnalyzePending) {
+      console.log("⚠️ quizAnalysis is null or auto analyze is disabled, skipping");
+      return;
+    }
+
+    autoAnalysisRanRef.current = true;
+    setAutoAnalyzePending(false);
 
     console.log("✅ quizAnalysis exists");
     console.log("   Type:", typeof quizAnalysis);
@@ -308,40 +399,61 @@ export const AiLearner = () => {
         console.log("🔨 Building userAnswerTexts...");
         const userAnswerTexts = quizAnalysis.wrongQuestions.map((q, idx) => {
           console.log(`   Processing question ${idx + 1}:`, q.id);
-          const userAnswerText = q.user_answer !== undefined ? q.options[q.user_answer] : "Không chọn";
-          const correctAnswerText = q.options[q.correct_answer];
+          const userAnswerText = q.user_answer_text || "Không chọn";
+          const correctAnswerText = q.correct_answer_text || "Không xác định";
+          const hasKnownCorrectAnswer =
+            correctAnswerText &&
+            correctAnswerText !== "Không xác định" &&
+            correctAnswerText !== "Không rõ";
+
+          const correctAnswerLine = hasKnownCorrectAnswer
+            ? `\n   ✅ **Đáp án đúng:** ${correctAnswerText}`
+            : "";
+
           return `${idx + 1}. **Câu ${q.id}** ${q.category ? `[${q.category}]` : ""}
    📝 **Đề bài:** ${q.question_text}
    ❌ **Bạn chọn:** ${userAnswerText}
-   ✅ **Đáp án đúng:** ${correctAnswerText}
+${correctAnswerLine}
    📚 **Giải thích:** ${q.explanation || "Không có giải thích"}`;
         }).join("\n\n");
         
         console.log("✅ userAnswerTexts built, length:", userAnswerTexts.length);
         
-        const analysisPrompt = `Hãy phân tích chi tiết kết quả bài kiểm tra luyện thi của tôi:
+        const analysisPrompt = `Bạn là gia sư luyện thi lái xe. Hãy phân tích BÀI KIỂM TRA dưới đây theo đúng cấu trúc, không trả lời chung chung, không lặp lại đề bài nguyên văn dài dòng, và không bỏ sót câu nào.
 
-📊 **THÔNG TIN CHUNG:**
-- Tên bài: ${quizAnalysis.examName}
-- Loại bằng: ${quizAnalysis.licenseType}
-- Kết quả: ${quizAnalysis.score} (${quizAnalysis.percentage}%)
-- Tổng câu sai: ${quizAnalysis.wrongQuestions.length}
+      YÊU CẦU TRẢ LỜI BẰNG TIẾNG VIỆT, theo 4 phần cố định:
+      1. Điểm yếu chính: tóm tắt 3-5 điểm yếu nổi bật nhất từ toàn bộ các câu sai.
+      2. Phân tích từng câu sai: mỗi câu trình bày theo mẫu: vì sao sai, nguyên tắc đúng là gì, vì sao nguyên tắc đó đúng, mẹo nhớ nhanh.
+      3. Hướng dẫn ôn tập cụ thể: đưa ra kế hoạch ôn tập ngắn hạn trong 3-5 bước, ưu tiên các lỗi dễ mất điểm.
+      4. Chủ đề cần ôn thêm: liệt kê các nhóm kiến thức cần học lại.
 
-❌ **CÁC CÂU SAI:**
-${userAnswerTexts}
+      Ràng buộc:
+      - Chỉ phân tích các câu sai được cung cấp bên dưới.
+      - Cần rõ ràng, thực tế, dễ hiểu.
+      - Không được viết câu kiểu "Đáp án đúng: Không xác định".
+      - Nếu thiếu đáp án đúng dạng lựa chọn A/B/C/D, hãy dùng mục Giải thích để nêu nguyên tắc đúng thay thế.
+      - Chỉ tập trung giải thích lỗi sai; không liệt kê lại toàn bộ đáp án của đề.
+      - Nếu câu nào là câu điểm liệt, phải nhấn mạnh mức độ quan trọng.
 
-📝 **YÊU CẦU PHÂN TÍCH:**
-1. Đưa ra các điểm yếu chính từ những câu sai này
-2. Giải thích chi tiết từng câu sai
-3. Đưa ra các lời khuyên cụ thể để ôn tập và cải thiện
-4. Liệt kê các chủ đề cần ôn luyện thêm
+      📊 THÔNG TIN CHUNG:
+      - Tên bài: ${quizAnalysis.examName}
+      - Loại bằng: ${quizAnalysis.licenseType}
+      - Kết quả: ${quizAnalysis.score} (${quizAnalysis.percentage}%)
+      - Tổng câu sai: ${quizAnalysis.wrongQuestions.length}
 
-Hãy phân tích một cách chi tiết, dễ hiểu và có hướng dẫn ôn tập cụ thể.`;
+      ❌ CÁC CÂU SAI:
+      ${userAnswerTexts}
+
+      Hãy trả lời ngay bằng 4 mục trên, dùng tiêu đề Markdown rõ ràng và bullet points ngắn gọn.`;
 
         console.log("✅ analysisPrompt built, length:", analysisPrompt.length);
 
         // Add user message to chat
-        const userMessage = { role: "user", content: analysisPrompt };
+        const userMessage = {
+          role: "user",
+          content:
+            `Nhờ bạn phân tích bài ${quizAnalysis.examName}: ${quizAnalysis.score} (${quizAnalysis.percentage}%), tổng ${quizAnalysis.wrongQuestions.length} câu sai.`,
+        };
         console.log("➕ Adding user message to chat");
         setMessages((prev) => {
           console.log("   Current messages count:", prev.length);
@@ -407,6 +519,14 @@ Hãy phân tích một cách chi tiết, dễ hiểu và có hướng dẫn ôn 
             return newMessages;
           });
           console.log("✅ AI message added to state");
+          
+          // Compute weak topics after AI analysis is received
+          if (quizAnalysis) {
+            console.log("📊 Computing weak topics from quizAnalysis...");
+            const topics = computeWeakTopics(quizAnalysis);
+            setWeakTopics(topics);
+            console.log("✅ Weak topics computed:", topics);
+          }
         } else {
           console.warn("⚠️ data.ai_response is empty or missing");
         }
@@ -424,61 +544,12 @@ Hãy phân tích một cách chi tiết, dễ hiểu và có hướng dẫn ôn 
       }
     };
 
-    // Send analysis after a small delay to ensure UI renders
-    console.log("⏱️ Setting timeout for 300ms");
-    const timer = setTimeout(() => {
-      console.log("🚀 TIMEOUT FIRED - Starting auto-analysis...");
-      sendAnalysis();
-    }, 300);
-
-    return () => {
-      console.log("🧹 Cleanup: clearing timeout");
-      clearTimeout(timer);
-    };
-  }, [quizAnalysis, conversationId]);
+    void sendAnalysis();
+  }, [quizAnalysis, autoAnalyzePending]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
-      <main className="flex-1 w-full max-w-screen-xl mx-auto p-8 flex flex-col gap-8">
-        {/* Quiz Analysis Banner */}
-        {quizAnalysis && (
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
-            <p className="text-sm text-blue-800 font-medium">
-              📊 <strong>Phân tích từ bài kiểm tra:</strong> {quizAnalysis.examName} • 
-              Điểm: {quizAnalysis.score} • Tỷ lệ: {quizAnalysis.percentage}%
-            </p>
-          </div>
-        )}
-
-        {/* DEBUG PANEL */}
-        {debugMode && (
-          <div className="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-xl font-mono text-xs">
-            <div className="font-bold text-yellow-800 mb-2">🔍 DEBUG PANEL</div>
-            <div className="space-y-1 text-yellow-700">
-              <div>📝 Messages: <span className="font-bold">{messages.length}</span></div>
-              <div>📚 Last 3 messages:
-                {messages.slice(-3).map((msg, i) => (
-                  <div key={i} className="ml-4 text-[10px] truncate">
-                    • [{msg.role}] {msg.content.substring(0, 50)}...
-                  </div>
-                ))}
-              </div>
-              <div>⏳ Loading: <span className="font-bold">{loading ? '🔄 YES' : '✅ NO'}</span></div>
-              <div>❌ Error: <span className="font-bold">{error || '✅ NONE'}</span></div>
-              <div>🆔 ConversationId: <span className="font-bold">{conversationId ? '✅' : '❓'} {conversationId?.substring(0, 8)}...</span></div>
-              <div>📦 QuizAnalysis: <span className="font-bold">{quizAnalysis ? '✅ YES' : '❌ NO'}</span></div>
-              {quizAnalysis && <div>   Wrong Q: <span className="font-bold">{quizAnalysis.wrongQuestions?.length || 0}</span></div>}
-              <div>🔗 API URL: <span className="font-bold">{import.meta.env.VITE_AI_API_URL}</span></div>
-              <button 
-                onClick={() => setDebugMode(!debugMode)}
-                className="mt-2 px-2 py-1 bg-yellow-300 hover:bg-yellow-400 rounded font-bold text-black"
-              >
-                {debugMode ? '🔒 Hide' : '🔓 Show'}
-              </button>
-            </div>
-          </div>
-        )}
-
+    <div className="h-screen overflow-hidden bg-[#f9f9ff] font-sans">
+      <main className="h-full w-full max-w-screen-xl mx-auto p-8 flex flex-col gap-8 overflow-hidden">
         {/* 1. Header & Stats */}
         <section className="space-y-6">
           <div>
@@ -488,43 +559,14 @@ Hãy phân tích một cách chi tiết, dễ hiểu và có hướng dẫn ôn 
             <p className="text-slate-500 font-medium">
               Get instant help with driving questions
             </p>
-            {process.env.NODE_ENV === 'development' && (
-              <button 
-                onClick={testAiApi}
-                className="mt-2 px-3 py-1 bg-yellow-300 text-black text-xs rounded font-bold hover:bg-yellow-400"
-              >
-                🧪 Test AI API
-              </button>
-            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {STATS.map((stat, i) => (
-              <Card key={i} className="border-none shadow-sm">
-                <CardContent className="p-6 flex items-center gap-5">
-                  <div
-                    className={`w-14 h-14 flex items-center justify-center rounded-2xl ${stat.color}`}
-                  >
-                    <stat.icon size={24} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1">
-                      {stat.label}
-                    </p>
-                    <p className="text-3xl font-bold text-[#141b2b]">
-                      {stat.value}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </section>
 
         {/* 2. Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1 min-h-0 overflow-hidden">
           {/* Left Sidebar */}
-          <aside className="lg:col-span-1 flex flex-col gap-6">
+          <aside className="lg:col-span-1 flex flex-col gap-6 min-h-0">
             {/* Suggested Topics */}
             <Card className="border-none shadow-sm rounded-2xl">
               <CardContent className="p-5 space-y-4">
@@ -536,6 +578,8 @@ Hãy phân tích một cách chi tiết, dễ hiểu và có hướng dẫn ôn 
                     <button
                       key={topic}
                       className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 text-slate-600 text-sm font-medium transition-colors group"
+                      onClick={() => handleSendMessage(null, TOPIC_PROMPTS[topic] || topic)}
+                      disabled={loading}
                     >
                       {topic}
                       <ChevronRight
@@ -578,22 +622,11 @@ Hãy phân tích một cách chi tiết, dễ hiểu và có hướng dẫn ôn 
               </CardContent>
             </Card>
 
-            {/* Pro Tip Card */}
-            <div className="mt-auto p-6 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-200">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles size={18} className="text-blue-200" />
-                <span className="text-sm font-bold">Pro Tip</span>
-              </div>
-              <p className="text-xs leading-relaxed text-blue-50/80 font-medium">
-                You can ask me to generate a custom practice test focusing on
-                your weakest areas!
-              </p>
-            </div>
           </aside>
 
           {/* Chat Workspace */}
-          <section className="lg:col-span-3 flex flex-col bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
-            <ScrollArea className="flex-1 p-8 h-[600px]">
+          <section className="lg:col-span-3 flex flex-col bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden min-h-0">
+            <ScrollArea className="flex-1 min-h-0 p-8 overflow-y-auto overscroll-contain">
               <div className="space-y-8">
                 {messages.map((msg, i) =>
                   msg.role === "assistant" ? (
@@ -633,6 +666,41 @@ Hãy phân tích một cách chi tiết, dễ hiểu và có hướng dẫn ôn 
                     </div>
                   </div>
                 )}
+
+                {/* Practice by Chapter Section */}
+                {weakTopics.length > 0 && !loading && (
+                  <div className="mt-12 space-y-4 max-w-3xl">
+                    <div className="flex items-center gap-2 mb-6">
+                      <BarChart2 size={20} className="text-slate-700" />
+                      <h3 className="text-lg font-bold text-[#141b2b]">
+                        Ôn tập theo chương
+                      </h3>
+                    </div>
+
+                    <div className="space-y-2">
+                      {weakTopics.map((topic, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg hover:shadow-sm transition-all"
+                        >
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-slate-900">
+                              {idx + 1}. {topic.display}
+                            </h4>
+                          </div>
+                          <Button
+                            onClick={() => handlePracticeByChapter(topic)}
+                            className="ml-4 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg whitespace-nowrap transition-all"
+                          >
+                            Luyện Tập
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div ref={chatEndRef} />
               </div>
 
               {/* Quick Suggestions Bubbles */}

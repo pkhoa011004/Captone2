@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export const LogInLearner = () => {
   const navigate = useNavigate();
+  const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +43,7 @@ export const LogInLearner = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/users/login`,
+        `${apiBaseUrl}/users/login`,
         {
           method: "POST",
           headers: {
@@ -52,7 +53,15 @@ export const LogInLearner = () => {
         },
       );
 
-      const data = await response.json();
+      let data = {};
+      const rawBody = await response.text();
+      if (rawBody) {
+        try {
+          data = JSON.parse(rawBody);
+        } catch {
+          data = {};
+        }
+      }
 
       if (!response.ok) {
         setError(
@@ -77,6 +86,8 @@ export const LogInLearner = () => {
       const userRole = data.data.user?.role?.toLowerCase() || "user";
       if (userRole === "admin") {
         navigate("/admin");
+      } else if (userRole === 'instructor') {
+        navigate("/instructor");
       } else {
         navigate("/learner");
       }

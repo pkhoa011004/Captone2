@@ -17,16 +17,28 @@ const normalizeGradingResult = (result, userAnswers = {}, questions = []) => {
     result?.score_percent ?? result?.scorePercent ?? result?.score ?? 0,
   );
 
-  // Calculate wrong_answers if not present
+  // Normalize wrong_answers from known backend shapes
   let wrongAnswers = result?.wrong_answers || result?.wrongAnswers || [];
-  if (wrongAnswers.length === 0 && questions.length > 0) {
+
+  if (!Array.isArray(wrongAnswers) || wrongAnswers.length === 0) {
+    const detailRows = Array.isArray(result?.details) ? result.details : [];
+    if (detailRows.length > 0) {
+      wrongAnswers = detailRows
+        .filter((row) => row?.is_correct === false)
+        .map((row) => Number(row?.question_id))
+        .filter((id) => Number.isFinite(id));
+    }
+  }
+
+  if ((!Array.isArray(wrongAnswers) || wrongAnswers.length === 0) && questions.length > 0) {
     console.log("🔧 Calculating wrong_answers from questions...");
     wrongAnswers = questions
       .filter((q) => {
         const userAnswer = userAnswers[q.id];
-        const isCorrect = userAnswer === q.correct_answer;
+        const correctAnswer = Number(q?.correctAnswer ?? q?.correct_answer);
+        const isCorrect = Number(userAnswer) === correctAnswer;
         if (!isCorrect) {
-          console.log(`  Q${q.id}: User=${userAnswer}, Correct=${q.correct_answer} → WRONG`);
+          console.log(`  Q${q.id}: User=${userAnswer}, Correct=${correctAnswer} → WRONG`);
         }
         return !isCorrect;
       })
@@ -34,13 +46,19 @@ const normalizeGradingResult = (result, userAnswers = {}, questions = []) => {
     console.log("✅ Calculated wrong_answers:", wrongAnswers);
   }
 
+  const normalizedWrongAnswers = [...new Set(
+    (Array.isArray(wrongAnswers) ? wrongAnswers : [])
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id)),
+  )];
+
   return {
     ...result,
     total_questions: totalQuestions,
     correct_count: correctCount,
     pass_threshold: passThreshold,
     score_percent: Number.isFinite(scorePercent) ? scorePercent : 0,
-    wrong_answers: wrongAnswers,
+    wrong_answers: normalizedWrongAnswers,
   };
 };
 

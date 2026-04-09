@@ -85,6 +85,77 @@ const clearQuizDraft = (storageKey) => {
   }
 };
 
+const getOptionTextByAnswer = (options = [], answerValue) => {
+  const normalizedAnswer = Number(answerValue);
+  if (!Number.isFinite(normalizedAnswer) || !Array.isArray(options)) {
+    return "Không xác định";
+  }
+
+  const normalizedLetter = (() => {
+    const key = String(answerValue ?? "").trim().toUpperCase();
+    return ["A", "B", "C", "D"].includes(key) ? key : null;
+  })();
+
+  if (normalizedLetter) {
+    const byKey = options.find((option) => {
+      const optionKey = String(
+        option?.option_key ?? option?.optionKey ?? option?.key ?? "",
+      )
+        .trim()
+        .toUpperCase();
+      return optionKey === normalizedLetter;
+    });
+
+    if (byKey) {
+      return (
+        byKey.optionText ??
+        byKey.option_text ??
+        byKey.text ??
+        String(byKey.label ?? "Không xác định")
+      );
+    }
+  }
+
+  const matchedOption = options.find((option) => {
+    const optionId = Number(
+      option?.optionId ?? option?.option_id ?? option?.id ?? option?.value,
+    );
+    return Number.isFinite(optionId) && optionId === normalizedAnswer;
+  });
+
+  if (matchedOption) {
+    return (
+      matchedOption.optionText ??
+      matchedOption.option_text ??
+      matchedOption.text ??
+      String(matchedOption.label ?? "Không xác định")
+    );
+  }
+
+  if (normalizedAnswer >= 1 && normalizedAnswer <= options.length) {
+    const oneBasedOption = options[normalizedAnswer - 1];
+    if (oneBasedOption) {
+      return (
+        oneBasedOption.optionText ??
+        oneBasedOption.option_text ??
+        oneBasedOption.text ??
+        String(oneBasedOption.label ?? "Không xác định")
+      );
+    }
+  }
+
+  // Legacy fallback for string-array options.
+  if (
+    normalizedAnswer >= 0 &&
+    normalizedAnswer < options.length &&
+    typeof options[normalizedAnswer] === "string"
+  ) {
+    return options[normalizedAnswer];
+  }
+
+  return "Không xác định";
+};
+
 const savePracticeResult = ({ topicId, examName, totalQuestions, result }) => {
   if (!result || typeof result !== "object") return;
 
@@ -769,6 +840,11 @@ export default function QuizLearner() {
       // Lấy danh sách câu sai
       console.log("\n📊 STEP 2: Extract wrong answers");
       const wrongAnswers = gradingResult?.wrong_answers || [];
+      const wrongAnswerIds = new Set(
+        (Array.isArray(wrongAnswers) ? wrongAnswers : [])
+          .map((id) => Number(id))
+          .filter((id) => Number.isFinite(id)),
+      );
       console.log("   - wrongAnswers array:", wrongAnswers);
       console.log("   - wrongAnswers length:", wrongAnswers.length);
       console.log("   - wrongAnswers type:", typeof wrongAnswers);
@@ -783,7 +859,8 @@ export default function QuizLearner() {
 
       console.log("\n📊 STEP 3: Filter questions");
       const wrongQuestions = questions.filter((q) => {
-        const isWrong = wrongAnswers.includes(q.id);
+        const questionId = Number(q.id);
+        const isWrong = wrongAnswerIds.has(questionId);
         console.log(`   Q${q.id}: ${isWrong ? "❌ WRONG" : "✅ CORRECT"}`);
         return isWrong;
       });
@@ -805,20 +882,33 @@ export default function QuizLearner() {
         percentage: gradingResult?.score_percent,
         licenseType: examConfig.licenseType,
         wrongQuestions: wrongQuestions.map((q) => {
+          const userAnswerValue = Number(answersByQuestion[q.id]);
+          const correctAnswerValue = Number(q.correctAnswer ?? q.correct_answer);
+          const userAnswerText = Number.isFinite(userAnswerValue)
+            ? getOptionTextByAnswer(q.options, userAnswerValue)
+            : "Không chọn";
+          const correctAnswerText = Number.isFinite(correctAnswerValue)
+            ? getOptionTextByAnswer(q.options, correctAnswerValue)
+            : "Không xác định";
+
           console.log(`   Processing Q${q.id}:`, {
-            question_text: q.question_text?.substring(0, 30),
-            user_answer: answersByQuestion[q.id],
-            correct_answer: q.correct_answer,
+            question_text: (q.questionText ?? q.question_text)?.substring(0, 30),
+            user_answer: userAnswerValue,
+            correct_answer: correctAnswerValue,
           });
 
           return {
             id: q.id,
-            question_text: q.question_text,
-            correct_answer: q.correct_answer,
-            user_answer: answersByQuestion[q.id],
+            question_text: q.questionText ?? q.question_text ?? "",
+            correct_answer: Number.isFinite(correctAnswerValue)
+              ? correctAnswerValue
+              : null,
+            user_answer: Number.isFinite(userAnswerValue) ? userAnswerValue : null,
+            correct_answer_text: correctAnswerText,
+            user_answer_text: userAnswerText,
             options: q.options,
             explanation: q.explanation,
-            category: q.category,
+            category: q.category ?? q.categoryInferred ?? "OTHER",
           };
         }),
         totalWrong: wrongQuestions.length,
@@ -858,7 +948,12 @@ export default function QuizLearner() {
 
       console.log("\n🚀 STEP 8: Navigate");
       console.log("🚀 Navigating to /learner/ai-assistant");
-      navigate("/learner/ai-assistant");
+      navigate("/learner/ai-assistant", {
+        state: {
+          quizAnalysis: analysisData,
+          autoAnalyze: true,
+        },
+      });
     } catch (error) {
       console.error("❌ Error in handleSendToAI:", error);
       console.error("   - Type:", error.constructor.name);
@@ -1001,8 +1096,8 @@ export default function QuizLearner() {
             )}
 
             <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <Button onClick={handleRestart} className="rounded-xl">
-                <RotateCcw size={16} className="mr-2" /> Làm lại
+              <Button onClick={handleRestart} className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700">
+                Làm lại
               </Button>
               <Button
                 variant="outline"
@@ -1014,16 +1109,15 @@ export default function QuizLearner() {
               <Button
                 onClick={handleSendToAI}
                 disabled={sendingToAI}
-                className="rounded-xl bg-blue-600 hover:bg-blue-700"
+                className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
               >
                 {sendingToAI ? (
                   <>
-                    <Loader size={16} className="mr-2 animate-spin" /> Đang
-                    gửi...
+                    Đang gửi...
                   </>
                 ) : (
                   <>
-                    <Sparkles size={16} className="mr-2" /> Phân tích với AI
+                    Phân tích với AI
                   </>
                 )}
               </Button>
@@ -1054,8 +1148,8 @@ export default function QuizLearner() {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <Button onClick={handleRestart} className="rounded-xl">
-                <RotateCcw size={16} className="mr-2" /> Làm lại
+              <Button onClick={handleRestart} className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700">
+                Làm lại
               </Button>
               <Button
                 variant="outline"
@@ -1189,19 +1283,23 @@ export default function QuizLearner() {
               )}
             </CardHeader>
 
-            <CardContent className="flex-1 overflow-hidden px-4 pb-4 pt-0">
-              <div className="grid lg:grid-cols-2 gap-6 h-full items-start">
+            <CardContent className="flex-1 overflow-hidden px-4 pb-4 pt-0 h-[500px]">
+              <div className="grid lg:grid-cols-2 gap-6 h-full items-start overflow-auto">
                 {/* Left: Question Text + Image */}
-                <div className="space-y-2 flex flex-col self-start">
-                  <p className="text-base font-semibold text-slate-600">
-                    Câu {currentQuestion + 1}
-                  </p>
-                  <h2 className="text-2xl leading-snug font-black text-[#141b2b] mt-0">
-                    {question.questionText}
-                  </h2>
+                <div className="flex flex-col self-start max-h-[500px]">
+                  {/* Question Text Section - Limited Height */}
+                  <div className="space-y-2 mb-4">
+                    <p className="text-base font-semibold text-slate-600">
+                      Câu {currentQuestion + 1}
+                    </p>
+                    <h2 className="text-xl leading-snug font-black text-[#141b2b] mt-0">
+                      {question.questionText}
+                    </h2>
+                  </div>
 
+                  {/* Image Section - Aligned with Answers */}
                   {question.image && (
-                    <div className="w-full max-w-130 mx-auto h-90 rounded-2xl border-2 border-slate-200 bg-slate-50 p-3 flex items-center justify-center overflow-hidden mt-1">
+                    <div className="w-full max-w-130 mx-auto h-80 rounded-2xl border-2 border-slate-200 bg-slate-50 p-3 flex items-center justify-center overflow-hidden shrink-0 mt-8">
                       <img
                         src={question.image}
                         alt={`Hình minh họa câu ${question.id}`}
@@ -1213,7 +1311,7 @@ export default function QuizLearner() {
                 </div>
 
                 {/* Right: Answer Options */}
-                <div className="space-y-3 flex flex-col justify-center h-full pt-0">
+                <div className="space-y-3 flex flex-col justify-start h-[500px] pt-32">
                   <RadioGroup
                     value={selectedOption?.toString()}
                     onValueChange={handleSelectOption}

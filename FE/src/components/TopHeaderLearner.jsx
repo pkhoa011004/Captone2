@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Search, Bell, Car, LogOut } from "lucide-react";
+import { Search, Bell, CarFront, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 const navItems = [
   { label: "Dashboard", path: "/learner", active: true },
   { label: "Practice Tests", path: "/learner/practice-tests", active: false },
-  { label: "Create topic", path: "/learner/create-exam", active: false },
   { label: "AI Assistant", path: "/learner/ai-assistant", active: false },
   { label: "Simulation", path: "/learner/simulator", active: false },
   { label: "Schedule", path: "/learner/schedule", active: false },
@@ -60,22 +59,14 @@ export const TopHeaderLearner = () => {
             className="flex items-center gap-3 group cursor-pointer"
             onClick={() => navigate("/learner")}
           >
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 transition-transform group-hover:scale-105">
-              <Car className="text-white w-6 h-6" strokeWidth={2.5} />
-            </div>
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
+              <CarFront className="h-5 w-5" />
+            </span>
             <span className="text-xl font-black text-blue-700 tracking-tighter">
               DriveMaster
             </span>
           </div>
 
-          {/* Search Bar */}
-          <div className="hidden md:flex relative w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <Input
-              placeholder="Quick search..."
-              className="pl-10 h-10 bg-slate-100 border-none rounded-full text-sm placeholder:text-slate-400 focus-visible:ring-blue-400 focus-visible:bg-white transition-all"
-            />
-          </div>
         </div>
 
         {/* CENTER: Navigation Links */}
@@ -119,12 +110,9 @@ export const TopHeaderLearner = () => {
                 <span className="text-xs font-bold text-[#141b2b] group-hover:text-blue-600 transition-colors">
                   {user?.name || "User"}
                 </span>
-                <span className="text-[10px] font-bold text-slate-400 tracking-tight">
-                  ID: {user?.id || "12345"}
-                </span>
               </div>
               <Avatar className="w-10 h-10 border-2 border-white shadow-sm group-hover:border-blue-100 transition-all">
-                <AvatarImage src="/user-profile.png" alt="Profile" />
+                <AvatarImage src={user?.avatar || user?.profileImage || "/user-profile.png"} alt="Profile" />
                 <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-xs">
                   {user?.name?.substring(0, 2).toUpperCase() || "U"}
                 </AvatarFallback>

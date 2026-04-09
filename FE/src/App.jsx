@@ -50,6 +50,7 @@ const App = () => {
           <Route path="ai-assistant" element={<AiLearner />} />
           <Route path="simulator" element={<SimulatorLearner />} />
           <Route path="schedule" element={<ScheduleLearner />} />
+          <Route path="profile" element={<AccountSettings />} />
           <Route path="account-settings" element={<AccountSettings />} />
           <Route path="quiz" element={<QuizLearner />} />
         </Route>
