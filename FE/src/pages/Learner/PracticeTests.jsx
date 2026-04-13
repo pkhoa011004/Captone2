@@ -423,20 +423,25 @@ export const PracticeTests = () => {
               onClick={() => {
                 setDifficultyFilter("ALL");
                 setCategoryFilter("ALL");
+                setShowFilters(false);
               }}
               className="rounded-xl bg-[#e1e8fd] text-blue-700 hover:bg-blue-100 font-bold px-6 border-none"
             >
               All Topics
             </Button>
             <Button
-              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 border-none"
+              type="button"
               onClick={() => navigate("/learner/create-exam")}
+              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 border-none"
             >
               Create Exam
             </Button>
             <Button
+              type="button"
+              onClick={() => setShowFilters((prev) => !prev)}
+              aria-pressed={showFilters}
               variant="ghost"
-              className="rounded-xl text-slate-500 font-bold px-6 gap-2"
+              className={`rounded-xl font-bold px-6 gap-2 transition-colors ${showFilters ? "text-blue-700 bg-blue-50 hover:bg-blue-100" : "text-slate-500 hover:bg-slate-100"}`}
             >
               <Filter size={16} /> Filter
             </Button>
@@ -457,13 +462,12 @@ export const PracticeTests = () => {
                   { value: "HARD", label: "Hard" },
                 ].map((item) => {
                   const active = difficultyFilter === item.value;
-
                   return (
                     <Button
                       key={item.value}
                       type="button"
-                      variant={active ? "default" : "outline"}
                       onClick={() => setDifficultyFilter(item.value)}
+                      variant={active ? "default" : "outline"}
                       className={`rounded-full px-4 font-bold ${
                         active
                           ? "bg-blue-600 text-white hover:bg-blue-700"
@@ -518,6 +522,7 @@ export const PracticeTests = () => {
                 onClick={() => {
                   setDifficultyFilter("ALL");
                   setCategoryFilter("ALL");
+                  setShowFilters(false);
                 }}
                 className="rounded-xl text-slate-500 font-bold"
               >

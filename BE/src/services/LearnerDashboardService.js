@@ -1,9 +1,20 @@
 import { LearnerDashboardModel } from '../models/LearnerDashboardModel.js'
 
 const FALLBACK_IMAGE =
+  'https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/Cover_744a8e3903.jpg'
+const LEGACY_FALLBACK_IMAGE =
   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzuBhk3q3lHZyFQgpUu_MwnkvMVRy3NwtvDg&s'
 
 export class LearnerDashboardService {
+  static normalizeSimulationImageUrl(value) {
+    const resolved = String(value || '').trim()
+    if (!resolved || resolved === LEGACY_FALLBACK_IMAGE) {
+      return FALLBACK_IMAGE
+    }
+
+    return resolved
+  }
+
   static normalizePositiveNumber(value, fallback = 0) {
     const normalized = Number(value)
     if (!Number.isFinite(normalized) || normalized < 0) {
@@ -90,7 +101,9 @@ export class LearnerDashboardService {
       simulationTraining: {
         title: profile.next_session_title || 'Simulation Training',
         nextSessionAt: profile.next_session_at || null,
-        imageUrl: profile.simulation_image_url || FALLBACK_IMAGE,
+        imageUrl: this.normalizeSimulationImageUrl(
+          profile.simulation_image_url || FALLBACK_IMAGE
+        ),
       },
     }
   }
@@ -179,7 +192,7 @@ export class LearnerDashboardService {
       aiMessage,
       nextSessionTitle: simulationTitle,
       nextSessionAt: this.normalizeDateTimeOrNull(nextSessionAtInput),
-      simulationImageUrl: simulationImage,
+      simulationImageUrl: this.normalizeSimulationImageUrl(simulationImage),
     })
 
     return await this.getDashboardByUserId(userId)

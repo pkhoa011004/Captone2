@@ -1,18 +1,16 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useDropzone } from "react-dropzone";
 import {
   User,
+  UserCircle2,
   Shield,
+  ShieldCheck,
   CreditCard,
   Bell,
   BookOpen,
-  Clock,
-  Globe,
   Lock,
   Trash2,
   Camera,
-  CheckCircle2,
-  Mail,
-  Phone,
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,15 +34,30 @@ import {
 
 // --- Dữ liệu điều hướng bên trái ---
 const SIDEBAR_NAV = [
-  { id: "account", label: "Account Details", icon: User, active: true },
-  { id: "security", label: "Security & Privacy", icon: Shield, active: false },
+  {
+    id: "account",
+    label: "Account Details",
+    hint: "Profile information & avatar",
+    icon: UserCircle2,
+    active: true,
+  },
+  {
+    id: "security",
+    label: "Security & Privacy",
+    hint: "Password and protection settings",
+    icon: ShieldCheck,
+    active: false,
+  },
   {
     id: "subscription",
     label: "Subscription",
+    hint: "Plan and billing overview",
     icon: CreditCard,
     active: false,
   },
 ];
+
+const AVATAR_STORAGE_KEY = "learnerAvatar";
 
 export const AccountSettings = () => {
   const parseJsonSafe = (value) => {
@@ -60,14 +73,13 @@ export const AccountSettings = () => {
 
     return {
       id: raw.id ?? raw.user_id ?? null,
-      name:
-        raw.name ?? raw.full_name ?? raw.fullName ?? raw.username ?? "",
+      name: raw.name ?? raw.full_name ?? raw.fullName ?? raw.username ?? "",
       email: raw.email ?? raw.email_address ?? "",
       phone: raw.phone ?? raw.phone_number ?? raw.phoneNumber ?? "",
-      license_type:
-        raw.license_type ?? raw.licenseType ?? raw.license ?? "",
+      license_type: raw.license_type ?? raw.licenseType ?? raw.license ?? "",
       created_at:
         raw.created_at ?? raw.createdAt ?? raw.joined_at ?? raw.joinedAt ?? "",
+      avatar: raw.avatar ?? raw.profileImage ?? raw.profile_image ?? "",
     };
   };
 
@@ -76,11 +88,120 @@ export const AccountSettings = () => {
       parseJsonSafe(localStorage.getItem("userInfo")),
   );
 
-  const [profile, setProfile] = useState(initialLocalProfile);
+  const cachedAvatar =
+    localStorage.getItem(AVATAR_STORAGE_KEY) ||
+    initialLocalProfile?.avatar ||
+    "";
+
+  const [profile, setProfile] = useState({
+    ...(initialLocalProfile || {}),
+    avatar: cachedAvatar,
+  });
   const [email, setEmail] = useState("");
+  const [avatarError, setAvatarError] = useState("");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const apiBaseUrl =
     import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+
+  const syncLocalUser = useCallback((nextPartialUser) => {
+    const existingUser = parseJsonSafe(localStorage.getItem("user")) || {};
+    const existingAvatar =
+      existingUser?.avatar ||
+      existingUser?.profileImage ||
+      localStorage.getItem(AVATAR_STORAGE_KEY) ||
+      "";
+    const incomingAvatar =
+      nextPartialUser?.avatar || nextPartialUser?.profileImage || "";
+    const resolvedAvatar = incomingAvatar || existingAvatar;
+
+    const nextUser = {
+      ...existingUser,
+      ...nextPartialUser,
+      avatar: resolvedAvatar,
+      profileImage: resolvedAvatar,
+    };
+
+    localStorage.setItem("user", JSON.stringify(nextUser));
+    if (resolvedAvatar) {
+      localStorage.setItem(AVATAR_STORAGE_KEY, resolvedAvatar);
+    }
+    window.dispatchEvent(new Event("user-updated"));
+  }, []);
+
+  const handleAvatarFile = useCallback(
+    (file) => {
+      if (!file) return;
+
+      const maxSizeInMb = 2;
+      const maxSizeBytes = maxSizeInMb * 1024 * 1024;
+
+      if (!file.type?.startsWith("image/")) {
+        setAvatarError("Please select an image file.");
+        return;
+      }
+
+      if (file.size > maxSizeBytes) {
+        setAvatarError(`Avatar must be smaller than ${maxSizeInMb}MB.`);
+        return;
+      }
+
+      setAvatarError("");
+      setIsUploadingAvatar(true);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const avatarDataUrl = String(reader.result || "");
+        if (!avatarDataUrl) {
+          setAvatarError("Cannot read selected image.");
+          setIsUploadingAvatar(false);
+          return;
+        }
+
+        setProfile((prev) => ({
+          ...(prev || {}),
+          avatar: avatarDataUrl,
+        }));
+
+        syncLocalUser({
+          avatar: avatarDataUrl,
+          profileImage: avatarDataUrl,
+        });
+
+        setIsUploadingAvatar(false);
+      };
+
+      reader.onerror = () => {
+        setAvatarError("Cannot read selected image.");
+        setIsUploadingAvatar(false);
+      };
+
+      reader.readAsDataURL(file);
+    },
+    [syncLocalUser],
+  );
+
+  const onDropAvatar = useCallback(
+    (acceptedFiles, rejectedFiles) => {
+      if (rejectedFiles?.length) {
+        setAvatarError("Only .jpg, .jpeg, .png, .webp files are supported.");
+        return;
+      }
+
+      handleAvatarFile(acceptedFiles?.[0]);
+    },
+    [handleAvatarFile],
+  );
+
+  const { getInputProps, open: openAvatarPicker } = useDropzone({
+    onDrop: onDropAvatar,
+    multiple: false,
+    noClick: true,
+    noKeyboard: true,
+    accept: {
+      "image/*": [".jpg", ".jpeg", ".png", ".webp"],
+    },
+  });
 
   useEffect(() => {
     if (initialLocalProfile?.email) {
@@ -108,26 +229,29 @@ export const AccountSettings = () => {
         const payload = await response.json();
         const userDataRaw = payload?.data?.user || payload?.data || payload;
         const userData = normalizeProfile(userDataRaw);
+        const preservedAvatar =
+          userData?.avatar ||
+          localStorage.getItem(AVATAR_STORAGE_KEY) ||
+          initialLocalProfile?.avatar ||
+          "";
+        const mergedUserData = {
+          ...(userData || {}),
+          avatar: preservedAvatar,
+          profileImage: preservedAvatar,
+        };
 
-        setProfile(userData);
+        setProfile(mergedUserData);
         setEmail(userData?.email || "");
 
         // Keep local user cache in sync for other screens using localStorage user.
-        const existingUser = JSON.parse(localStorage.getItem("user") || "{}");
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            ...existingUser,
-            ...userData,
-          }),
-        );
+        syncLocalUser(mergedUserData);
       } catch (err) {
         console.error("Failed to fetch learner profile:", err);
       }
     };
 
     void fetchProfile();
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, initialLocalProfile?.email, syncLocalUser]);
 
   const joinedLabel = useMemo(() => {
     const rawDate = profile?.created_at;
@@ -147,25 +271,49 @@ export const AccountSettings = () => {
   const learnerEmail = profile?.email || "";
   const learnerPhone = profile?.phone || "";
   const learnerLicense = profile?.license_type || "N/A";
+  const learnerAvatar = profile?.avatar || profile?.profileImage || "";
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans pb-20">
-      <main className="flex-1 w-full max-w-[1440px] mx-auto p-8 grid grid-cols-12 gap-8">
+      <main className="flex-1 w-full max-w-360 mx-auto p-8 grid grid-cols-12 gap-8">
         {/* --- CỘT TRÁI: PROFILE & NAV (3/12) --- */}
         <aside className="col-span-12 lg:col-span-3 space-y-6">
           <Card className="border-none shadow-sm overflow-hidden text-center">
             <CardContent className="pt-8 pb-6 space-y-4">
               <div className="relative inline-block">
-                <div className="w-32 h-32 rounded-full bg-slate-100 flex items-center justify-center border-4 border-white shadow-sm overflow-hidden">
-                  <User size={64} className="text-slate-300" />
-                </div>
+                <input {...getInputProps()} />
+                <button
+                  type="button"
+                  onClick={openAvatarPicker}
+                  disabled={isUploadingAvatar}
+                  className="w-32 h-32 rounded-full bg-slate-100 flex items-center justify-center border-4 border-white shadow-sm overflow-hidden cursor-pointer transition-opacity hover:opacity-90 disabled:cursor-not-allowed"
+                  title="Click to change avatar"
+                >
+                  {learnerAvatar ? (
+                    <img
+                      src={learnerAvatar}
+                      alt="Learner avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User size={64} className="text-slate-300" />
+                  )}
+                </button>
                 <Button
+                  type="button"
                   size="icon"
                   className="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 absolute bottom-1 right-1 border-2 border-white shadow-md"
+                  onClick={openAvatarPicker}
+                  disabled={isUploadingAvatar}
                 >
                   <Camera size={14} />
                 </Button>
               </div>
+              {avatarError ? (
+                <p className="text-xs text-red-500 font-medium">
+                  {avatarError}
+                </p>
+              ) : null}
 
               <div>
                 <h3 className="text-xl font-bold text-[#141b2b]">
@@ -197,18 +345,45 @@ export const AccountSettings = () => {
             </CardContent>
           </Card>
 
-          <nav className="space-y-1">
+          <nav className="space-y-2 rounded-2xl border border-blue-100/60 bg-white/80 p-2 shadow-sm">
             {SIDEBAR_NAV.map((item) => (
               <button
                 key={item.id}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                className={`group w-full flex items-center justify-between gap-3 px-3 py-3 rounded-xl text-left transition-all ${
                   item.active
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-100"
-                    : "text-slate-500 hover:bg-white hover:text-blue-600"
+                    : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
                 }`}
               >
-                <item.icon size={18} />
-                {item.label}
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+                      item.active
+                        ? "bg-white/20 text-white"
+                        : "bg-blue-100 text-blue-600 group-hover:bg-blue-200"
+                    }`}
+                  >
+                    <item.icon size={17} />
+                  </span>
+
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold truncate">
+                      {item.label}
+                    </span>
+                    <span
+                      className={`block text-[11px] truncate ${
+                        item.active ? "text-blue-100" : "text-slate-400"
+                      }`}
+                    >
+                      {item.hint}
+                    </span>
+                  </span>
+                </div>
+
+                <ChevronRight
+                  size={16}
+                  className={item.active ? "text-blue-100" : "text-slate-300"}
+                />
               </button>
             ))}
           </nav>

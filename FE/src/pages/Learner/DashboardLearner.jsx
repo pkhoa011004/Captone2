@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Play,
   Zap,
@@ -24,6 +25,7 @@ const QUICK_LINKS = [
     icon: <MessageSquare className="text-blue-600" size={20} />,
     title: "Ask AI Assistant",
     subtitle: "Clarify traffic rules instantly",
+    path: "/learner/ai-assistant",
   },
   {
     icon: <Map className="text-blue-600" size={20} />,
@@ -38,6 +40,8 @@ const QUICK_LINKS = [
 ];
 
 const FOOTER_LINKS = ["SAFETY PROTOCOLS", "PRIVACY POLICY", "SUPPORT"];
+const DEFAULT_SIMULATION_IMAGE =
+  "https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/Cover_744a8e3903.jpg";
 
 const DASHBOARD_FALLBACK = {
   knowledgeTheory: {
@@ -58,8 +62,7 @@ const DASHBOARD_FALLBACK = {
   simulationTraining: {
     title: "Simulation Training",
     nextSessionAt: null,
-    imageUrl:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzuBhk3q3lHZyFQgpUu_MwnkvMVRy3NwtvDg&s",
+    imageUrl: DEFAULT_SIMULATION_IMAGE,
   },
 };
 
@@ -100,6 +103,7 @@ const formatSessionTime = (isoDateString) => {
 };
 
 export const DashboardLearner = () => {
+  const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(DASHBOARD_FALLBACK);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -141,6 +145,8 @@ export const DashboardLearner = () => {
     dashboardData?.aiLearningBridge || DASHBOARD_FALLBACK.aiLearningBridge;
   const simulationTraining =
     dashboardData?.simulationTraining || DASHBOARD_FALLBACK.simulationTraining;
+  const simulationImageUrl =
+    simulationTraining?.imageUrl || DEFAULT_SIMULATION_IMAGE;
 
   const sessionTimeText = useMemo(
     () => formatSessionTime(simulationTraining?.nextSessionAt),
@@ -154,23 +160,27 @@ export const DashboardLearner = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
-      <main className="flex-1 w-full max-w-screen-xl mx-auto p-10 space-y-12">
+      <main className="flex-1 w-full max-w-7xl mx-auto p-10 space-y-14">
         {/* 1. Hero Section */}
         <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-          <div className="max-w-xl">
-            <h1 className="text-5xl font-black tracking-tight leading-tight font-manrope">
+          <div className="max-w-2xl">
+            <h1 className="text-6xl font-black tracking-tight leading-tight font-manrope">
               <span className="text-[#141b2b]">Master the Road with </span>
               <span className="text-[#004ac6]">AI-Powered training.</span>
             </h1>
           </div>
           <div className="flex gap-4">
-            <Button className="h-12 px-8 rounded-xl bg-[#004ac6] hover:bg-blue-700 shadow-lg shadow-blue-200 gap-2">
+            <Button
+              className="h-12 px-8 rounded-xl bg-[#004ac6] hover:bg-blue-700 shadow-lg shadow-blue-200 gap-2"
+              onClick={() => navigate("/learner/practice-tests")}
+            >
               <Play size={18} fill="currentColor" />
               <span className="font-bold">Start Test</span>
             </Button>
             <Button
               variant="outline"
               className="h-12 px-8 rounded-xl bg-[#e1e8fd] border-none text-[#004ac6] font-bold hover:bg-blue-200 transition-all"
+              onClick={() => navigate("/learner/simulator")}
             >
               Quick Simulation
             </Button>
@@ -181,30 +191,30 @@ export const DashboardLearner = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Knowledge Theory Card */}
           <Card className="lg:col-span-8 rounded-[32px] border-none shadow-sm overflow-hidden bg-white">
-            <CardContent className="p-10 flex flex-col justify-between h-full min-h-[333px]">
+            <CardContent className="p-12 flex flex-col justify-between h-full min-h-95 gap-8">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-bold text-[#141b2b] font-manrope">
+                  <h2 className="text-3xl font-bold text-[#141b2b] font-manrope">
                     Knowledge Theory
                   </h2>
-                  <p className="text-slate-500 font-medium">
+                  <p className="text-base text-slate-500 font-medium">
                     Progress towards exam readiness
                   </p>
                 </div>
-                <Badge className="bg-blue-50 text-blue-600 hover:bg-blue-100 border-none rounded-full px-4 py-1.5 font-bold">
+                <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none rounded-full px-5 py-2 text-sm font-bold shadow-sm">
                   {safeCompletion}% Complete
                 </Badge>
               </div>
 
-              <div className="flex items-baseline gap-2">
-                <span className="text-8xl font-black tracking-tighter text-[#141b2b]">
+              <div className="flex items-end gap-3">
+                <span className="text-[6rem] leading-none font-black tracking-tighter text-[#141b2b]">
                   {knowledgeTheory?.completedQuestions ?? 0}
                 </span>
                 <div className="flex flex-col">
-                  <span className="text-2xl font-bold text-slate-300">
+                  <span className="text-3xl font-bold text-slate-300 leading-none">
                     / {knowledgeTheory?.totalQuestions ?? 600}
                   </span>
-                  <span className="text-xs font-bold text-slate-400 tracking-[2px] uppercase">
+                  <span className="text-sm font-bold text-slate-400 tracking-[2px] uppercase">
                     Questions
                   </span>
                 </div>
@@ -213,7 +223,7 @@ export const DashboardLearner = () => {
               <div className="space-y-2">
                 <Progress
                   value={safeCompletion}
-                  className="h-4 bg-slate-100"
+                  className="h-5 bg-slate-100"
                   indicatorClassName="bg-[#004ac6]"
                 />
               </div>
@@ -222,33 +232,36 @@ export const DashboardLearner = () => {
 
           {/* Latest Test Summary */}
           <Card className="lg:col-span-4 rounded-[32px] border-none shadow-sm bg-[#f1f3ff]">
-            <CardContent className="p-10 flex flex-col justify-between h-full min-h-[333px]">
-              <div className="flex justify-between items-center">
-                <div className="p-3 bg-white rounded-2xl shadow-sm text-blue-600">
-                  <Zap size={20} fill="currentColor" />
+            <CardContent className="p-12 flex flex-col justify-between h-full min-h-95 gap-8">
+              <div className="flex items-start justify-between gap-4">
+                <div className="p-4 bg-white rounded-2xl shadow-sm text-blue-600">
+                  <Zap size={24} fill="currentColor" />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 tracking-[2px]">
+                <span className="pt-2 text-sm font-bold text-slate-400 tracking-[3px]">
                   LATEST TEST
                 </span>
               </div>
 
-              <div className="space-y-1 pt-12">
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-tight">
+              <div className="space-y-3">
+                <p className="text-[15px] font-bold text-slate-500 uppercase tracking-tight">
                   {latestTest?.name || "No test yet"}
                 </p>
-                <div className="flex items-baseline">
-                  <span className="text-4xl font-black text-[#141b2b]">
+                <div className="flex items-end gap-2">
+                  <span className="text-6xl leading-none font-black text-[#141b2b]">
                     {latestTest?.correctAnswers ?? 0}
                   </span>
-                  <span className="text-xl font-bold text-slate-400">
+                  <span className="pb-1 text-2xl font-bold text-slate-400">
                     / {latestTest?.totalQuestions ?? 0}
                   </span>
                 </div>
+                <p className="text-sm text-slate-500 font-medium">
+                  Correct answers from your most recent test.
+                </p>
               </div>
 
-              <div className="flex items-center gap-3 p-4 bg-green-50 rounded-2xl border border-green-100 mt-auto">
-                <CheckCircle2 size={20} className="text-green-600" />
-                <span className="text-sm font-bold text-green-700">
+              <div className="flex items-center gap-3 p-5 bg-green-50 rounded-2xl border border-green-100 shadow-sm mt-auto">
+                <CheckCircle2 size={22} className="text-green-600" />
+                <span className="text-base font-bold text-green-700">
                   {latestTest?.accuracyPercent ?? 0}% Accuracy Score
                 </span>
               </div>
@@ -257,17 +270,17 @@ export const DashboardLearner = () => {
 
           {/* AI Learning Bridge Card */}
           <Card className="lg:col-span-5 rounded-[32px] border-none shadow-sm bg-[#293040] text-white relative overflow-hidden group">
-            <CardContent className="p-10 flex flex-col gap-8 relative z-10">
+            <CardContent className="p-12 flex flex-col gap-8 relative z-10 min-h-85">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/10 rounded-lg text-blue-300">
                   <Cpu size={22} />
                 </div>
-                <h3 className="text-lg font-bold font-manrope">
+                <h3 className="text-xl font-bold font-manrope">
                   AI Learning Bridge
                 </h3>
               </div>
 
-              <p className="text-xl font-medium leading-relaxed">
+              <p className="text-2xl font-medium leading-relaxed max-w-88">
                 "
                 {aiLearningBridge?.message ||
                   "Start a practice test to receive AI insights."}
@@ -287,7 +300,7 @@ export const DashboardLearner = () => {
 
           {/* Simulation Training Card */}
           <Card className="lg:col-span-7 rounded-[32px] border-none shadow-sm bg-[#e1e8fd] overflow-hidden">
-            <CardContent className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center h-full">
+            <CardContent className="p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center h-full min-h-85">
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
@@ -297,16 +310,19 @@ export const DashboardLearner = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-3xl font-black text-[#141b2b]">
+                  <h3 className="text-[2.1rem] font-black text-[#141b2b] leading-tight">
                     {simulationTraining?.title || "Simulation Training"}
                   </h3>
-                  <p className="text-base font-medium text-slate-500 leading-snug">
+                  <p className="text-lg font-medium text-slate-500 leading-snug">
                     {sessionTimeText}
                   </p>
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <Button className="rounded-xl bg-[#141b2b] hover:bg-slate-800 text-white font-bold h-11 px-6 transition-transform active:scale-95">
+                  <Button
+                    className="rounded-xl bg-[#141b2b] hover:bg-slate-800 text-white font-bold h-11 px-6 transition-transform active:scale-95"
+                    onClick={() => navigate("/learner/schedule")}
+                  >
                     Add to Calendar
                   </Button>
                   <Button
@@ -321,10 +337,7 @@ export const DashboardLearner = () => {
               <div className="relative group">
                 <div className="rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/10 rotate-2 group-hover:rotate-0 transition-transform duration-500">
                   <img
-                    src={
-                      simulationTraining?.imageUrl ||
-                      DASHBOARD_FALLBACK.simulationTraining.imageUrl
-                    }
+                    src={simulationImageUrl}
                     alt="Simulation View"
                     className="w-full h-40 object-cover scale-110 group-hover:scale-100 transition-transform duration-500"
                   />
@@ -335,31 +348,51 @@ export const DashboardLearner = () => {
         </div>
 
         {/* 3. Quick Links Row */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {QUICK_LINKS.map((link, idx) => (
-            <Card
-              key={idx}
-              className="rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-            >
-              <CardContent className="p-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 flex items-center justify-center bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-                    {link.icon}
+        <section className="space-y-6">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold tracking-[0.2em] text-blue-500 uppercase">
+                Quick Access
+              </p>
+              <h2 className="mt-1 text-3xl font-black tracking-tight text-[#141b2b]">
+                Shortcuts you can read at a glance
+              </h2>
+            </div>
+            <p className="hidden md:block max-w-md text-base font-medium text-slate-500 text-right">
+              Tap into the most-used learner features with clearer, larger
+              action cards.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {QUICK_LINKS.map((link, idx) => (
+              <Card
+                key={idx}
+                className="rounded-3xl border border-slate-100 shadow-sm hover:shadow-lg transition-all cursor-pointer group min-h-37"
+                onClick={() => link.path && navigate(link.path)}
+              >
+                <CardContent className="p-8 flex items-center justify-between gap-6 h-full">
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 flex items-center justify-center bg-blue-50 rounded-2xl group-hover:bg-blue-100 transition-colors shrink-0">
+                      {link.icon}
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-black tracking-tight text-[#141b2b]">
+                        {link.title}
+                      </h4>
+                      <p className="mt-1 text-sm text-slate-500 font-medium leading-relaxed">
+                        {link.subtitle}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-[#141b2b]">
-                      {link.title}
-                    </h4>
-                    <p className="text-xs text-slate-500">{link.subtitle}</p>
-                  </div>
-                </div>
-                <ChevronRight
-                  className="text-slate-300 group-hover:text-blue-600 transition-colors"
-                  size={16}
-                />
-              </CardContent>
-            </Card>
-          ))}
+                  <ChevronRight
+                    className="text-slate-300 group-hover:text-blue-600 transition-colors shrink-0"
+                    size={20}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </section>
 
         {isLoading && (
@@ -370,16 +403,16 @@ export const DashboardLearner = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full max-w-screen-xl mx-auto px-10 py-12 flex flex-col md:flex-row justify-between items-center gap-8 border-t border-slate-100 mt-20">
-        <p className="text-sm font-medium text-slate-400">
+      <footer className="w-full max-w-7xl mx-auto px-10 py-14 flex flex-col md:flex-row justify-between items-center gap-8 border-t border-slate-100 mt-20">
+        <p className="text-base font-medium text-slate-500">
           © 2026 DriveMaster Technologies. All rights reserved.
         </p>
-        <nav className="flex gap-8">
+        <nav className="flex flex-wrap justify-center gap-8">
           {FOOTER_LINKS.map((link) => (
             <a
               key={link}
               href="#"
-              className="text-[10px] font-bold text-slate-400 tracking-[1.5px] hover:text-blue-600 transition-colors uppercase"
+              className="text-sm font-bold text-slate-500 tracking-[0.18em] hover:text-blue-600 transition-colors uppercase"
             >
               {link}
             </a>

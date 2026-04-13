@@ -52,7 +52,7 @@ function Toggle({ enabled }) {
 function Field({ label, value }) {
   return (
     <div>
-      <label className="mb-1 block text-[10px] font-bold tracking-[0.1em] text-slate-400">
+      <label className="mb-1 block text-[10px] font-bold tracking-widest text-slate-400">
         {label}
       </label>
       <div className="rounded-md bg-blue-50 px-3 py-2 text-xs font-semibold text-slate-700">
@@ -65,14 +65,16 @@ function Field({ label, value }) {
 export function AdminSettings() {
   return (
     <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
-      <aside className="flex min-h-[760px] flex-col rounded-xl border border-blue-100 bg-white p-4">
+      <aside className="flex min-h-190 flex-col rounded-xl border border-blue-100 bg-white p-4">
         <div className="mb-4 flex items-center gap-2">
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-blue-600 text-white">
             <Settings2 className="h-3.5 w-3.5" />
           </span>
           <div>
             <p className="text-xs font-bold text-slate-800">ADMIN PANEL</p>
-            <p className="text-[10px] font-semibold text-slate-400">SYSTEM CORE</p>
+            <p className="text-[10px] font-semibold text-slate-400">
+              SYSTEM CORE
+            </p>
           </div>
         </div>
 
@@ -119,7 +121,9 @@ export function AdminSettings() {
 
       <section className="space-y-4">
         <header>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Profile</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+            Profile
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
             Configure platform preferences and system-wide behaviors.
           </p>
@@ -138,16 +142,17 @@ export function AdminSettings() {
             </div>
 
             <div className="mt-3">
-              <label className="mb-1 block text-[10px] font-bold tracking-[0.1em] text-slate-400">
+              <label className="mb-1 block text-[10px] font-bold tracking-widest text-slate-400">
                 PLATFORM DESCRIPTION
               </label>
               <div className="rounded-md bg-blue-50 px-3 py-3 text-xs text-slate-700">
-                The leading digital solution for driver training schools and instructors.
+                The leading digital solution for driver training schools and
+                instructors.
               </div>
             </div>
 
             <div className="mt-3">
-              <label className="mb-1 block text-[10px] font-bold tracking-[0.1em] text-slate-400">
+              <label className="mb-1 block text-[10px] font-bold tracking-widest text-slate-400">
                 TIMEZONE
               </label>
               <button
@@ -182,7 +187,9 @@ export function AdminSettings() {
             </div>
 
             <div className="mt-3 flex items-center justify-between rounded-md bg-blue-50 px-3 py-2">
-              <p className="text-xs font-semibold text-slate-600">Randomize Order</p>
+              <p className="text-xs font-semibold text-slate-600">
+                Randomize Order
+              </p>
               <Toggle enabled />
             </div>
 
@@ -209,8 +216,12 @@ export function AdminSettings() {
                   className="flex items-center justify-between rounded-md bg-blue-50 px-3 py-2"
                 >
                   <div>
-                    <p className="text-xs font-semibold text-slate-700">{item.label}</p>
-                    <p className="text-[10px] text-slate-400">{item.description}</p>
+                    <p className="text-xs font-semibold text-slate-700">
+                      {item.label}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      {item.description}
+                    </p>
                   </div>
                   <Toggle enabled={item.enabled} />
                 </div>
@@ -227,16 +238,24 @@ export function AdminSettings() {
             <div className="space-y-3">
               <div className="flex items-center justify-between rounded-md border border-slate-100 px-3 py-2">
                 <div>
-                  <p className="text-xs font-semibold text-slate-700">Maintenance Mode</p>
-                  <p className="text-[10px] text-slate-400">Restrict user access</p>
+                  <p className="text-xs font-semibold text-slate-700">
+                    Maintenance Mode
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    Restrict user access
+                  </p>
                 </div>
                 <Toggle enabled={false} />
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-slate-100 px-3 py-2">
                 <div>
-                  <p className="text-xs font-semibold text-slate-700">Clear System Cache</p>
-                  <p className="text-[10px] text-slate-400">Optimize performance</p>
+                  <p className="text-xs font-semibold text-slate-700">
+                    Clear System Cache
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    Optimize performance
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -248,8 +267,12 @@ export function AdminSettings() {
 
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-slate-100 px-3 py-2">
                 <div>
-                  <p className="text-xs font-semibold text-slate-700">Reset Analytics Data</p>
-                  <p className="text-[10px] text-slate-400">Irreversible action, backup required</p>
+                  <p className="text-xs font-semibold text-slate-700">
+                    Reset Analytics Data
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    Irreversible action, backup required
+                  </p>
                 </div>
                 <button
                   type="button"
