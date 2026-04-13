@@ -23,6 +23,12 @@ const normalizeQuestion = (question) => ({
   image: resolveQuestionImageUrl(question?.image),
   isFatal: Boolean(question?.is_fatal),
   explanation: question?.explanation ?? null,
+  correctAnswer: Number(
+    question?.correct_answer ??
+    question?.correctAnswer ??
+    question?.correct_option ??
+    0
+  ),
   options: Array.isArray(question?.options)
     ? question.options
         .map((option) => ({

@@ -72,6 +72,15 @@ export const getProfile = async (req, res, next) => {
   }
 }
 
+export const getCurrentUser = async (req, res, next) => {
+  try {
+    const user = await UserService.getCurrentUser(req.user.id)
+    successResponse(res, user, 'Current user profile retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const getAllUsers = async (req, res, next) => {
   try {
     const { search, role } = req.query

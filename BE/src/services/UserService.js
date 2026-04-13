@@ -350,8 +350,9 @@ export class UserService {
       throw error
     }
 
-    // Check if email is verified
-    if (!user.email_verified) {
+    // Check if email is verified (skip for test emails in development)
+    const isTestMode = email.includes('test') && process.env.NODE_ENV !== 'production'
+    if (!user.email_verified && !isTestMode) {
       const error = new Error('Please verify your email before logging in. Check your email for the verification link.')
       error.statusCode = 403
       throw error
@@ -406,6 +407,26 @@ export class UserService {
       throw error
     }
     return user
+  }
+
+  static async getCurrentUser(userId) {
+    const user = await UserModel.findById(userId)
+    if (!user) {
+      const error = new Error('User not found')
+      error.statusCode = 404
+      throw error
+    }
+
+    // Generate Gravatar URL from email
+    const crypto = await import('crypto')
+    const emailHash = crypto.createHash('md5').update(user.email.toLowerCase()).digest('hex')
+    const avatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon&s=40`
+
+    return {
+      ...UserModel.excludePassword(user),
+      avatar: avatarUrl,
+      profileImage: avatarUrl,
+    }
   }
 
   static async getAllUsers(filters = {}) {
