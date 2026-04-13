@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Play,
   Zap,
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { learnerDashboardApi } from "@/services/api/learnerDashboard";
 
 const QUICK_LINKS = [
   {
@@ -38,7 +39,116 @@ const QUICK_LINKS = [
 
 const FOOTER_LINKS = ["SAFETY PROTOCOLS", "PRIVACY POLICY", "SUPPORT"];
 
+const DASHBOARD_FALLBACK = {
+  knowledgeTheory: {
+    completedQuestions: 0,
+    totalQuestions: 600,
+    completionPercent: 0,
+  },
+  latestTest: {
+    name: "No test yet",
+    correctAnswers: 0,
+    totalQuestions: 0,
+    accuracyPercent: 0,
+  },
+  aiLearningBridge: {
+    focusTopic: "Traffic rules",
+    message: "Start a practice test to receive AI insights.",
+  },
+  simulationTraining: {
+    title: "Simulation Training",
+    nextSessionAt: null,
+    imageUrl:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzuBhk3q3lHZyFQgpUu_MwnkvMVRy3NwtvDg&s",
+  },
+};
+
+const formatSessionTime = (isoDateString) => {
+  if (!isoDateString) {
+    return "No scheduled session yet";
+  }
+
+  const date = new Date(isoDateString);
+  if (Number.isNaN(date.getTime())) {
+    return "No scheduled session yet";
+  }
+
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startTarget = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+  const dayDiff = Math.round(
+    (startTarget.getTime() - startToday.getTime()) / (24 * 60 * 60 * 1000),
+  );
+
+  const timeText = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  if (dayDiff === 0) return `Today at ${timeText}`;
+  if (dayDiff === 1) return `Tomorrow at ${timeText}`;
+
+  const dateText = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+  return `${dateText} at ${timeText}`;
+};
+
 export const DashboardLearner = () => {
+  const [dashboardData, setDashboardData] = useState(DASHBOARD_FALLBACK);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchDashboard = async () => {
+      try {
+        setIsLoading(true);
+        const data = await learnerDashboardApi.getLearnerDashboard();
+        if (mounted && data) {
+          setDashboardData(data);
+        }
+      } catch (error) {
+        if (mounted) {
+          setDashboardData(DASHBOARD_FALLBACK);
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchDashboard();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const knowledgeTheory =
+    dashboardData?.knowledgeTheory || DASHBOARD_FALLBACK.knowledgeTheory;
+  const latestTest = dashboardData?.latestTest || DASHBOARD_FALLBACK.latestTest;
+  const aiLearningBridge =
+    dashboardData?.aiLearningBridge || DASHBOARD_FALLBACK.aiLearningBridge;
+  const simulationTraining =
+    dashboardData?.simulationTraining || DASHBOARD_FALLBACK.simulationTraining;
+
+  const sessionTimeText = useMemo(
+    () => formatSessionTime(simulationTraining?.nextSessionAt),
+    [simulationTraining?.nextSessionAt],
+  );
+
+  const safeCompletion = Math.max(
+    0,
+    Math.min(100, Number(knowledgeTheory?.completionPercent || 0)),
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
       <main className="flex-1 w-full max-w-screen-xl mx-auto p-10 space-y-12">
@@ -79,17 +189,17 @@ export const DashboardLearner = () => {
                   </p>
                 </div>
                 <Badge className="bg-blue-50 text-blue-600 hover:bg-blue-100 border-none rounded-full px-4 py-1.5 font-bold">
-                  67% Complete
+                  {safeCompletion}% Complete
                 </Badge>
               </div>
 
               <div className="flex items-baseline gap-2">
                 <span className="text-8xl font-black tracking-tighter text-[#141b2b]">
-                  400
+                  {knowledgeTheory?.completedQuestions ?? 0}
                 </span>
                 <div className="flex flex-col">
                   <span className="text-2xl font-bold text-slate-300">
-                    / 600
+                    / {knowledgeTheory?.totalQuestions ?? 600}
                   </span>
                   <span className="text-xs font-bold text-slate-400 tracking-[2px] uppercase">
                     Questions
@@ -99,7 +209,7 @@ export const DashboardLearner = () => {
 
               <div className="space-y-2">
                 <Progress
-                  value={67}
+                  value={safeCompletion}
                   className="h-4 bg-slate-100"
                   indicatorClassName="bg-[#004ac6]"
                 />
@@ -121,18 +231,22 @@ export const DashboardLearner = () => {
 
               <div className="space-y-1 pt-12">
                 <p className="text-sm font-bold text-slate-500 uppercase tracking-tight">
-                  Practice Exam #12
+                  {latestTest?.name || "No test yet"}
                 </p>
                 <div className="flex items-baseline">
-                  <span className="text-4xl font-black text-[#141b2b]">28</span>
-                  <span className="text-xl font-bold text-slate-400">/ 30</span>
+                  <span className="text-4xl font-black text-[#141b2b]">
+                    {latestTest?.correctAnswers ?? 0}
+                  </span>
+                  <span className="text-xl font-bold text-slate-400">
+                    / {latestTest?.totalQuestions ?? 0}
+                  </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 p-4 bg-green-50 rounded-2xl border border-green-100 mt-auto">
                 <CheckCircle2 size={20} className="text-green-600" />
                 <span className="text-sm font-bold text-green-700">
-                  93% Accuracy Score
+                  {latestTest?.accuracyPercent ?? 0}% Accuracy Score
                 </span>
               </div>
             </CardContent>
@@ -151,11 +265,10 @@ export const DashboardLearner = () => {
               </div>
 
               <p className="text-xl font-medium leading-relaxed">
-                "Your performance in{" "}
-                <span className="text-blue-300 underline decoration-blue-300/30 font-bold">
-                  Right-of-Way
-                </span>{" "}
-                scenarios is slightly lagging. Let's focus there next."
+                "
+                {aiLearningBridge?.message ||
+                  "Start a practice test to receive AI insights."}
+                "
               </p>
 
               <Button
@@ -182,10 +295,10 @@ export const DashboardLearner = () => {
 
                 <div className="space-y-2">
                   <h3 className="text-3xl font-black text-[#141b2b]">
-                    Simulation Training
+                    {simulationTraining?.title || "Simulation Training"}
                   </h3>
                   <p className="text-base font-medium text-slate-500 leading-snug">
-                    Tomorrow at 3:00 PM • Advanced Highway Entry
+                    {sessionTimeText}
                   </p>
                 </div>
 
@@ -205,7 +318,10 @@ export const DashboardLearner = () => {
               <div className="relative group">
                 <div className="rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/10 rotate-2 group-hover:rotate-0 transition-transform duration-500">
                   <img
-                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzuBhk3q3lHZyFQgpUu_MwnkvMVRy3NwtvDg&s"
+                    src={
+                      simulationTraining?.imageUrl ||
+                      DASHBOARD_FALLBACK.simulationTraining.imageUrl
+                    }
                     alt="Simulation View"
                     className="w-full h-40 object-cover scale-110 group-hover:scale-100 transition-transform duration-500"
                   />
@@ -242,6 +358,12 @@ export const DashboardLearner = () => {
             </Card>
           ))}
         </section>
+
+        {isLoading && (
+          <div className="text-sm font-medium text-slate-400">
+            Loading learner dashboard data...
+          </div>
+        )}
       </main>
 
       {/* Footer */}
