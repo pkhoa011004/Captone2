@@ -42,6 +42,19 @@ export const LogInLearner = () => {
     setError("");
     setLoading(true);
 
+    // Client-side validation
+    if (!email || !email.includes("@")) {
+      setError("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`${apiBaseUrl}/users/login`, {
         method: "POST",
@@ -62,9 +75,23 @@ export const LogInLearner = () => {
       }
 
       if (!response.ok) {
-        setError(
-          data.message || "Login failed. Please check your credentials.",
-        );
+        // Handle specific status codes with helpful messages
+        if (response.status === 403) {
+          setError(data.message || "Please verify your email before logging in. Check your email for the verification link.");
+        } else if (response.status === 401) {
+          setError("Invalid email or password. Please try again.");
+        } else {
+          setError(
+            data.message || "Login failed. Please check your credentials.",
+          );
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Validate response structure
+      if (!data.data || !data.data.token || !data.data.user) {
+        setError("Invalid response from server. Please try again.");
         setLoading(false);
         return;
       }
@@ -115,7 +142,7 @@ export const LogInLearner = () => {
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("An error occurred. Please try again.");
+      setError(err.message || "An error occurred. Please try again.");
       setLoading(false);
     }
   };
@@ -162,6 +189,7 @@ export const LogInLearner = () => {
               </p>
             </div>
 
+          <CardContent className="p-10 relative z-10">
             {/* Tabs Switcher */}
             <Tabs defaultValue="login" className="w-full mb-8">
               <TabsList className="grid w-full grid-cols-2 bg-slate-100/50 p-1 rounded-xl">
@@ -187,16 +215,23 @@ export const LogInLearner = () => {
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                   <div>
+                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-red-700">
                       {error}
                     </p>
                     {error.includes("verify your email") && (
                       <button
                         onClick={() => navigate("/resend-verification")}
-                        className="text-xs font-bold text-red-600 hover:underline mt-2"
+                        className="text-xs font-bold text-red-600 hover:underline mt-2 transition-colors"
                       >
                         Resend Verification Email →
                       </button>
+                    )}
+                    {error.includes("Invalid email or password") && (
+                      <p className="text-xs text-red-600 mt-2">
+                        Don't have an account? <button onClick={() => navigate("/signup")} className="font-bold underline hover:no-underline">Sign up here</button>.
+                      </p>
                     )}
                   </div>
                 </div>

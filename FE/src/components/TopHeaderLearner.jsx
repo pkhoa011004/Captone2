@@ -6,6 +6,8 @@ import {
   UserCircle2,
   ChevronRight,
 } from "lucide-react";
+﻿import React, { useState, useRef, useEffect } from "react";
+import { Search, Bell, CarFront, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +19,8 @@ const navItems = [
   { label: "Simulation", path: "/learner/simulator", active: false },
   { label: "Schedule", path: "/learner/schedule", active: false },
 ];
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
 
 export const TopHeaderLearner = () => {
   const cachedAvatarKey = "learnerAvatar";
@@ -33,6 +37,40 @@ export const TopHeaderLearner = () => {
     } catch {
       setUser(null);
     }
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Fetch user profile with avatar from API
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/me`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.data);
+          // Update localStorage with new avatar
+          localStorage.setItem("user", JSON.stringify(data.data));
+        } else {
+          // Fallback to localStorage if API fails
+          const userData = JSON.parse(localStorage.getItem("user"));
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        // Fallback to localStorage
+        const userData = JSON.parse(localStorage.getItem("user"));
+        setUser(userData);
+      }
+    };
+
+    fetchUserProfile();
   }, []);
 
   const avatarSrc =
@@ -149,6 +187,9 @@ export const TopHeaderLearner = () => {
               <Avatar className="w-13 h-13 border-2 border-white shadow-md group-hover:border-blue-100 transition-all">
                 <AvatarImage src={avatarSrc} alt="Profile" />
                 <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-base">
+              <Avatar className="w-10 h-10 border-2 border-white shadow-sm group-hover:border-blue-100 transition-all">
+                <AvatarImage src={user?.avatar || user?.profileImage} alt="Profile" />
+                <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-xs">
                   {user?.name?.substring(0, 2).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>

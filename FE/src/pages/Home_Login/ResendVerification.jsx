@@ -13,8 +13,9 @@ export default function ResendVerification() {
     setStatus("loading");
 
     try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/users/resend-verification-email`,
+        `${apiBaseUrl}/users/resend-verification-email`,
         {
           method: "POST",
           headers: {

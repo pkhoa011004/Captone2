@@ -77,7 +77,7 @@ const RECENT_USERS = [
     email: "s.jenkins@webmail.com",
     license: "B2",
     date: "Oct 23, 2023",
-    status: "PENDING",
+    status: "OFFLINE",
   },
   {
     name: "Marcus Thorne",
@@ -328,7 +328,7 @@ export const DashboardAdmin = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div
-                            className={`w-1.5 h-1.5 rounded-full ${user.status === "ACTIVE" ? "bg-green-500" : user.status === "PENDING" ? "bg-amber-500" : "bg-slate-300"}`}
+                            className={`w-1.5 h-1.5 rounded-full ${user.status === "ACTIVE" ? "bg-green-500" : user.status === "OFFLINE" ? "bg-amber-500" : "bg-slate-300"}`}
                           />
                           <span className="text-[10px] font-bold text-slate-600 uppercase">
                             {user.status}
@@ -409,7 +409,7 @@ export const DashboardAdmin = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <PlatformAlert
-              title="Pending registrations"
+              title="Offline registrations"
               desc="24 applications require manual ID verification."
               icon={ShieldCheck}
               colorClass="bg-red-50/50 border-red-100"
@@ -432,7 +432,7 @@ export const DashboardAdmin = () => {
       <footer className="w-full border-t border-slate-200/50 py-10 px-8 mt-10 bg-white/50 backdrop-blur-sm">
         <div className="max-w-[1440px] mx-auto text-center flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400">
           <p className="font-bold text-[10px] tracking-[2.5px] uppercase italic">
-            © 2026 DRIVEMASTER ADMIN INTERFACE • V2.4.0-BUILD.82
+            © 2026 DRIVEMASTER • V2.4.0-BUILD.82
           </p>
           <div className="flex gap-4 text-[10px] font-bold uppercase tracking-widest">
             <a href="#" className="hover:text-blue-600 transition-colors">
