@@ -9,7 +9,11 @@ const navigationItems = [
     matchPaths: ["/admin", "/admin-dashboard"],
   },
   { label: "User Management", path: "/admin/users" },
-  { label: "Exam Management", path: "/admin/exams" },
+  {
+    label: "Exam Management",
+    path: "/admin/exams",
+    matchPrefixes: ["/admin/exams/"],
+  },
   { label: "Classrooms", path: "/admin/classrooms" },
   { label: "Analytics", path: "/admin/analytics" },
 ];
@@ -64,7 +68,9 @@ export function AdminHeader() {
           {navigationItems.map((item) => {
             const isActive = item.matchPaths
               ? item.matchPaths.includes(location.pathname)
-              : location.pathname === item.path;
+              : item.matchPrefixes?.some((prefix) =>
+                  location.pathname.startsWith(prefix),
+                ) || location.pathname === item.path;
 
             return (
               <button

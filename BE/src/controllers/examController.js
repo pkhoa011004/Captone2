@@ -135,3 +135,39 @@ export const gradeExam = async (req, res, next) => {
     next(error)
   }
 }
+
+/**
+ * Get admin exam management data (read-only)
+ * GET /api/v1/exams/admin/management
+ */
+export const getAdminExamManagementData = async (req, res, next) => {
+  try {
+    const { search, licenseType, license, source, status, page, limit } = req.query
+    const data = await ExamService.getAdminExamManagementData({
+      search,
+      licenseType: licenseType || license,
+      source,
+      status,
+      page,
+      limit,
+    })
+
+    successResponse(res, data, 'Admin exam management data retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Get detail of one admin exam (read-only)
+ * GET /api/v1/exams/admin/management/:examId
+ */
+export const getAdminExamManagementDetail = async (req, res, next) => {
+  try {
+    const { examId } = req.params
+    const data = await ExamService.getAdminExamManagementDetail({ examId })
+    successResponse(res, data, 'Admin exam detail retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}

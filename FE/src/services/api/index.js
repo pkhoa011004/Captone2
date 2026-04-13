@@ -9,8 +9,17 @@ const apiInstance = axios.create({
 //Interceptor thêm header Authorization
 apiInstance.interceptors.request.use(
   (config) => {
-    const parseUserInfo = JSON.parse(localStorage.getItem("userInfo"));
-    const token = parseUserInfo?.accessToken;
+    const tokenFromStorage = localStorage.getItem("token");
+    let tokenFromLegacyUserInfo = null;
+
+    try {
+      const parseUserInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+      tokenFromLegacyUserInfo = parseUserInfo?.accessToken || null;
+    } catch (_error) {
+      tokenFromLegacyUserInfo = null;
+    }
+
+    const token = tokenFromStorage || tokenFromLegacyUserInfo;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,8 +39,10 @@ apiInstance.interceptors.response.use(
     if (window.location.href.includes("/login")) {
       return Promise.reject(error);
     }
-    if (error.response.status === 401) {
+    if (error?.response?.status === 401) {
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("userInfo");
       window.location.href = "/login";
     }
     return Promise.reject(error);
