@@ -85,8 +85,40 @@ const clearQuizDraft = (storageKey) => {
   }
 };
 
+const normalizeAnswerToOptionId = (options = [], answerValue) => {
+  if (answerValue === null || answerValue === undefined) return null;
+
+  const directNumeric = Number(answerValue);
+  if (Number.isFinite(directNumeric)) return directNumeric;
+
+  const normalizedLetter = String(answerValue).trim().toUpperCase();
+  if (!["A", "B", "C", "D"].includes(normalizedLetter)) {
+    return null;
+  }
+
+  if (!Array.isArray(options)) return null;
+
+  const byKey = options.find((option) => {
+    const optionKey = String(
+      option?.option_key ?? option?.optionKey ?? option?.key ?? "",
+    )
+      .trim()
+      .toUpperCase();
+    return optionKey === normalizedLetter;
+  });
+
+  if (byKey) {
+    const optionId = Number(
+      byKey?.optionId ?? byKey?.option_id ?? byKey?.id ?? byKey?.value,
+    );
+    return Number.isFinite(optionId) ? optionId : null;
+  }
+
+  return normalizedLetter.charCodeAt(0) - 64;
+};
+
 const getOptionTextByAnswer = (options = [], answerValue) => {
-  const normalizedAnswer = Number(answerValue);
+  const normalizedAnswer = normalizeAnswerToOptionId(options, answerValue);
   if (!Number.isFinite(normalizedAnswer) || !Array.isArray(options)) {
     return "Không xác định";
   }
@@ -402,7 +434,7 @@ export default function QuizLearner() {
   const [questionsWithAnswers, setQuestionsWithAnswers] = useState(null);
 
   useEffect(() => {
-    if (!questions.length || isFinished || !reviewMode) return;
+    if (!questions.length || !isFinished || !reviewMode) return;
 
     // Refetch questions with correct answers when entering review mode
     const fetchQuestionsWithAnswers = async () => {
@@ -427,7 +459,10 @@ export default function QuizLearner() {
         const qWithAnswersMap = {};
         data.forEach((q, idx) => {
           const qId = Number(q?.id ?? q?.question_id);
-          const correctAns = Number(q?.correct_answer ?? 0);
+          const correctAns = normalizeAnswerToOptionId(
+            q?.options ?? [],
+            q?.correct_answer ?? q?.correctAnswer,
+          );
           qWithAnswersMap[qId] = correctAns;
           if (idx < 3) { // Log first 3 for debugging
             console.log(`[Review Mode] Q${qId}: correctAnswer=${correctAns}`);
@@ -437,7 +472,9 @@ export default function QuizLearner() {
         // Merge with existing questions
         const merged = questions.map(q => ({
           ...q,
-          correctAnswer: qWithAnswersMap[q.id] ?? q.correctAnswer ?? 0,
+          correctAnswer:
+            qWithAnswersMap[q.id] ??
+            normalizeAnswerToOptionId(q.options ?? [], q.correctAnswer ?? q.correct_answer),
         }));
         
         console.log('[Review Mode] Merged sample:', {
@@ -563,7 +600,10 @@ export default function QuizLearner() {
       return null;
     }
 
-    const correctAnswer = Number(questionItem.correctAnswer);
+    const correctAnswer = normalizeAnswerToOptionId(
+      questionItem?.options ?? [],
+      questionItem?.correctAnswer ?? questionItem?.correct_answer,
+    );
     const normalizedAnswer = Number(answerValue);
 
     if (!Number.isFinite(correctAnswer) || !Number.isFinite(normalizedAnswer)) {
@@ -848,7 +888,10 @@ export default function QuizLearner() {
       return;
     }
 
-    const correctAnswer = Number(question.correctAnswer);
+    const correctAnswer = normalizeAnswerToOptionId(
+      question?.options ?? [],
+      question?.correctAnswer ?? question?.correct_answer,
+    );
     if (!Number.isFinite(correctAnswer)) {
       return;
     }
@@ -1117,9 +1160,18 @@ export default function QuizLearner() {
     }
 
     const userAnswer = Number(answersByQuestion[reviewQuestion.id]);
-    const correctAnswer = Number(reviewQuestion.correctAnswer ?? 0);
-    const isCorrect = userAnswer === correctAnswer;
-    const isWrong = wrongAnswerIds.has(Number(reviewQuestion.id));
+    const correctAnswer = normalizeAnswerToOptionId(
+      reviewQuestion?.options ?? [],
+      reviewQuestion?.correctAnswer ?? reviewQuestion?.correct_answer,
+    );
+    const isCorrect =
+      Number.isFinite(userAnswer) &&
+      Number.isFinite(correctAnswer) &&
+      userAnswer === correctAnswer;
+    const isWrong =
+      Number.isFinite(userAnswer) && Number.isFinite(correctAnswer)
+        ? userAnswer !== correctAnswer
+        : wrongAnswerIds.has(Number(reviewQuestion.id));
 
     // Debug logging
     console.log(`[Review Mode - Q${reviewQuestion.id}]:`, {
@@ -1174,7 +1226,16 @@ export default function QuizLearner() {
                 {reviewQuestions.map((item, index) => {
                   const isCurrent = index === currentQuestion;
                   const isAnswered = answersByQuestion[item.id] !== undefined;
-                  const isWrongQuestion = wrongAnswerIds.has(Number(item.id));
+                  const itemUserAnswer = Number(answersByQuestion[item.id]);
+                  const itemCorrectAnswer = normalizeAnswerToOptionId(
+                    item?.options ?? [],
+                    item?.correctAnswer ?? item?.correct_answer,
+                  );
+                  const isWrongQuestion =
+                    Number.isFinite(itemUserAnswer) &&
+                    Number.isFinite(itemCorrectAnswer)
+                      ? itemUserAnswer !== itemCorrectAnswer
+                      : wrongAnswerIds.has(Number(item.id));
 
                   return (
                     <button
@@ -1283,8 +1344,12 @@ export default function QuizLearner() {
                 {/* Answer Options */}
                 <div className="space-y-3">
                   {reviewQuestion.options.map((option, optIdx) => {
-                    const isUserAnswer = userAnswer === option.optionId;
-                    const isCorrectOption = correctAnswer === option.optionId;
+                    const optionId = Number(
+                      option?.optionId ?? option?.option_id ?? option?.id ?? option?.value,
+                    );
+                    const isUserAnswer = Number.isFinite(optionId) && userAnswer === optionId;
+                    const isCorrectOption =
+                      Number.isFinite(optionId) && correctAnswer === optionId;
                     
                     if (optIdx === 0) {
                       console.log(`[Options Render] First option:`, {
@@ -1309,7 +1374,7 @@ export default function QuizLearner() {
                       circleTextColor = "text-emerald-700";
                     }
                     
-                    if (isUserAnswer && isWrong) {
+                    if (isUserAnswer && isWrong && !isCorrectOption) {
                       // Đáp án sai user chọn - tô đậm màu đỏ
                       optionBgColor = "bg-red-100 border-red-500";
                       optionTextColor = "text-red-900";
@@ -1334,7 +1399,7 @@ export default function QuizLearner() {
                               <span className="text-lg">✓</span> Đáp án đúng
                             </p>
                           )}
-                          {isUserAnswer && isWrong && (
+                          {isUserAnswer && isWrong && !isCorrectOption && (
                             <p className="text-xs font-semibold text-red-700 mt-1 flex items-center gap-1">
                               <span className="text-lg">✗</span> Bạn chọn
                             </p>
