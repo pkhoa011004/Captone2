@@ -7,6 +7,7 @@ import { LandingPage } from "./pages/Home_Login/LandingPage";
 import { LogInLearner } from "./pages/Home_Login/LoginNew";
 import RegisterLearner from "./pages/Home_Login/SignupNew";
 import VerifyEmail from "./pages/Home_Login/VerifyEmail";
+import ForgotPassword from "./pages/Home_Login/ForgotPassword";
 import ResendVerification from "./pages/Home_Login/ResendVerification";
 import { AdminDashboardPage } from "./pages/Admin/AdminDashboardPage";
 import { AdminUserManagement } from "./pages/Admin/AdminUserManagement";
@@ -42,6 +43,7 @@ const App = () => {
         <Route path="/signupnew" element={<Navigate to="/signup" replace />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/resend-verification" element={<ResendVerification />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/dashboard" element={<Navigate to="/learner" replace />} />
 
         <Route path="/learner" element={<LearnerLayout />}>
