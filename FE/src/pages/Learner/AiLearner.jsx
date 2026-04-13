@@ -592,36 +592,6 @@ ${correctAnswerLine}
               </CardContent>
             </Card>
 
-            {/* Past Conversations */}
-            <Card className="border-none shadow-sm rounded-2xl">
-              <CardContent className="p-5 space-y-4">
-                <h3 className="text-sm font-bold text-[#141b2b]">
-                  Past Conversations
-                </h3>
-                <div className="flex flex-col gap-3">
-                  {PAST_CONVERSATIONS.map((convo, i) => (
-                    <div
-                      key={i}
-                      className={`p-3 rounded-xl cursor-pointer transition-all ${
-                        convo.active
-                          ? "bg-blue-50 border-l-4 border-blue-600"
-                          : "hover:bg-slate-50"
-                      }`}
-                    >
-                      <p
-                        className={`text-xs font-bold truncate ${convo.active ? "text-[#141b2b]" : "text-slate-600"}`}
-                      >
-                        {convo.title}
-                      </p>
-                      <p className="text-[10px] text-slate-400 font-medium mt-1">
-                        {convo.date}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
           </aside>
 
           {/* Chat Workspace */}

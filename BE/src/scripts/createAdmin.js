@@ -65,7 +65,7 @@ const createAdminAccount = async () => {
     }
 
     const email = 'admin@drivemaster.com'
-    const password = 'admin'
+    const password = 'admin123'
     const passwordHash = await bcrypt.hash(password, 10)
 
     const [existing] = await connection.execute(

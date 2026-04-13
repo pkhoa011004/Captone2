@@ -76,15 +76,15 @@ Keep the response practical, specific, and step-by-step."""
         
         # Use mock response for testing if API key not available
         if self.use_mock:
-            log_info("🎭 Using mock response mode")
+            log_info("Using mock response mode")
             mock_resp = self._get_mock_response(user_message)
-            log_info(f"🎭 Mock response length: {len(mock_resp)}")
+            log_info(f"Mock response length: {len(mock_resp)}")
             return mock_resp
         
         try:
             is_analysis_request = any(marker in user_message for marker in [
-                "📊 THÔNG TIN CHUNG",
-                "❌ CÁC CÂU SAI",
+                "THÔNG TIN CHUNG",
+                "CÁC CÂU SAI",
                 "YÊU CẦU PHÂN TÍCH",
             ])
 
@@ -98,7 +98,7 @@ Keep the response practical, specific, and step-by-step."""
             
             # Add conversation history if provided for regular chat only
             if conversation_history and not is_analysis_request:
-                log_info(f"📚 Adding {len(conversation_history)} messages from conversation history")
+                log_info(f" Adding {len(conversation_history)} messages from conversation history")
                 messages.extend(conversation_history)
             
             # Add current user message without truncation so long quiz analysis prompts keep full context
@@ -110,11 +110,11 @@ Keep the response practical, specific, and step-by-step."""
             # Call Groq API
             groq_client = get_groq_client()
             if not groq_client:
-                log_error("❌ Groq client not initialized, using mock")
+                log_error(" Groq client not initialized, using mock")
                 return self._get_mock_response(user_message)
             
-            log_info(f"🚀 Calling Groq API with model: llama-3.1-8b-instant")
-            log_info(f"📊 Total messages to send: {len(messages)}")
+            log_info(f" Calling Groq API with model: llama-3.1-8b-instant")
+            log_info(f" Total messages to send: {len(messages)}")
             
             response = groq_client.chat.completions.create(
                 model="llama-3.1-8b-instant",
@@ -124,7 +124,7 @@ Keep the response practical, specific, and step-by-step."""
             )
             
             ai_response = response.choices[0].message.content
-            log_info(f"✅ AI response generated successfully ({len(ai_response)} chars)")
+            log_info(f" AI response generated successfully ({len(ai_response)} chars)")
             return ai_response
             
         except Exception as e:
@@ -132,9 +132,9 @@ Keep the response practical, specific, and step-by-step."""
             error_msg = f"❌ Error getting AI response: {str(e)}"
             error_trace = traceback.format_exc()
             log_error(error_msg)
-            log_error(f"📍 Full traceback:\n{error_trace}")
+            log_error(f" Full traceback:\n{error_trace}")
             # Fallback to mock
-            log_info("🔄 Falling back to mock response")
+            log_info(" Falling back to mock response")
             return self._get_mock_response(user_message)
     
     def _get_mock_response(self, user_message: str) -> str:

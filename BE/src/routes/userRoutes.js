@@ -7,6 +7,7 @@ import {
   verifyEmail,
   resendVerificationEmail,
   getProfile,
+  getCurrentUser,
   getAllUsers,
   getAdminUserManagementData,
   getAdminUserDetail,
@@ -35,6 +36,7 @@ router.get('/verify-email', verifyEmail)
 router.post('/resend-verification-email', resendVerificationEmail)
 
 // Protected routes
+router.get('/me', authenticate, getCurrentUser)
 router.get('/profile', authenticate, getProfile)
 router.patch('/profile', authenticate, validateRequest(updateUserSchema), updateUser)
 router.post('/change-password', authenticate, validateRequest(changePasswordSchema), changePassword)

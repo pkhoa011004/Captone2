@@ -48,7 +48,6 @@ apiInstance.interceptors.request.use(
       tokenFromLegacyUserInfo = null;
     }
 
-    const token = tokenFromStorage || tokenFromLegacyUserInfo;
     const token = getStoredToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -73,8 +72,6 @@ apiInstance.interceptors.response.use(
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       localStorage.removeItem("userInfo");
-      localStorage.removeItem("userInfo");
-      localStorage.removeItem("user");
       window.location.href = "/login";
     }
     return Promise.reject(error);
