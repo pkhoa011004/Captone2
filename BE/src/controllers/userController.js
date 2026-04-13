@@ -87,6 +87,79 @@ export const getAllUsers = async (req, res, next) => {
   }
 }
 
+export const getAdminUserManagementData = async (req, res, next) => {
+  try {
+    const { search, status, role, licenseType, license, page, limit } = req.query
+    const data = await UserService.getAdminUserManagementData({
+      search,
+      status,
+      role,
+      licenseType: licenseType || license,
+      page,
+      limit,
+    })
+    successResponse(res, data, 'Admin user management data retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getAdminUserDetail = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const detail = await UserService.getAdminUserDetail(id)
+    successResponse(res, detail, 'Admin user detail retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const updateAdminUserStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { status } = req.validatedData
+    const actorUserId = req.user?.id
+
+    const updated = await UserService.updateAdminUserStatus({
+      id,
+      status,
+      actorUserId,
+    })
+
+    successResponse(res, updated, 'User status updated successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const createAdminUser = async (req, res, next) => {
+  try {
+    const {
+      email,
+      password,
+      name,
+      phone,
+      licenseType,
+      role,
+      status,
+    } = req.validatedData
+
+    const created = await UserService.createAdminUser({
+      email,
+      password,
+      name,
+      phone,
+      licenseType,
+      role,
+      status,
+    })
+
+    successResponse(res, created, 'User created successfully', 201)
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const getUserById = async (req, res, next) => {
   try {
     const { id } = req.params
@@ -139,6 +212,10 @@ export default {
   resendVerificationEmail,
   getProfile,
   getAllUsers,
+  getAdminUserManagementData,
+  getAdminUserDetail,
+  updateAdminUserStatus,
+  createAdminUser,
   getUserById,
   updateUser,
   changePassword,

@@ -11,6 +11,7 @@ import ResendVerification from "./pages/Home_Login/ResendVerification";
 import { AdminDashboardPage } from "./pages/Admin/AdminDashboardPage";
 import { AdminUserManagement } from "./pages/Admin/AdminUserManagement";
 import { AdminExamManagement } from "./pages/Admin/AdminExamManagement";
+import { AdminExamDetails } from "./pages/Admin/AdminExamDetails";
 import { AdminClassrooms } from "./pages/Admin/AdminClassrooms";
 import { AdminAnalytics } from "./pages/Admin/AdminAnalytics";
 import { AdminSettings } from "./pages/Admin/AdminSettings";
@@ -93,6 +94,7 @@ const App = () => {
           <Route index element={<AdminDashboardPage />} />
           <Route path="users" element={<AdminUserManagement />} />
           <Route path="exams" element={<AdminExamManagement />} />
+          <Route path="exams/:examId" element={<AdminExamDetails />} />
           <Route path="classrooms" element={<AdminClassrooms />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="settings" element={<AdminSettings />} />
