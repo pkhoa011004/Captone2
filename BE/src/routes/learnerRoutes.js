@@ -1,6 +1,7 @@
 import express from 'express'
 import { authenticate } from '../middleware/authMiddleware.js'
 import { getLearnerDashboard, updateLearnerDashboard } from '../controllers/learnerController.js'
+import scheduleRoutes from './scheduleRoutes.js'
 
 const router = express.Router()
 
@@ -10,5 +11,6 @@ const router = express.Router()
  */
 router.get('/dashboard', authenticate, getLearnerDashboard)
 router.patch('/dashboard', authenticate, updateLearnerDashboard)
+router.use('/schedule', scheduleRoutes)
 
 export default router

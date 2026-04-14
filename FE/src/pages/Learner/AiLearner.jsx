@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const SUGGESTED_TOPICS = [
@@ -44,12 +43,18 @@ const QUICK_SUGGESTIONS = [
 ];
 
 const TOPIC_PROMPTS = {
-  "Traffic Signs": "Giải thích giúp tôi các nhóm biển báo giao thông quan trọng và mẹo nhớ nhanh.",
-  "Right of Way": "Cho tôi quy tắc nhường đường trong các tình huống thường gặp khi thi bằng lái.",
-  "Speed Limits": "Tóm tắt giới hạn tốc độ thường gặp và các lỗi dễ bị mất điểm liên quan tốc độ.",
-  "Parking Rules": "Hướng dẫn các quy tắc đỗ xe quan trọng và các lỗi đỗ xe hay gặp trong đề thi.",
-  Emergency: "Cho tôi các nguyên tắc xử lý tình huống khẩn cấp khi lái xe máy an toàn.",
-  "Vehicle Maintenance": "Những kiểm tra bảo dưỡng xe cơ bản cần nhớ trước khi tham gia giao thông là gì?",
+  "Traffic Signs":
+    "Giải thích giúp tôi các nhóm biển báo giao thông quan trọng và mẹo nhớ nhanh.",
+  "Right of Way":
+    "Cho tôi quy tắc nhường đường trong các tình huống thường gặp khi thi bằng lái.",
+  "Speed Limits":
+    "Tóm tắt giới hạn tốc độ thường gặp và các lỗi dễ bị mất điểm liên quan tốc độ.",
+  "Parking Rules":
+    "Hướng dẫn các quy tắc đỗ xe quan trọng và các lỗi đỗ xe hay gặp trong đề thi.",
+  Emergency:
+    "Cho tôi các nguyên tắc xử lý tình huống khẩn cấp khi lái xe máy an toàn.",
+  "Vehicle Maintenance":
+    "Những kiểm tra bảo dưỡng xe cơ bản cần nhớ trước khi tham gia giao thông là gì?",
 };
 
 // Category code to readable label mapping
@@ -63,7 +68,7 @@ const CATEGORY_MAP = {
   TRAFFIC_CULTURE: "Văn hóa giao thông",
 };
 
-  // Function to compute weak topics from quiz analysis
+// Function to compute weak topics from quiz analysis
 const computeWeakTopics = (quizAnalysis) => {
   if (!quizAnalysis || !Array.isArray(quizAnalysis.wrongQuestions)) {
     return [];
@@ -155,8 +160,7 @@ export const AiLearner = () => {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content:
-        `Hi ${learnerName}! I'm your AI driving assistant. I can help explain traffic rules, clarify practice test questions, or give you tips for your upcoming exam. What would you like to learn today?`,
+      content: `Hi ${learnerName}! I'm your AI driving assistant. I can help explain traffic rules, clarify practice test questions, or give you tips for your upcoming exam. What would you like to learn today?`,
     },
   ]);
   const [conversationId, setConversationId] = useState(null);
@@ -179,7 +183,10 @@ export const AiLearner = () => {
     console.log("   - ConversationId:", conversationId);
     console.log("   - QuizAnalysis exists:", !!quizAnalysis);
     if (quizAnalysis) {
-      console.log("   - Quiz wrong questions:", quizAnalysis.wrongQuestions?.length || 0);
+      console.log(
+        "   - Quiz wrong questions:",
+        quizAnalysis.wrongQuestions?.length || 0,
+      );
     }
   }, [messages, loading, error, conversationId, quizAnalysis]);
 
@@ -212,14 +219,21 @@ export const AiLearner = () => {
         console.log("   - wrongQuestions type:", typeof data.wrongQuestions);
         console.log("   - wrongQuestions:", data.wrongQuestions);
         if (Array.isArray(data.wrongQuestions)) {
-          console.log(`   ✅ wrongQuestions is array, length: ${data.wrongQuestions.length}`);
+          console.log(
+            `   ✅ wrongQuestions is array, length: ${data.wrongQuestions.length}`,
+          );
           if (data.wrongQuestions.length > 0) {
             console.log("   First question:", data.wrongQuestions[0]);
           }
         } else {
-          console.log(`   ❌ wrongQuestions is NOT an array! Type: ${typeof data.wrongQuestions}`);
+          console.log(
+            `   ❌ wrongQuestions is NOT an array! Type: ${typeof data.wrongQuestions}`,
+          );
         }
-        console.log("   - answersByQuestion keys:", Object.keys(data.answersByQuestion || {}));
+        console.log(
+          "   - answersByQuestion keys:",
+          Object.keys(data.answersByQuestion || {}),
+        );
         console.log("📋 FULL DATA:", JSON.stringify(data, null, 2));
         setQuizAnalysis(data);
         setAutoAnalyzePending(true);
@@ -261,11 +275,11 @@ export const AiLearner = () => {
       console.log("📋 Event prevented");
       e.preventDefault();
     }
-    
+
     const messageToSend = messageText || inputValue;
     console.log("💬 Message to send:", messageToSend);
     console.log("📝 Input value:", inputValue);
-    
+
     if (!messageToSend.trim()) {
       console.log("⚠️ Message is empty, returning");
       return;
@@ -279,9 +293,12 @@ export const AiLearner = () => {
     setError("");
 
     try {
-      console.log("🌐 Fetching from:", `${import.meta.env.VITE_AI_API_URL}/chat/message`);
+      console.log(
+        "🌐 Fetching from:",
+        `${import.meta.env.VITE_AI_API_URL}/chat/message`,
+      );
       console.log("🔄 Conversation ID:", conversationId);
-      
+
       const response = await fetch(
         `${import.meta.env.VITE_AI_API_URL}/chat/message`,
         {
@@ -293,7 +310,7 @@ export const AiLearner = () => {
             message: messageToSend,
             conversation_id: conversationId,
           }),
-        }
+        },
       );
 
       console.log("✅ Response received, status:", response.status);
@@ -345,7 +362,9 @@ export const AiLearner = () => {
     }
 
     if (!quizAnalysis || !autoAnalyzePending) {
-      console.log("⚠️ quizAnalysis is null or auto analyze is disabled, skipping");
+      console.log(
+        "⚠️ quizAnalysis is null or auto analyze is disabled, skipping",
+      );
       return;
     }
 
@@ -382,43 +401,53 @@ export const AiLearner = () => {
       console.log("   Full quizAnalysis data:", quizAnalysis);
       return;
     }
-    
+
     console.log("✅ All checks passed, preparing analysis...");
-    console.log(`   - ${quizAnalysis.wrongQuestions.length} wrong questions found`);
-    console.log("   Questions:", quizAnalysis.wrongQuestions.map(q => ({ 
-      id: q.id, 
-      text: q.question_text?.substring(0, 30),
-      user_answer: q.user_answer,
-      correct_answer: q.correct_answer
-    })));
-    
+    console.log(
+      `   - ${quizAnalysis.wrongQuestions.length} wrong questions found`,
+    );
+    console.log(
+      "   Questions:",
+      quizAnalysis.wrongQuestions.map((q) => ({
+        id: q.id,
+        text: q.question_text?.substring(0, 30),
+        user_answer: q.user_answer,
+        correct_answer: q.correct_answer,
+      })),
+    );
+
     const sendAnalysis = async () => {
       console.log("\n📤 SEND_ANALYSIS function started");
-      
+
       try {
         console.log("🔨 Building userAnswerTexts...");
-        const userAnswerTexts = quizAnalysis.wrongQuestions.map((q, idx) => {
-          console.log(`   Processing question ${idx + 1}:`, q.id);
-          const userAnswerText = q.user_answer_text || "Không chọn";
-          const correctAnswerText = q.correct_answer_text || "Không xác định";
-          const hasKnownCorrectAnswer =
-            correctAnswerText &&
-            correctAnswerText !== "Không xác định" &&
-            correctAnswerText !== "Không rõ";
+        const userAnswerTexts = quizAnalysis.wrongQuestions
+          .map((q, idx) => {
+            console.log(`   Processing question ${idx + 1}:`, q.id);
+            const userAnswerText = q.user_answer_text || "Không chọn";
+            const correctAnswerText = q.correct_answer_text || "Không xác định";
+            const hasKnownCorrectAnswer =
+              correctAnswerText &&
+              correctAnswerText !== "Không xác định" &&
+              correctAnswerText !== "Không rõ";
 
-          const correctAnswerLine = hasKnownCorrectAnswer
-            ? `\n   ✅ **Đáp án đúng:** ${correctAnswerText}`
-            : "";
+            const correctAnswerLine = hasKnownCorrectAnswer
+              ? `\n   ✅ **Đáp án đúng:** ${correctAnswerText}`
+              : "";
 
-          return `${idx + 1}. **Câu ${q.id}** ${q.category ? `[${q.category}]` : ""}
+            return `${idx + 1}. **Câu ${q.id}** ${q.category ? `[${q.category}]` : ""}
    📝 **Đề bài:** ${q.question_text}
    ❌ **Bạn chọn:** ${userAnswerText}
 ${correctAnswerLine}
    📚 **Giải thích:** ${q.explanation || "Không có giải thích"}`;
-        }).join("\n\n");
-        
-        console.log("✅ userAnswerTexts built, length:", userAnswerTexts.length);
-        
+          })
+          .join("\n\n");
+
+        console.log(
+          "✅ userAnswerTexts built, length:",
+          userAnswerTexts.length,
+        );
+
         const analysisPrompt = `Bạn là gia sư luyện thi lái xe. Hãy phân tích BÀI KIỂM TRA dưới đây theo đúng cấu trúc, không trả lời chung chung, không lặp lại đề bài nguyên văn dài dòng, và không bỏ sót câu nào.
 
       YÊU CẦU TRẢ LỜI BẰNG TIẾNG VIỆT, theo 4 phần cố định:
@@ -451,8 +480,7 @@ ${correctAnswerLine}
         // Add user message to chat
         const userMessage = {
           role: "user",
-          content:
-            `Nhờ bạn phân tích bài ${quizAnalysis.examName}: ${quizAnalysis.score} (${quizAnalysis.percentage}%), tổng ${quizAnalysis.wrongQuestions.length} câu sai.`,
+          content: `Nhờ bạn phân tích bài ${quizAnalysis.examName}: ${quizAnalysis.score} (${quizAnalysis.percentage}%), tổng ${quizAnalysis.wrongQuestions.length} câu sai.`,
         };
         console.log("➕ Adding user message to chat");
         setMessages((prev) => {
@@ -461,12 +489,15 @@ ${correctAnswerLine}
           console.log("   New messages count:", newMessages.length);
           return newMessages;
         });
-        
+
         setLoading(true);
         setError("");
 
         console.log("📤 Sending analysis request to AI...");
-        console.log("🔗 API URL:", `${import.meta.env.VITE_AI_API_URL}/chat/message`);
+        console.log(
+          "🔗 API URL:",
+          `${import.meta.env.VITE_AI_API_URL}/chat/message`,
+        );
         console.log("💬 Message length:", analysisPrompt.length);
         console.log("🆔 Conversation ID:", conversationId || "NEW");
 
@@ -481,18 +512,23 @@ ${correctAnswerLine}
               message: analysisPrompt,
               conversation_id: conversationId,
             }),
-          }
+          },
         );
 
         console.log("📥 Response received");
         console.log("   Status:", response.status);
         console.log("   StatusText:", response.statusText);
-        console.log("   Headers Content-Type:", response.headers.get("Content-Type"));
+        console.log(
+          "   Headers Content-Type:",
+          response.headers.get("Content-Type"),
+        );
 
         if (!response.ok) {
           const errorText = await response.text();
           console.error("❌ ERROR Response body:", errorText);
-          throw new Error(`Failed to get AI response: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Failed to get AI response: ${response.status} ${response.statusText}`,
+          );
         }
 
         const data = await response.json();
@@ -500,7 +536,10 @@ ${correctAnswerLine}
         console.log("   Response keys:", Object.keys(data));
         console.log("   conversation_id:", data.conversation_id);
         console.log("   ai_response length:", data.ai_response?.length || 0);
-        console.log("   ai_response preview:", data.ai_response?.substring(0, 100));
+        console.log(
+          "   ai_response preview:",
+          data.ai_response?.substring(0, 100),
+        );
 
         // Set conversation ID from response
         if (!conversationId && data.conversation_id) {
@@ -519,7 +558,7 @@ ${correctAnswerLine}
             return newMessages;
           });
           console.log("✅ AI message added to state");
-          
+
           // Compute weak topics after AI analysis is received
           if (quizAnalysis) {
             console.log("📊 Computing weak topics from quizAnalysis...");
@@ -548,42 +587,43 @@ ${correctAnswerLine}
   }, [quizAnalysis, autoAnalyzePending]);
 
   return (
-    <div className="h-screen overflow-hidden bg-[#f9f9ff] font-sans">
-      <main className="h-full w-full max-w-screen-xl mx-auto p-8 flex flex-col gap-8 overflow-hidden">
+    <div className="min-h-screen bg-[#f9f9ff] font-sans">
+      <main className="w-full max-w-7xl mx-auto px-10 py-10 flex flex-col gap-10">
         {/* 1. Header & Stats */}
         <section className="space-y-6">
           <div>
-            <h1 className="text-3xl font-extrabold text-[#141b2b] tracking-tight font-manrope">
+            <h1 className="text-4xl font-black text-[#141b2b] tracking-tight font-manrope">
               AI Assistant
             </h1>
-            <p className="text-slate-500 font-medium">
+            <p className="text-lg text-slate-500 font-semibold">
               Get instant help with driving questions
             </p>
           </div>
-
         </section>
 
         {/* 2. Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1 min-h-0 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 flex-1 min-h-0">
           {/* Left Sidebar */}
           <aside className="lg:col-span-1 flex flex-col gap-6 min-h-0">
             {/* Suggested Topics */}
-            <Card className="border-none shadow-sm rounded-2xl">
-              <CardContent className="p-5 space-y-4">
-                <h3 className="text-sm font-bold text-[#141b2b]">
+            <Card className="border-none shadow-md rounded-3xl bg-white/95">
+              <CardContent className="p-6 space-y-5">
+                <h3 className="text-base font-black text-[#141b2b] tracking-tight">
                   Suggested Topics
                 </h3>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2">
                   {SUGGESTED_TOPICS.map((topic) => (
                     <button
                       key={topic}
-                      className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 text-slate-600 text-sm font-medium transition-colors group"
-                      onClick={() => handleSendMessage(null, TOPIC_PROMPTS[topic] || topic)}
+                      className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 text-slate-700 text-base font-semibold transition-colors group"
+                      onClick={() =>
+                        handleSendMessage(null, TOPIC_PROMPTS[topic] || topic)
+                      }
                       disabled={loading}
                     >
                       {topic}
                       <ChevronRight
-                        size={14}
+                        size={16}
                         className="text-slate-300 group-hover:text-blue-600"
                       />
                     </button>
@@ -593,27 +633,27 @@ ${correctAnswerLine}
             </Card>
 
             {/* Past Conversations */}
-            <Card className="border-none shadow-sm rounded-2xl">
-              <CardContent className="p-5 space-y-4">
-                <h3 className="text-sm font-bold text-[#141b2b]">
+            <Card className="border-none shadow-md rounded-3xl bg-white/95">
+              <CardContent className="p-6 space-y-5">
+                <h3 className="text-base font-black text-[#141b2b] tracking-tight">
                   Past Conversations
                 </h3>
                 <div className="flex flex-col gap-3">
                   {PAST_CONVERSATIONS.map((convo, i) => (
                     <div
                       key={i}
-                      className={`p-3 rounded-xl cursor-pointer transition-all ${
+                      className={`p-4 rounded-2xl cursor-pointer transition-all ${
                         convo.active
                           ? "bg-blue-50 border-l-4 border-blue-600"
                           : "hover:bg-slate-50"
                       }`}
                     >
                       <p
-                        className={`text-xs font-bold truncate ${convo.active ? "text-[#141b2b]" : "text-slate-600"}`}
+                        className={`text-sm font-bold truncate ${convo.active ? "text-[#141b2b]" : "text-slate-600"}`}
                       >
                         {convo.title}
                       </p>
-                      <p className="text-[10px] text-slate-400 font-medium mt-1">
+                      <p className="text-xs text-slate-400 font-medium mt-1">
                         {convo.date}
                       </p>
                     </div>
@@ -621,76 +661,82 @@ ${correctAnswerLine}
                 </div>
               </CardContent>
             </Card>
-
           </aside>
 
           {/* Chat Workspace */}
-          <section className="lg:col-span-3 flex flex-col bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden min-h-0">
-            <ScrollArea className="flex-1 min-h-0 p-8 overflow-y-auto overscroll-contain">
-              <div className="space-y-8">
+          <section className="lg:col-span-3 flex flex-col bg-white rounded-[36px] border border-slate-100 shadow-md min-h-0">
+            <div className="flex-1 min-h-0 p-10 space-y-10">
+              <div className="space-y-10">
                 {messages.map((msg, i) =>
                   msg.role === "assistant" ? (
-                    <div key={i} className="flex gap-4 max-w-3xl">
-                      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                        <Sparkles size={20} />
+                    <div key={i} className="flex gap-5 max-w-4xl">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
+                        <Sparkles size={22} />
                       </div>
-                      <div className="bg-slate-50 p-5 rounded-2xl rounded-tl-none border border-slate-100 flex-1">
-                        <p className="text-sm text-slate-700 leading-relaxed font-medium whitespace-pre-wrap break-words">
+                      <div className="bg-slate-50 p-6 rounded-3xl rounded-tl-none border border-slate-100 flex-1 shadow-sm">
+                        <p className="text-base text-slate-700 leading-relaxed font-medium whitespace-pre-wrap wrap-break-word">
                           {msg.content}
                         </p>
                       </div>
                     </div>
                   ) : (
-                    <div key={i} className="flex gap-4 max-w-3xl ml-auto flex-row-reverse">
-                      <Avatar className="w-10 h-10 rounded-full bg-emerald-500 text-white shrink-0">
+                    <div
+                      key={i}
+                      className="flex gap-5 max-w-4xl ml-auto flex-row-reverse"
+                    >
+                      <Avatar className="w-12 h-12 rounded-full bg-emerald-500 text-white shrink-0 shadow-sm">
                         <AvatarFallback className="bg-emerald-500 font-bold">
                           T
                         </AvatarFallback>
                       </Avatar>
-                      <div className="bg-blue-600 p-5 rounded-2xl rounded-tr-none shadow-md shadow-blue-100">
-                        <p className="text-sm text-white font-medium whitespace-pre-wrap break-words">
+                      <div className="bg-blue-600 p-6 rounded-3xl rounded-tr-none shadow-md shadow-blue-100 max-w-3xl">
+                        <p className="text-base text-white font-medium whitespace-pre-wrap wrap-break-word">
                           {msg.content}
                         </p>
                       </div>
                     </div>
-                  )
+                  ),
                 )}
-                
+
                 {loading && (
-                  <div className="flex gap-4 max-w-3xl">
-                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                      <Loader size={20} className="animate-spin" />
+                  <div className="flex gap-5 max-w-4xl">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
+                      <Loader size={22} className="animate-spin" />
                     </div>
-                    <div className="bg-slate-50 p-5 rounded-2xl rounded-tl-none border border-slate-100">
-                      <p className="text-sm text-slate-500">AI đang phân tích...</p>
+                    <div className="bg-slate-50 p-6 rounded-3xl rounded-tl-none border border-slate-100 shadow-sm">
+                      <p className="text-base text-slate-500 font-medium">
+                        AI đang phân tích...
+                      </p>
                     </div>
                   </div>
                 )}
 
                 {/* Practice by Chapter Section */}
                 {weakTopics.length > 0 && !loading && (
-                  <div className="mt-12 space-y-4 max-w-3xl">
-                    <div className="flex items-center gap-2 mb-6">
-                      <BarChart2 size={20} className="text-slate-700" />
-                      <h3 className="text-lg font-bold text-[#141b2b]">
+                  <div className="mt-14 space-y-5 max-w-4xl">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                        <BarChart2 size={20} />
+                      </div>
+                      <h3 className="text-xl font-black text-[#141b2b] tracking-tight">
                         Ôn tập theo chương
                       </h3>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {weakTopics.map((topic, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg hover:shadow-sm transition-all"
+                          className="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-2xl hover:shadow-md transition-all"
                         >
                           <div className="flex-1">
-                            <h4 className="font-semibold text-slate-900">
+                            <h4 className="font-bold text-slate-900 text-base">
                               {idx + 1}. {topic.display}
                             </h4>
                           </div>
                           <Button
                             onClick={() => handlePracticeByChapter(topic)}
-                            className="ml-4 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg whitespace-nowrap transition-all"
+                            className="ml-4 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-xl whitespace-nowrap transition-all"
                           >
                             Luyện Tập
                           </Button>
@@ -705,12 +751,12 @@ ${correctAnswerLine}
 
               {/* Quick Suggestions Bubbles */}
               {messages.length <= 1 && (
-                <div className="flex flex-wrap justify-center gap-2 mt-12 mb-4">
+                <div className="flex flex-wrap justify-center gap-3 mt-12 mb-4">
                   {QUICK_SUGGESTIONS.map((s) => (
                     <Button
                       key={s}
                       variant="secondary"
-                      className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold text-[11px] h-9 px-4"
+                      className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm h-11 px-5 shadow-sm"
                       onClick={() => {
                         console.log("✅ Quick suggestion clicked:", s);
                         handleSendMessage(null, s);
@@ -721,13 +767,13 @@ ${correctAnswerLine}
                   ))}
                 </div>
               )}
-            </ScrollArea>
+            </div>
 
             {/* Input Bar */}
-            <div className="p-6 bg-slate-50/50 border-t border-slate-100">
-              <div className="max-w-4xl mx-auto space-y-4">
+            <div className="p-8 bg-slate-50/70 border-t border-slate-100">
+              <div className="max-w-5xl mx-auto space-y-5">
                 {error && (
-                  <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                  <div className="p-4 bg-red-100 text-red-700 rounded-2xl text-sm font-medium">
                     {error}
                   </div>
                 )}
@@ -736,7 +782,7 @@ ${correctAnswerLine}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder="Ask a question about driving rules..."
-                    className="w-full h-16 pl-6 pr-24 rounded-2xl border-slate-200 shadow-sm focus-visible:ring-blue-400 font-medium placeholder:text-slate-400"
+                    className="w-full h-18 pl-6 pr-28 rounded-3xl border-slate-200 shadow-md focus-visible:ring-blue-400 font-medium placeholder:text-slate-400 text-base bg-white"
                     disabled={loading}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -744,14 +790,14 @@ ${correctAnswerLine}
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="text-slate-400 hover:text-blue-600 rounded-xl"
+                      className="text-slate-400 hover:text-blue-600 rounded-2xl w-12 h-12"
                     >
                       <Mic size={20} />
                     </Button>
                     <Button
                       type="submit"
                       size="icon"
-                      className="bg-blue-600 hover:bg-blue-700 rounded-xl w-10 h-10 shadow-lg shadow-blue-200 disabled:opacity-50"
+                      className="bg-blue-600 hover:bg-blue-700 rounded-2xl w-12 h-12 shadow-lg shadow-blue-200 disabled:opacity-50"
                       disabled={loading || !inputValue.trim()}
                     >
                       {loading ? (
@@ -764,10 +810,10 @@ ${correctAnswerLine}
                 </form>
 
                 <div className="flex justify-center gap-6">
-                  <button className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
+                  <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
                     <BarChart2 size={12} /> Progress
                   </button>
-                  <button className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
+                  <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
                     <MapIcon size={12} /> Map
                   </button>
                 </div>

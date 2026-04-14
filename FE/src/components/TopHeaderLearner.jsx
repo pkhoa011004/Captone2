@@ -126,7 +126,7 @@ export const TopHeaderLearner = () => {
             size="icon"
             className="relative h-11 w-11 rounded-full text-slate-500 hover:bg-slate-100"
           >
-            <Bell className="w-5 h-5" />
+            <Bell className="w-6 h-6" />
             <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
           </Button>
 

@@ -1,5 +1,6 @@
 import { pool } from './database.js'
 import { logger } from '../utils/logger.js'
+import { LearnerScheduleModel } from '../models/LearnerScheduleModel.js'
 
 export async function ensureUsersEmailVerificationSchema() {
   let connection
@@ -88,6 +89,24 @@ export async function ensureUsersEmailVerificationSchema() {
     return true
   } catch (error) {
     logger.error(`❌ Auto-migration failed: ${error.message}`)
+    return false
+  } finally {
+    if (connection) {
+      connection.release()
+    }
+  }
+}
+
+export async function ensureLearnerScheduleSchema() {
+  let connection
+
+  try {
+    connection = await pool.getConnection()
+    await LearnerScheduleModel.ensureTable(connection)
+    logger.info('✅ Auto-migration completed: learner schedule schema is up to date')
+    return true
+  } catch (error) {
+    logger.error(`❌ Learner schedule auto-migration failed: ${error.message}`)
     return false
   } finally {
     if (connection) {
