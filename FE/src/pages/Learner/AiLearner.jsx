@@ -174,7 +174,6 @@ export const AiLearner = () => {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: t("aiPage.greeting", { learnerName }),
       content: `Hi ${learnerName}! I'm your AI driving assistant. I can help explain traffic rules, clarify practice test questions, or give you tips for your upcoming exam. What would you like to learn today?`,
     },
   ]);
@@ -612,13 +611,6 @@ ${correctAnswerLine}
             </h1>
             <p className="text-lg text-slate-500 font-semibold">
               {t("aiPage.subtitle")}
-            </h1>
-            <p className="text-lg text-slate-500 font-semibold">
-              {t("aiPage.subtitle")}
-              AI Assistant
-            </h1>
-            <p className="text-lg text-slate-500 font-semibold">
-              Get instant help with driving questions
             </p>
           </div>
         </section>
@@ -632,7 +624,6 @@ ${correctAnswerLine}
               <CardContent className="p-6 space-y-5">
                 <h3 className="text-base font-black text-[#141b2b] tracking-tight">
                   {t("aiPage.suggestedTopics")}
-                  Suggested Topics
                 </h3>
                 <div className="flex flex-col gap-2">
                   {SUGGESTED_TOPICS.map((topic) => (
@@ -644,10 +635,6 @@ ${correctAnswerLine}
                           null,
                           TOPIC_PROMPTS[topic.id] || t(topic.labelKey),
                         )
-                      key={topic}
-                      className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 text-slate-700 text-base font-semibold transition-colors group"
-                      onClick={() =>
-                        handleSendMessage(null, TOPIC_PROMPTS[topic] || topic)
                       }
                       disabled={loading}
                     >
@@ -657,41 +644,6 @@ ${correctAnswerLine}
                         className="text-slate-300 group-hover:text-blue-600"
                       />
                     </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Past Conversations */}
-            <Card className="border-none shadow-md rounded-3xl bg-white/95">
-              <CardContent className="p-6 space-y-5">
-                <h3 className="text-base font-black text-[#141b2b] tracking-tight">
-                  {t("aiPage.pastConversations")}
-                  Past Conversations
-                </h3>
-                <div className="flex flex-col gap-3">
-                  {PAST_CONVERSATIONS.map((convo, i) => (
-                    <div
-                      key={i}
-                      className={`p-4 rounded-2xl cursor-pointer transition-all ${
-                        convo.active
-                          ? "bg-blue-50 border-l-4 border-blue-600"
-                          : "hover:bg-slate-50"
-                      }`}
-                    >
-                      <p
-                        className={`text-sm font-bold truncate ${convo.active ? "text-[#141b2b]" : "text-slate-600"}`}
-                      >
-                        {t(convo.titleKey)}
-                      </p>
-                      <p className="text-xs text-slate-400 font-medium mt-1">
-                        {t(convo.dateKey)}
-                        {convo.title}
-                      </p>
-                      <p className="text-xs text-slate-400 font-medium mt-1">
-                        {convo.date}
-                      </p>
-                    </div>
                   ))}
                 </div>
               </CardContent>
@@ -820,8 +772,6 @@ ${correctAnswerLine}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder={t("aiPage.inputPlaceholder")}
                     className="w-full h-16 pl-6 pr-28 rounded-3xl border-slate-200 shadow-md focus-visible:ring-blue-400 font-medium placeholder:text-slate-400 text-base bg-white"
-                    placeholder="Ask a question about driving rules..."
-                    className="w-full h-18 pl-6 pr-28 rounded-3xl border-slate-200 shadow-md focus-visible:ring-blue-400 font-medium placeholder:text-slate-400 text-base bg-white"
                     disabled={loading}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -854,13 +804,6 @@ ${correctAnswerLine}
                   </button>
                   <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
                     <MapIcon size={12} /> {t("aiPage.map")}
-                  </button>
-                  <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
-                    <MapIcon size={12} /> {t("aiPage.map")}
-                    <BarChart2 size={12} /> Progress
-                  </button>
-                  <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
-                    <MapIcon size={12} /> Map
                   </button>
                 </div>
               </div>

@@ -843,8 +843,6 @@ export const ScheduleLearner = () => {
                 {saving
                   ? t("schedulePage.savingSchedule")
                   : t("schedulePage.loadingSchedule")}
-                  ? "Saving schedule changes..."
-                  : "Loading schedule data..."}
               </p>
             </div>
           )}
@@ -996,24 +994,6 @@ export const ScheduleLearner = () => {
                 </h2>
                 <p className="text-blue-100 text-base leading-relaxed max-w-sm">
                   {localizedMilestoneDescription}
-                </Badge>
-                <h2 className="text-3xl font-black text-white font-manrope">
-                  {localizedExamName}
-                </h2>
-                <p className="text-blue-100 text-base leading-relaxed max-w-sm">
-                  {localizedMilestoneDescription}
-                  {overview.milestoneTitle || "FINAL MILESTONE"}
-                </Badge>
-                <h2 className="text-3xl font-black text-white font-manrope">
-                  {overview.examName || "License Exam"}
-                </h2>
-                <p className="text-blue-100 text-base leading-relaxed max-w-sm">
-                  {overview.milestoneDescription ||
-                    "Keep up your current practice pace."}
-                  <br />
-                  {overview.examLocation
-                    ? `Location: ${overview.examLocation}`
-                    : null}
                 </p>
               </div>
               <div className="flex flex-col items-center justify-center h-32 w-32 md:h-36 md:w-36 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl">
@@ -1070,32 +1050,6 @@ export const ScheduleLearner = () => {
                   (session.instructorId
                     ? `Instructor #${session.instructorId}`
                     : t("schedulePage.instructorTbd"));
-                const locationLabel = session.location || "TBD";
-                const locationType =
-                  session.locationType || session.location_type || "physical";
-
-                    You have no sessions yet. Click <b>Book Session</b> to
-                    create your first one.
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              {sessions.map((session, idx) => {
-                const sessionType =
-                  session.sessionType || session.type || "SESSION";
-                const badgeStyles =
-                  session.badgeStyles || getSessionBadgeStyles(sessionType);
-                const sessionIcon = session.icon || getSessionIcon(session);
-                const dateLabel = formatDateLabel(
-                  session.date || session.sessionDate || session.session_date,
-                );
-                const timeLabel = `${formatTimeLabel(session.startTime || session.start_time)} - ${formatTimeLabel(session.endTime || session.end_time)}`;
-                const instructorLabel =
-                  session.instructor ||
-                  (session.instructorId
-                    ? `Instructor #${session.instructorId}`
-                    : t("schedulePage.instructorTbd"));
-                    : "Instructor TBD");
                 const locationLabel = session.location || "TBD";
                 const locationType =
                   session.locationType || session.location_type || "physical";
@@ -1212,10 +1166,6 @@ export const ScheduleLearner = () => {
                 </p>
                 <h4 className="text-2xl font-black text-[#141b2b] leading-tight">
                   {selectedSessionDetail.title || t("schedulePage.session")}
-                  Session Details
-                </p>
-                <h4 className="text-2xl font-black text-[#141b2b] leading-tight">
-                  {selectedSessionDetail.title || "Session"}
                 </h4>
               </div>
               <Button
@@ -1273,7 +1223,6 @@ export const ScheduleLearner = () => {
                           (selectedSessionDetail.instructorId
                             ? `Instructor #${selectedSessionDetail.instructorId}`
                             : t("schedulePage.instructorTbd"))}
-                            : "Instructor TBD")}
                       </td>
                     </tr>
                     <tr

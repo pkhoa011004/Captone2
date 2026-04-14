@@ -209,11 +209,6 @@ export const DashboardLearner = () => {
         if (mounted) {
           setDashboardData(dashboardResponse || DASHBOARD_FALLBACK);
           setNextScheduleSession(nextSession);
-        console.log("🔄 Fetching learner dashboard...");
-        const data = await learnerDashboardApi.getLearnerDashboard();
-        console.log("✅ Dashboard data:", data);
-        if (mounted && data) {
-          setDashboardData(data);
         }
       } catch (error) {
         console.error("Error fetching dashboard:", error);
@@ -651,12 +646,6 @@ export const DashboardLearner = () => {
             >
               {t(link.i18nKey)}
             </button>
-              {link === "SAFETY PROTOCOLS"
-                ? t("dashboardPage.footerSafetyProtocols")
-                : link === "PRIVACY POLICY"
-                  ? t("dashboardPage.footerPrivacyPolicy")
-                  : t("dashboardPage.footerSupport")}
-            </a>
           ))}
         </nav>
       </footer>
