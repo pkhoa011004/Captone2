@@ -996,6 +996,12 @@ export const ScheduleLearner = () => {
                 </h2>
                 <p className="text-blue-100 text-base leading-relaxed max-w-sm">
                   {localizedMilestoneDescription}
+                </Badge>
+                <h2 className="text-3xl font-black text-white font-manrope">
+                  {localizedExamName}
+                </h2>
+                <p className="text-blue-100 text-base leading-relaxed max-w-sm">
+                  {localizedMilestoneDescription}
                   {overview.milestoneTitle || "FINAL MILESTONE"}
                 </Badge>
                 <h2 className="text-3xl font-black text-white font-manrope">
@@ -1088,6 +1094,7 @@ export const ScheduleLearner = () => {
                   session.instructor ||
                   (session.instructorId
                     ? `Instructor #${session.instructorId}`
+                    : t("schedulePage.instructorTbd"));
                     : "Instructor TBD");
                 const locationLabel = session.location || "TBD";
                 const locationType =

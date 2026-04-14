@@ -9,9 +9,7 @@
     "dev": "nodemon src/index.js",
     "test": "jest --coverage",
     "lint": "eslint src/",
-    "seed:questions": "node src/scripts/importQuestions.js",
-    "seed:users": "node src/scripts/seedUsersForPagination.js",
-    "seed:exams": "node src/scripts/seedExamsForManagement.js"
+    "seed:questions": "node src/scripts/importQuestions.js"
   },
   "keywords": [
     "nodejs",

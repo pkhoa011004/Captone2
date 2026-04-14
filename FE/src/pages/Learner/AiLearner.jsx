@@ -612,6 +612,9 @@ ${correctAnswerLine}
             </h1>
             <p className="text-lg text-slate-500 font-semibold">
               {t("aiPage.subtitle")}
+            </h1>
+            <p className="text-lg text-slate-500 font-semibold">
+              {t("aiPage.subtitle")}
               AI Assistant
             </h1>
             <p className="text-lg text-slate-500 font-semibold">
@@ -847,6 +850,9 @@ ${correctAnswerLine}
                 <div className="flex justify-center gap-6">
                   <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
                     <BarChart2 size={12} /> {t("aiPage.progress")}
+                  </button>
+                  <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
+                    <MapIcon size={12} /> {t("aiPage.map")}
                   </button>
                   <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
                     <MapIcon size={12} /> {t("aiPage.map")}

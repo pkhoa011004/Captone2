@@ -32,6 +32,9 @@ import { InstructorClassroomDetailsPage } from "./pages/Instructor/InstructorCla
 import { InstructorProfilePage } from "./pages/Instructor/InstructorProfilePage";
 import QuizLearner from "./pages/Learner/QuizLearner";
 import CreateExamLearner from "./pages/Learner/CreateExamLearner";
+import SafetyProtocols from "./pages/Learner/SafetyProtocols";
+import PrivacyPolicy from "./pages/Learner/PrivacyPolicy";
+import Support from "./pages/Learner/Support";
 
 const App = () => {
   return (
@@ -45,6 +48,9 @@ const App = () => {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/resend-verification" element={<ResendVerification />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/safety-protocols" element={<SafetyProtocols />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/support" element={<Support />} />
         <Route path="/dashboard" element={<Navigate to="/learner" replace />} />
 
         <Route path="/learner" element={<LearnerLayout />}>
@@ -56,6 +62,9 @@ const App = () => {
           <Route path="profile" element={<AccountSettings />} />
           <Route path="account-settings" element={<AccountSettings />} />
           <Route path="quiz" element={<QuizLearner />} />
+          <Route path="safety-protocols" element={<SafetyProtocols />} />
+          <Route path="privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="support" element={<Support />} />
         </Route>
 
         <Route

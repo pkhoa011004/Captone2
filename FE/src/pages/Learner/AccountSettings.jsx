@@ -66,6 +66,39 @@ const DEFAULT_STUDY_PREFERENCES = {
   language: "en",
 };
 
+const getAvatarStorageKeys = (userLike) => {
+  const email = String(userLike?.email || "")
+    .trim()
+    .toLowerCase();
+  const id = String(userLike?.id ?? userLike?.user_id ?? "")
+    .trim()
+    .toLowerCase();
+
+  const keys = [];
+  if (email) keys.push(`${AVATAR_STORAGE_KEY}:email:${email}`);
+  if (id) {
+    keys.push(`${AVATAR_STORAGE_KEY}:id:${id}`);
+    // backward compatibility with old format
+    keys.push(`${AVATAR_STORAGE_KEY}:${id}`);
+  }
+  return keys;
+};
+
+const readAvatarFromStorage = (userLike) => {
+  const keys = getAvatarStorageKeys(userLike);
+  for (const key of keys) {
+    const value = localStorage.getItem(key);
+    if (value) return value;
+  }
+  return "";
+};
+
+const writeAvatarToStorage = (userLike, avatar) => {
+  if (!avatar) return;
+  const keys = getAvatarStorageKeys(userLike);
+  keys.forEach((key) => localStorage.setItem(key, avatar));
+};
+
 export const AccountSettings = () => {
   const { t, i18n } = useTranslation();
 
@@ -94,11 +127,11 @@ export const AccountSettings = () => {
 
   const initialLocalProfile = normalizeProfile(
     parseJsonSafe(localStorage.getItem("user")) ||
-      parseJsonSafe(localStorage.getItem("userInfo")),
+      parseJsonSafe(localStorage.getItem("userInfo"))?.user,
   );
 
   const cachedAvatar =
-    localStorage.getItem(AVATAR_STORAGE_KEY) ||
+    readAvatarFromStorage(initialLocalProfile) ||
     initialLocalProfile?.avatar ||
     "";
 
@@ -133,6 +166,7 @@ export const AccountSettings = () => {
     message: "",
   });
   const [avatarError, setAvatarError] = useState("");
+  const [avatarStatus, setAvatarStatus] = useState({ type: "", message: "" });
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const apiBaseUrl =
@@ -141,9 +175,9 @@ export const AccountSettings = () => {
   const syncLocalUser = useCallback((nextPartialUser) => {
     const existingUser = parseJsonSafe(localStorage.getItem("user")) || {};
     const existingAvatar =
+      readAvatarFromStorage(existingUser) ||
       existingUser?.avatar ||
       existingUser?.profileImage ||
-      localStorage.getItem(AVATAR_STORAGE_KEY) ||
       "";
     const incomingAvatar =
       nextPartialUser?.avatar || nextPartialUser?.profileImage || "";
@@ -158,7 +192,7 @@ export const AccountSettings = () => {
 
     localStorage.setItem("user", JSON.stringify(nextUser));
     if (resolvedAvatar) {
-      localStorage.setItem(AVATAR_STORAGE_KEY, resolvedAvatar);
+      writeAvatarToStorage(nextUser, resolvedAvatar);
     }
     window.dispatchEvent(new Event("user-updated"));
   }, []);
@@ -181,6 +215,7 @@ export const AccountSettings = () => {
       }
 
       setAvatarError("");
+      setAvatarStatus({ type: "", message: "" });
       setIsUploadingAvatar(true);
 
       const reader = new FileReader();
@@ -269,9 +304,9 @@ export const AccountSettings = () => {
         const userDataRaw = payload?.data?.user || payload?.data || payload;
         const userData = normalizeProfile(userDataRaw);
         const preservedAvatar =
-          userData?.avatar ||
-          localStorage.getItem(AVATAR_STORAGE_KEY) ||
+          readAvatarFromStorage(userData || initialLocalProfile) ||
           initialLocalProfile?.avatar ||
+          userData?.avatar ||
           "";
         const mergedUserData = {
           ...(userData || {}),
@@ -417,6 +452,26 @@ export const AccountSettings = () => {
     });
   };
 
+  const handleSaveAvatar = () => {
+    if (!learnerAvatar) {
+      setAvatarStatus({
+        type: "error",
+        message: t("accountSettings.avatarMissing"),
+      });
+      return;
+    }
+
+    syncLocalUser({
+      avatar: learnerAvatar,
+      profileImage: learnerAvatar,
+    });
+
+    setAvatarStatus({
+      type: "success",
+      message: t("accountSettings.avatarSaved"),
+    });
+  };
+
   const learnerName = personalForm.name || profile?.name || "User";
   const learnerEmail = personalForm.email || profile?.email || "";
   const learnerPhone = personalForm.phone || profile?.phone || "";
@@ -430,7 +485,7 @@ export const AccountSettings = () => {
         <aside className="col-span-12 lg:col-span-3 space-y-6">
           <Card className="border-none shadow-sm overflow-hidden text-center">
             <CardContent className="pt-8 pb-6 space-y-4">
-              <div className="relative inline-block">
+              <div className="relative mx-auto w-fit">
                 <input {...getInputProps()} />
                 <button
                   type="button"
@@ -464,6 +519,26 @@ export const AccountSettings = () => {
                   {avatarError}
                 </p>
               ) : null}
+              {avatarStatus.message ? (
+                <p
+                  className={`text-xs font-medium ${
+                    avatarStatus.type === "success"
+                      ? "text-emerald-600"
+                      : "text-red-500"
+                  }`}
+                >
+                  {avatarStatus.message}
+                </p>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSaveAvatar}
+                disabled={isUploadingAvatar}
+                className="block mx-auto mt-1 h-10 min-w-40 rounded-xl bg-[#e1e8fd] border-none px-5 text-blue-600 font-bold hover:bg-blue-100"
+              >
+                {t("accountSettings.saveAvatar")}
+              </Button>
 
               <div>
                 <h3 className="text-xl font-bold text-[#141b2b]">
