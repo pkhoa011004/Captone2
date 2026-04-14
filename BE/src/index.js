@@ -12,7 +12,7 @@ import questionRoutes from './routes/questionRoutes.js'
 import examRoutes from './routes/examRoutes.js'
 import learnerRoutes from './routes/learnerRoutes.js'
 import { testConnection } from './config/database.js'
-import { ensureUsersEmailVerificationSchema } from './config/migrations.js'
+import { ensureUsersEmailVerificationSchema, ensureLearnerScheduleSchema } from './config/migrations.js'
 import emailService from './services/EmailService.js'
 
 // Load environment variables
@@ -98,6 +98,7 @@ const server = app.listen(PORT, async () => {
 
   if (dbConnected) {
     await ensureUsersEmailVerificationSchema()
+    await ensureLearnerScheduleSchema()
   }
   
   // Initialize email service
