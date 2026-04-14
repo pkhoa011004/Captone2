@@ -193,8 +193,14 @@ export const DashboardLearner = () => {
         if (mounted) {
           setDashboardData(dashboardResponse || DASHBOARD_FALLBACK);
           setNextScheduleSession(nextSession);
+        console.log("🔄 Fetching learner dashboard...");
+        const data = await learnerDashboardApi.getLearnerDashboard();
+        console.log("✅ Dashboard data:", data);
+        if (mounted && data) {
+          setDashboardData(data);
         }
       } catch (error) {
+        console.error("❌ Error fetching dashboard:", error);
         if (mounted) {
           setDashboardData(DASHBOARD_FALLBACK);
           setNextScheduleSession(null);

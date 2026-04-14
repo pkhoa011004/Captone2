@@ -8,8 +8,9 @@ import {
   HeadphonesIcon,
   MonitorIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { learnerDashboardApi } from "../../services/api/learnerDashboard";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import { Separator } from "../../components/ui/separator";
@@ -120,7 +121,32 @@ const footerSupport = [
 
 export const LandingPage = () => {
   const [activeNav, setActiveNav] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsLoggedIn(true);
+      fetchDashboardData();
+    }
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      console.log("🔄 Fetching learner dashboard...");
+      const data = await learnerDashboardApi.getLearnerDashboard();
+      console.log("✅ Dashboard data:", data);
+      setDashboardData(data);
+    } catch (error) {
+      console.error("❌ Error fetching dashboard:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="w-full flex flex-col min-h-screen bg-white font-sans">
@@ -162,6 +188,17 @@ export const LandingPage = () => {
           </button>
         </div>
       </header>
+
+      {/* Banner Image Section */}
+      <section className="w-full py-4 flex justify-center">
+        <div className="w-full px-8 max-w-6xl">
+          <img
+            src="https://cdn2.fptshop.com.vn/unsafe/800x0/Poster_ATGT_7_1572f845a0.jpg"
+            alt="Banner"
+            className="w-full h-89 object-cover rounded-lg shadow-md"
+          />
+        </div>
+      </section>
 
       {/* Hero Section */}
       <section className="w-full px-8 py-16 flex flex-col md:flex-row items-center gap-10 max-w-6xl mx-auto">
