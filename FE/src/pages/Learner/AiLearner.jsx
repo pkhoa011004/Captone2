@@ -602,7 +602,7 @@ ${correctAnswerLine}
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] font-sans">
-      <main className="w-full max-w-7xl mx-auto px-10 py-10 flex flex-col gap-10">
+      <main className="w-full max-w-7xl mx-auto px-10 py-10 flex flex-col gap-10 h-full">
         {/* 1. Header & Stats */}
         <section className="space-y-6">
           <div>
@@ -616,7 +616,7 @@ ${correctAnswerLine}
         </section>
 
         {/* 2. Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1 min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1 min-h-0 h-[calc(100vh-250px)]">
           {/* Left Sidebar */}
           <aside className="lg:col-span-1 flex flex-col gap-6 min-h-0">
             {/* Suggested Topics */}
@@ -651,12 +651,33 @@ ${correctAnswerLine}
           </aside>
 
           {/* Chat Workspace */}
-          <section className="lg:col-span-3 flex flex-col bg-white rounded-[32px] border border-slate-100 shadow-md">
-            <div className="p-8 space-y-8">
-              <div className="space-y-8">
+          <section className="lg:col-span-3 flex flex-col bg-white rounded-[32px] border border-slate-100 shadow-md h-full min-h-0 overflow-hidden">
+            <div className="p-8 flex-1 min-h-0 flex flex-col overflow-hidden">
+              <div
+                className="space-y-8 mt-2 flex-1 min-h-0 overflow-y-auto pr-2 chat-messages-scroll"
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#bfdbfe transparent'
+                }}
+              >
+                <style>{`
+                  div[style*="scrollbarWidth"]::-webkit-scrollbar {
+                    width: 8px;
+                  }
+                  div[style*="scrollbarWidth"]::-webkit-scrollbar-track {
+                    background: transparent;
+                  }
+                  div[style*="scrollbarWidth"]::-webkit-scrollbar-thumb {
+                    background: #bfdbfe;
+                    border-radius: 4px;
+                  }
+                  div[style*="scrollbarWidth"]::-webkit-scrollbar-thumb:hover {
+                    background: #93c5fd;
+                  }
+                `}</style>
                 {messages.map((msg, i) =>
                   msg.role === "assistant" ? (
-                    <div key={i} className="flex gap-5 max-w-4xl">
+                    <div key={i} className="flex gap-5 max-w-10xl">
                       <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
                         <Sparkles size={22} />
                       </div>
@@ -737,30 +758,29 @@ ${correctAnswerLine}
 
                 <div ref={chatEndRef} />
               </div>
-
-              {/* Quick Suggestions Bubbles */}
-              {messages.length <= 1 && (
-                <div className="flex flex-wrap justify-center gap-3 mt-10 mb-2">
-                  {QUICK_SUGGESTIONS.map((s) => (
-                    <Button
-                      key={s.id}
-                      variant="secondary"
-                      className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm h-11 px-5 shadow-sm"
-                      onClick={() => {
-                        console.log("✅ Quick suggestion clicked:", s.id);
-                        handleSendMessage(null, t(s.labelKey));
-                      }}
-                    >
-                      {t(s.labelKey)}
-                    </Button>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Input Bar */}
             <div className="p-6 bg-slate-50/70 border-t border-slate-100">
               <div className="max-w-5xl mx-auto space-y-4">
+                {/* Quick Suggestions Bubbles */}
+                {messages.length <= 1 && (
+                  <div className="flex flex-wrap justify-center gap-3 mb-4">
+                    {QUICK_SUGGESTIONS.map((s) => (
+                      <Button
+                        key={s.id}
+                        variant="secondary"
+                        className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm h-11 px-5 shadow-sm"
+                        onClick={() => {
+                          console.log("✅ Quick suggestion clicked:", s.id);
+                          handleSendMessage(null, t(s.labelKey));
+                        }}
+                      >
+                        {t(s.labelKey)}
+                      </Button>
+                    ))}
+                  </div>
+                )}
                 {error && (
                   <div className="p-4 bg-red-100 text-red-700 rounded-2xl text-sm font-medium">
                     {error}
