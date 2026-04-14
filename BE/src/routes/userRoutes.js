@@ -7,7 +7,12 @@ import {
   verifyEmail,
   resendVerificationEmail,
   getProfile,
+  getCurrentUser,
   getAllUsers,
+  getAdminUserManagementData,
+  getAdminUserDetail,
+  updateAdminUserStatus,
+  createAdminUser,
   getUserById,
   updateUser,
   changePassword,
@@ -18,6 +23,8 @@ import {
   loginSchema,
   updateUserSchema,
   changePasswordSchema,
+  updateManagementStatusSchema,
+  adminCreateUserSchema,
 } from '../validators/userValidator.js'
 
 const router = express.Router()
@@ -29,12 +36,29 @@ router.get('/verify-email', verifyEmail)
 router.post('/resend-verification-email', resendVerificationEmail)
 
 // Protected routes
+router.get('/me', authenticate, getCurrentUser)
 router.get('/profile', authenticate, getProfile)
 router.patch('/profile', authenticate, validateRequest(updateUserSchema), updateUser)
 router.post('/change-password', authenticate, validateRequest(changePasswordSchema), changePassword)
 
 // Admin routes
 router.get('/', authenticate, authorize('admin'), getAllUsers)
+router.post(
+  '/admin',
+  authenticate,
+  authorize('admin'),
+  validateRequest(adminCreateUserSchema),
+  createAdminUser
+)
+router.get('/admin/user-management', authenticate, authorize('admin'), getAdminUserManagementData)
+router.get('/admin/:id/detail', authenticate, authorize('admin'), getAdminUserDetail)
+router.patch(
+  '/admin/:id/status',
+  authenticate,
+  authorize('admin'),
+  validateRequest(updateManagementStatusSchema),
+  updateAdminUserStatus
+)
 router.get('/:id', authenticate, getUserById)
 router.delete('/:id', authenticate, authorize('admin'), deleteUser)
 

@@ -35,6 +35,8 @@ const navItems = [
   },
 ];
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+
 export const TopHeaderLearner = () => {
   const { t } = useTranslation();
   const cachedAvatarKey = "learnerAvatar";
@@ -44,24 +46,51 @@ export const TopHeaderLearner = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileMenuRef = useRef(null);
 
+  // 1. Hàm đồng bộ user từ LocalStorage
   const syncUserFromLocalStorage = useCallback(() => {
     try {
       const userData = JSON.parse(localStorage.getItem("user") || "null");
       setUser(userData);
-    } catch {
+    } catch (error) {
+      console.error("Error parsing user data:", error);
       setUser(null);
     }
   }, []);
 
-  const avatarSrc =
-    user?.avatar ||
-    user?.profileImage ||
-    localStorage.getItem(cachedAvatarKey) ||
-    "/user-profile.png";
+  // 2. Fetch profile từ API khi component mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/me`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.data);
+          localStorage.setItem("user", JSON.stringify(data.data));
+        } else {
+          syncUserFromLocalStorage();
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        syncUserFromLocalStorage();
+      }
+    };
+
+    fetchUserProfile();
+  }, [syncUserFromLocalStorage]);
+
+  // 3. Lắng nghe thay đổi storage
   useEffect(() => {
     syncUserFromLocalStorage();
-
     window.addEventListener("user-updated", syncUserFromLocalStorage);
     window.addEventListener("storage", syncUserFromLocalStorage);
 
@@ -71,55 +100,45 @@ export const TopHeaderLearner = () => {
     };
   }, [syncUserFromLocalStorage]);
 
+  // 4. Click outside để đóng menu
   useEffect(() => {
     const handleOutsideClick = (event) => {
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(event.target)
-      ) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
         setIsProfileOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("userInfo");
     localStorage.removeItem("user");
     navigate("/login");
   };
 
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
+  const isActive = (path) => location.pathname === path;
+
+  const avatarSrc = user?.avatar || user?.profileImage || localStorage.getItem(cachedAvatarKey) || "/user-profile.png";
+
   return (
     <div className="w-full h-24 bg-white/85 backdrop-blur-md border-b border-slate-100 flex items-center px-10 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl w-full mx-auto flex items-center justify-between gap-8">
-        {/* LEFT: Logo & Search */}
+        
+        {/* LEFT: Logo */}
         <div className="flex items-center gap-10 shrink-0">
-          {/* Logo */}
-          <div
-            className="flex items-center gap-4 group cursor-pointer"
-            onClick={() => navigate("/learner")}
-          >
+          <div className="flex items-center gap-4 group cursor-pointer" onClick={() => navigate("/learner")}>
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-200">
               <CarFront className="h-6 w-6" />
             </span>
             <div className="leading-tight">
-              <span className="block text-[1.4rem] font-black text-blue-700 tracking-tight">
-                DriveMaster
-              </span>
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                Learner Portal
-              </span>
+              <span className="block text-[1.4rem] font-black text-blue-700 tracking-tight">DriveMaster</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Learner Portal</span>
             </div>
           </div>
         </div>
 
-        {/* CENTER: Navigation Links */}
+        {/* CENTER: Navigation */}
         <nav className="hidden lg:flex items-center gap-2">
           {navItems.map((item) => (
             <button
@@ -127,7 +146,7 @@ export const TopHeaderLearner = () => {
               onClick={() => navigate(item.path)}
               className={`px-5 py-3 rounded-xl text-[15px] font-bold transition-all ${
                 isActive(item.path)
-                  ? "text-blue-600 bg-blue-50 relative after:content-[''] after:absolute after:-bottom-5.5 after:left-4 after:w-[calc(100%-2rem)] after:h-0.5 after:bg-blue-600"
+                  ? "text-blue-600 bg-blue-50"
                   : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
@@ -136,7 +155,7 @@ export const TopHeaderLearner = () => {
           ))}
         </nav>
 
-        {/* RIGHT: Notifications & Profile */}
+        {/* RIGHT: Profile & Actions */}
         <div className="flex items-center gap-5 shrink-0">
           {/* Notification Button */}
           <Button
@@ -150,7 +169,6 @@ export const TopHeaderLearner = () => {
 
           <div className="h-10 w-px bg-slate-100" />
 
-          {/* User Profile Dropdown */}
           <div ref={profileMenuRef} className="relative">
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -164,9 +182,9 @@ export const TopHeaderLearner = () => {
                   {t("learnerHeader.learner")}
                 </span>
               </div>
-              <Avatar className="w-13 h-13 border-2 border-white shadow-md group-hover:border-blue-100 transition-all">
+              <Avatar className="w-11 h-11 border-2 border-white shadow-md">
                 <AvatarImage src={avatarSrc} alt="Profile" />
-                <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-base">
+                <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
                   {user?.name?.substring(0, 2).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
@@ -184,10 +202,7 @@ export const TopHeaderLearner = () => {
                 </div>
 
                 <button
-                  onClick={() => {
-                    navigate("/learner/profile");
-                    setIsProfileOpen(false);
-                  }}
+                  onClick={() => { navigate("/learner/profile"); setIsProfileOpen(false); }}
                   className="flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-[15px] font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
                 >
                   <span className="flex items-center gap-3">
@@ -200,10 +215,7 @@ export const TopHeaderLearner = () => {
                 </button>
 
                 <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsProfileOpen(false);
-                  }}
+                  onClick={() => { handleLogout(); setIsProfileOpen(false); }}
                   className="mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-[15px] font-bold text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                 >
                   <span className="flex items-center gap-3">
@@ -222,4 +234,5 @@ export const TopHeaderLearner = () => {
     </div>
   );
 };
+
 export default TopHeaderLearner;

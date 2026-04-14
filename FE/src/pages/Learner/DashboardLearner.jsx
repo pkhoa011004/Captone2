@@ -195,6 +195,7 @@ export const DashboardLearner = () => {
           setNextScheduleSession(nextSession);
         }
       } catch (error) {
+        console.error("Error fetching dashboard:", error);
         if (mounted) {
           setDashboardData(DASHBOARD_FALLBACK);
           setNextScheduleSession(null);

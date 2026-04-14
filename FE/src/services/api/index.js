@@ -38,6 +38,16 @@ const getStoredToken = () => {
 //Interceptor thêm header Authorization
 apiInstance.interceptors.request.use(
   (config) => {
+    const tokenFromStorage = localStorage.getItem("token");
+    let tokenFromLegacyUserInfo = null;
+
+    try {
+      const parseUserInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+      tokenFromLegacyUserInfo = parseUserInfo?.accessToken || null;
+    } catch (_error) {
+      tokenFromLegacyUserInfo = null;
+    }
+
     const token = getStoredToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -60,8 +70,8 @@ apiInstance.interceptors.response.use(
     }
     if (error?.response?.status === 401) {
       localStorage.removeItem("token");
-      localStorage.removeItem("userInfo");
       localStorage.removeItem("user");
+      localStorage.removeItem("userInfo");
       window.location.href = "/login";
     }
     return Promise.reject(error);

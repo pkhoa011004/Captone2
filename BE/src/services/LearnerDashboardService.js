@@ -109,7 +109,27 @@ export class LearnerDashboardService {
   }
 
   static async getDashboardByUserId(userId) {
-    const profile = await LearnerDashboardModel.findByUserId(userId)
+    let profile = await LearnerDashboardModel.findByUserId(userId)
+    
+    // Nếu chưa có profile, tạo mới
+    if (!profile) {
+      const defaultTotal = this.inferDefaultTotalQuestions({})
+      await LearnerDashboardModel.upsertByUserId(userId, {
+        completedQuestions: 0,
+        totalQuestions: defaultTotal,
+        latestTestName: 'No test yet',
+        latestTestCorrect: 0,
+        latestTestTotal: 0,
+        aiFocusTopic: 'Traffic rules',
+        aiMessage: 'Start a practice test to receive AI insights.',
+        nextSessionTitle: 'Simulation Training',
+        nextSessionAt: null,
+        simulationImageUrl: FALLBACK_IMAGE,
+      })
+      // Lấy lại profile vừa tạo
+      profile = await LearnerDashboardModel.findByUserId(userId)
+    }
+    
     return this.mapProfileToDashboard(profile)
   }
 

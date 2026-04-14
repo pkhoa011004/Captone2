@@ -1,9 +1,19 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import TopHeaderLearner from "../TopHeaderLearner";
 
 export function LearnerLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isQuizPage = location.pathname === "/learner/quiz";
+
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
 
   return (
     <div

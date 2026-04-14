@@ -84,7 +84,7 @@ const recentUsers = [
     email: "congdinh@webmail.com",
     license: "B2",
     date: "Mar 10, 2026",
-    status: "PENDING",
+    status: "OFFLINE",
   },
   {
     name: "Ta Hoang Huy",
@@ -132,7 +132,7 @@ const systemStatus = [
 
 const alerts = [
   {
-    title: "Pending user registrations",
+    title: "Offline user registrations",
     description: "24 applications require manual ID verification.",
     action: "Review",
     icon: ShieldCheck,
@@ -153,8 +153,7 @@ const alerts = [
 
 const statusStyles = {
   ACTIVE: "bg-emerald-100 text-emerald-700",
-  PENDING: "bg-amber-100 text-amber-700",
-  OFFLINE: "bg-slate-200 text-slate-600",
+  OFFLINE: "bg-amber-100 text-amber-700",
 };
 
 const panelClasses =

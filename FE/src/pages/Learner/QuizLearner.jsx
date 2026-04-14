@@ -85,8 +85,40 @@ const clearQuizDraft = (storageKey) => {
   }
 };
 
+const normalizeAnswerToOptionId = (options = [], answerValue) => {
+  if (answerValue === null || answerValue === undefined) return null;
+
+  const directNumeric = Number(answerValue);
+  if (Number.isFinite(directNumeric)) return directNumeric;
+
+  const normalizedLetter = String(answerValue).trim().toUpperCase();
+  if (!["A", "B", "C", "D"].includes(normalizedLetter)) {
+    return null;
+  }
+
+  if (!Array.isArray(options)) return null;
+
+  const byKey = options.find((option) => {
+    const optionKey = String(
+      option?.option_key ?? option?.optionKey ?? option?.key ?? "",
+    )
+      .trim()
+      .toUpperCase();
+    return optionKey === normalizedLetter;
+  });
+
+  if (byKey) {
+    const optionId = Number(
+      byKey?.optionId ?? byKey?.option_id ?? byKey?.id ?? byKey?.value,
+    );
+    return Number.isFinite(optionId) ? optionId : null;
+  }
+
+  return normalizedLetter.charCodeAt(0) - 64;
+};
+
 const getOptionTextByAnswer = (options = [], answerValue) => {
-  const normalizedAnswer = Number(answerValue);
+  const normalizedAnswer = normalizeAnswerToOptionId(options, answerValue);
   if (!Number.isFinite(normalizedAnswer) || !Array.isArray(options)) {
     return "Không xác định";
   }
@@ -398,6 +430,70 @@ export default function QuizLearner() {
   const [isQuestionSidebarOpen, setIsQuestionSidebarOpen] = useState(false);
   const [isFailedByFatal, setIsFailedByFatal] = useState(false);
   const [fatalFailQuestionNumber, setFatalFailQuestionNumber] = useState(null);
+  const [reviewMode, setReviewMode] = useState(false);
+  const [questionsWithAnswers, setQuestionsWithAnswers] = useState(null);
+
+  useEffect(() => {
+    if (!questions.length || !isFinished || !reviewMode) return;
+
+    // Refetch questions with correct answers when entering review mode
+    const fetchQuestionsWithAnswers = async () => {
+      try {
+        console.log('[Review Mode] Fetching questions with answers...');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+        const url = `${apiUrl}/questions?licenseType=${examConfig.licenseType}&includeAnswer=true`;
+        console.log('[Review Mode] Fetch URL:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to fetch questions with answers`);
+        }
+        
+        const result = await response.json();
+        console.log('[Review Mode] API Response:', result);
+        
+        const data = Array.isArray(result?.data) ? result.data : [];
+        console.log('[Review Mode] Questions count:', data.length);
+        
+        // Normalize and map to original question IDs
+        const qWithAnswersMap = {};
+        data.forEach((q, idx) => {
+          const qId = Number(q?.id ?? q?.question_id);
+          const correctAns = normalizeAnswerToOptionId(
+            q?.options ?? [],
+            q?.correct_answer ?? q?.correctAnswer,
+          );
+          qWithAnswersMap[qId] = correctAns;
+          if (idx < 3) { // Log first 3 for debugging
+            console.log(`[Review Mode] Q${qId}: correctAnswer=${correctAns}`);
+          }
+        });
+        
+        // Merge with existing questions
+        const merged = questions.map(q => ({
+          ...q,
+          correctAnswer:
+            qWithAnswersMap[q.id] ??
+            normalizeAnswerToOptionId(q.options ?? [], q.correctAnswer ?? q.correct_answer),
+        }));
+        
+        console.log('[Review Mode] Merged sample:', {
+          id: merged[0]?.id,
+          correctAnswer: merged[0]?.correctAnswer,
+          options: merged[0]?.options?.map(o => ({ id: o.optionId, text: o.optionText.substring(0, 20) })),
+        });
+        
+        setQuestionsWithAnswers(merged);
+      } catch (error) {
+        console.error('[Review Mode] Failed to fetch answers:', error);
+        console.log('[Review Mode] Falling back to existing questions');
+        // Fallback: use existing questions
+        setQuestionsWithAnswers(questions);
+      }
+    };
+
+    fetchQuestionsWithAnswers();
+  }, [isFinished, reviewMode, questions.length, examConfig.licenseType, questions]);
 
   const quizDraftStorageKey = useMemo(
     () => getQuizDraftStorageKey(examConfig),
@@ -504,7 +600,10 @@ export default function QuizLearner() {
       return null;
     }
 
-    const correctAnswer = Number(questionItem.correctAnswer);
+    const correctAnswer = normalizeAnswerToOptionId(
+      questionItem?.options ?? [],
+      questionItem?.correctAnswer ?? questionItem?.correct_answer,
+    );
     const normalizedAnswer = Number(answerValue);
 
     if (!Number.isFinite(correctAnswer) || !Number.isFinite(normalizedAnswer)) {
@@ -789,7 +888,10 @@ export default function QuizLearner() {
       return;
     }
 
-    const correctAnswer = Number(question.correctAnswer);
+    const correctAnswer = normalizeAnswerToOptionId(
+      question?.options ?? [],
+      question?.correctAnswer ?? question?.correct_answer,
+    );
     if (!Number.isFinite(correctAnswer)) {
       return;
     }
@@ -1004,6 +1106,356 @@ export default function QuizLearner() {
     );
   }
 
+  if (isFinished && reviewMode) {
+    const correctCount = gradingResult?.correct_count ?? 0;
+    const passThreshold =
+      gradingResult?.pass_threshold ?? Math.ceil(totalQuestions * 0.84);
+    const scorePercent = gradingResult?.score_percent ?? 0;
+    const fatalWrongCount = Number(gradingResult?.fatal_wrong_count ?? 0);
+    const passedByScore = Number(correctCount) >= Number(passThreshold);
+    const passedByFatalRule = fatalWrongCount === 0;
+    const computedPassed = passedByScore && passedByFatalRule;
+    const backendPassed =
+      typeof gradingResult?.passed === "boolean" ? gradingResult.passed : null;
+    const isPassedExam =
+      backendPassed === null ? computedPassed : backendPassed && computedPassed;
+
+    const wrongAnswerIds = new Set(
+      (Array.isArray(gradingResult?.wrong_answers) ? gradingResult.wrong_answers : [])
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id)),
+    );
+
+    // Use questionsWithAnswers if available, else fallback to questions
+    const reviewQuestions = questionsWithAnswers || questions;
+    if (!reviewQuestions || !reviewQuestions.length) {
+      return (
+        <QuizShell>
+          <Card className="border-none shadow-sm rounded-3xl">
+            <CardContent className="px-8 py-10 text-center">
+              <p className="text-slate-600">Đang tải dữ liệu...</p>
+            </CardContent>
+          </Card>
+        </QuizShell>
+      );
+    }
+
+    const reviewQuestion = reviewQuestions[currentQuestion] || null;
+    if (!reviewQuestion) {
+      return (
+        <QuizShell>
+          <Card className="border-none shadow-sm rounded-3xl">
+            <CardContent className="px-8 py-10 text-center">
+              <p className="text-slate-600">Không có câu hỏi để xem lại</p>
+              <Button
+                onClick={() => setReviewMode(false)}
+                className="mt-4 rounded-xl"
+              >
+                Quay lại kết quả
+              </Button>
+            </CardContent>
+          </Card>
+        </QuizShell>
+      );
+    }
+
+    const userAnswer = Number(answersByQuestion[reviewQuestion.id]);
+    const correctAnswer = normalizeAnswerToOptionId(
+      reviewQuestion?.options ?? [],
+      reviewQuestion?.correctAnswer ?? reviewQuestion?.correct_answer,
+    );
+    const isCorrect =
+      Number.isFinite(userAnswer) &&
+      Number.isFinite(correctAnswer) &&
+      userAnswer === correctAnswer;
+    const isWrong =
+      Number.isFinite(userAnswer) && Number.isFinite(correctAnswer)
+        ? userAnswer !== correctAnswer
+        : wrongAnswerIds.has(Number(reviewQuestion.id));
+
+    // Debug logging
+    console.log(`[Review Mode - Q${reviewQuestion.id}]:`, {
+      correctAnswer,
+      correctAnswerRaw: reviewQuestion.correctAnswer,
+      userAnswer,
+      isCorrect,
+      isWrong,
+      optionCount: reviewQuestion.options?.length,
+      optionIds: reviewQuestion.options?.map(o => o.optionId),
+      firstOption: reviewQuestion.options?.[0] ? { id: reviewQuestion.options[0].optionId, text: reviewQuestion.options[0].optionText.substring(0, 20) } : null,
+    });
+
+    const userAnswerText = Number.isFinite(userAnswer)
+      ? getOptionTextByAnswer(reviewQuestion.options, userAnswer)
+      : "Chưa chọn";
+    const correctAnswerText = Number.isFinite(correctAnswer)
+      ? getOptionTextByAnswer(reviewQuestion.options, correctAnswer)
+      : "Không xác định";
+
+    return (
+      <QuizShell>
+        <button
+          type="button"
+          onClick={() => setIsQuestionSidebarOpen((prev) => !prev)}
+          className="fixed right-3 top-1/2 -translate-y-1/2 z-40 rounded-l-xl rounded-r-md bg-white border border-slate-300 shadow px-2 py-3 text-slate-700 hover:bg-slate-50"
+          aria-label="Mở danh sách câu hỏi"
+        >
+          <Menu size={18} />
+        </button>
+
+        <aside
+          className={`fixed top-20 right-0 h-[calc(100vh-5rem)] w-72 bg-white border-l border-slate-200 shadow-xl z-50 transition-transform duration-300 ${
+            isQuestionSidebarOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+              <h3 className="font-bold text-slate-800">Danh sách câu</h3>
+              <button
+                type="button"
+                onClick={() => setIsQuestionSidebarOpen(false)}
+                className="p-1 rounded-md hover:bg-slate-100"
+                aria-label="Đóng danh sách câu hỏi"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-3 overflow-y-auto">
+              <div className="grid grid-cols-5 gap-2">
+                {reviewQuestions.map((item, index) => {
+                  const isCurrent = index === currentQuestion;
+                  const isAnswered = answersByQuestion[item.id] !== undefined;
+                  const itemUserAnswer = Number(answersByQuestion[item.id]);
+                  const itemCorrectAnswer = normalizeAnswerToOptionId(
+                    item?.options ?? [],
+                    item?.correctAnswer ?? item?.correct_answer,
+                  );
+                  const isWrongQuestion =
+                    Number.isFinite(itemUserAnswer) &&
+                    Number.isFinite(itemCorrectAnswer)
+                      ? itemUserAnswer !== itemCorrectAnswer
+                      : wrongAnswerIds.has(Number(item.id));
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setCurrentQuestion(index)}
+                      title={
+                        isWrongQuestion ? "Câu sai" : `Câu ${index + 1}`
+                      }
+                      className={`relative h-9 rounded-lg text-sm font-semibold border transition-all ${
+                        isCurrent
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : isWrongQuestion
+                            ? "bg-red-50 text-red-700 border-red-200"
+                            : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      }`}
+                    >
+                      {index + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Header */}
+        <div className="shrink-0 space-y-2 border-b-2 border-slate-200 pb-3 mb-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="space-y-0.5">
+              <h1 className="text-2xl font-black text-[#141b2b]">
+                Xem câu trả lời đúng
+              </h1>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-[#e1e8fd] text-blue-700 border-none font-bold text-xs">
+                  {examConfig.licenseType}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {examConfig.examName}
+                </Badge>
+              </div>
+            </div>
+            <Button
+              onClick={() => setReviewMode(false)}
+              variant="outline"
+              className="text-sm h-8"
+            >
+              Quay lại
+            </Button>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-slate-500 font-semibold">
+              <span>
+                Câu {currentQuestion + 1}/{totalQuestions}
+              </span>
+            </div>
+            <Progress
+              value={((currentQuestion + 1) / totalQuestions) * 100}
+              className="h-2 bg-slate-100"
+              indicatorClassName="bg-blue-600"
+            />
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="p-2 flex justify-center">
+            <Card className="border border-slate-200 rounded-2xl flex flex-col w-full bg-white gap-0 py-0">
+              <CardHeader className="space-y-2 shrink-0 px-4 pt-4 pb-1">
+                {isWrong && (
+                  <Badge className="bg-red-50 text-red-700 border border-red-200 text-xs font-bold w-fit">
+                    Câu sai
+                  </Badge>
+                )}
+                {!isWrong && (
+                  <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold w-fit">
+                    Câu đúng
+                  </Badge>
+                )}
+              </CardHeader>
+
+              <CardContent className="flex-1 overflow-hidden px-4 pb-4 pt-0 space-y-6">
+                {/* Question Text */}
+                <div className="space-y-2">
+                  <p className="text-base font-semibold text-slate-600">
+                    Câu {currentQuestion + 1}
+                  </p>
+                  <h2 className="text-xl leading-snug font-black text-[#141b2b]">
+                    {reviewQuestion.questionText}
+                  </h2>
+                </div>
+
+                {/* Image */}
+                {reviewQuestion.image && (
+                  <div className="w-full max-w-md mx-auto h-64 rounded-2xl border-2 border-slate-200 bg-slate-50 p-3 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={reviewQuestion.image}
+                      alt={`Hình minh họa câu ${reviewQuestion.id}`}
+                      className="w-full h-full object-contain rounded-xl"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+
+                {/* Answer Options */}
+                <div className="space-y-3">
+                  {reviewQuestion.options.map((option, optIdx) => {
+                    const optionId = Number(
+                      option?.optionId ?? option?.option_id ?? option?.id ?? option?.value,
+                    );
+                    const isUserAnswer = Number.isFinite(optionId) && userAnswer === optionId;
+                    const isCorrectOption =
+                      Number.isFinite(optionId) && correctAnswer === optionId;
+                    
+                    if (optIdx === 0) {
+                      console.log(`[Options Render] First option:`, {
+                        optionId: option.optionId,
+                        correctAnswer,
+                        isCorrectOption,
+                        userAnswer,
+                        isUserAnswer,
+                      });
+                    }
+                    
+                    let optionBgColor = "bg-white border-slate-300";
+                    let optionTextColor = "text-slate-700";
+                    let circleBgColor = "bg-white border-slate-400";
+                    let circleTextColor = "text-slate-700";
+
+                    if (isCorrectOption) {
+                      // Đáp án đúng - tô đậm màu xanh
+                      optionBgColor = "bg-emerald-100 border-emerald-500";
+                      optionTextColor = "text-emerald-900";
+                      circleBgColor = "bg-emerald-200 border-emerald-500";
+                      circleTextColor = "text-emerald-700";
+                    }
+                    
+                    if (isUserAnswer && isWrong && !isCorrectOption) {
+                      // Đáp án sai user chọn - tô đậm màu đỏ
+                      optionBgColor = "bg-red-100 border-red-500";
+                      optionTextColor = "text-red-900";
+                      circleBgColor = "bg-red-200 border-red-500";
+                      circleTextColor = "text-red-700";
+                    }
+
+                    return (
+                      <div
+                        key={option.optionId}
+                        className={`border-2 p-4 rounded-xl flex items-start gap-3 transition-all ${optionBgColor} ${isCorrectOption ? "shadow-sm ring-1 ring-emerald-300" : ""} ${isUserAnswer && isWrong ? "shadow-sm ring-1 ring-red-300" : ""}`}
+                      >
+                        <span className={`shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center text-base font-bold ${circleBgColor} ${circleTextColor}`}>
+                          {String.fromCharCode(64 + option.optionId)}
+                        </span>
+                        <div className="grow pt-0.5">
+                          <p className={`text-sm font-medium ${optionTextColor}`}>
+                            {option.optionText}
+                          </p>
+                          {isCorrectOption && (
+                            <p className="text-xs font-semibold text-emerald-700 mt-1 flex items-center gap-1">
+                              <span className="text-lg">✓</span> Đáp án đúng
+                            </p>
+                          )}
+                          {isUserAnswer && isWrong && !isCorrectOption && (
+                            <p className="text-xs font-semibold text-red-700 mt-1 flex items-center gap-1">
+                              <span className="text-lg">✗</span> Bạn chọn
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Explanation */}
+                {reviewQuestion.explanation && (
+                  <div className="rounded-xl bg-blue-50 border border-blue-200 p-4">
+                    <p className="text-xs font-semibold text-blue-700 uppercase mb-2">
+                      Giải thích
+                    </p>
+                    <p className="text-sm text-blue-900">
+                      {reviewQuestion.explanation}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+
+              <CardFooter className="border-t-2 border-slate-200 bg-slate-50 px-4 py-3 shrink-0 flex justify-between">
+                <Button
+                  onClick={() =>
+                    setCurrentQuestion((prev) => Math.max(prev - 1, 0))
+                  }
+                  disabled={currentQuestion === 0}
+                  variant="outline"
+                  className="px-5 py-2 text-sm font-semibold"
+                >
+                  <ChevronLeft size={16} className="mr-2" />
+                  Quay lại
+                </Button>
+
+                <Button
+                  onClick={() =>
+                    setCurrentQuestion((prev) =>
+                      Math.min(prev + 1, totalQuestions - 1),
+                    )
+                  }
+                  disabled={currentQuestion === totalQuestions - 1}
+                  className="px-6 py-2 text-sm font-semibold"
+                >
+                  Câu tiếp theo
+                  <ChevronRight size={16} className="ml-2" />
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
+      </QuizShell>
+    );
+  }
+
   if (isFinished) {
     const correctCount = gradingResult?.correct_count ?? 0;
     const passThreshold =
@@ -1098,6 +1550,12 @@ export default function QuizLearner() {
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <Button onClick={handleRestart} className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700">
                 Làm lại
+              </Button>
+              <Button 
+                onClick={() => setReviewMode(true)}
+                className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
+              >
+                Xem câu trả lời đúng
               </Button>
               <Button
                 variant="outline"
