@@ -692,6 +692,7 @@ export const ScheduleLearner = () => {
                 onClick={handleViewInsights}
               >
                 {t("schedulePage.viewDetailedInsights")}
+                View Detailed Insights
               </Button>
 
               {showInsights ? (
@@ -702,6 +703,7 @@ export const ScheduleLearner = () => {
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-extrabold text-[#141b2b] tracking-wide uppercase">
                       {t("schedulePage.detailedInsights")}
+                      Detailed Insights
                     </p>
                     <Button
                       type="button"
@@ -718,6 +720,7 @@ export const ScheduleLearner = () => {
                     <div className="rounded-xl bg-white p-3 border border-blue-100">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("schedulePage.avgProgress")}
+                        Avg. Progress
                       </p>
                       <p className="text-xl font-black text-[#004ac6]">
                         {insightStats.averageProgress}%
@@ -726,6 +729,7 @@ export const ScheduleLearner = () => {
                     <div className="rounded-xl bg-white p-3 border border-blue-100">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("schedulePage.totalSessions")}
+                        Total Sessions
                       </p>
                       <p className="text-xl font-black text-[#004ac6]">
                         {insightStats.totalSessions}
@@ -734,6 +738,7 @@ export const ScheduleLearner = () => {
                     <div className="rounded-xl bg-white p-3 border border-blue-100">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("schedulePage.upcoming")}
+                        Upcoming
                       </p>
                       <p className="text-xl font-black text-amber-600">
                         {insightStats.upcomingSessions}
@@ -742,6 +747,7 @@ export const ScheduleLearner = () => {
                     <div className="rounded-xl bg-white p-3 border border-blue-100">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("schedulePage.completed")}
+                        Completed
                       </p>
                       <p className="text-xl font-black text-emerald-600">
                         {insightStats.completedSessions}
@@ -783,6 +789,7 @@ export const ScheduleLearner = () => {
               >
                 <Plus size={18} strokeWidth={3} />
                 {t("schedulePage.bookSession")}
+                Book Session
               </Button>
             </div>
           </div>
@@ -796,6 +803,7 @@ export const ScheduleLearner = () => {
                 <div className="flex-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
                     {t("schedulePage.examDateForDaysLeft")}
+                    Exam Date (for Days Left)
                   </p>
                   <input
                     type="date"
@@ -815,6 +823,7 @@ export const ScheduleLearner = () => {
                   className="h-11 px-5 rounded-xl bg-[#004ac6] hover:bg-blue-700 text-white font-bold"
                 >
                   {t("schedulePage.saveExamDate")}
+                  Save Exam Date
                 </Button>
               </form>
             </CardContent>
@@ -834,6 +843,8 @@ export const ScheduleLearner = () => {
                 {saving
                   ? t("schedulePage.savingSchedule")
                   : t("schedulePage.loadingSchedule")}
+                  ? "Saving schedule changes..."
+                  : "Loading schedule data..."}
               </p>
             </div>
           )}
@@ -985,6 +996,20 @@ export const ScheduleLearner = () => {
                 </h2>
                 <p className="text-blue-100 text-base leading-relaxed max-w-sm">
                   {localizedMilestoneDescription}
+                </Badge>
+                <h2 className="text-3xl font-black text-white font-manrope">
+                  {localizedExamName}
+                </h2>
+                <p className="text-blue-100 text-base leading-relaxed max-w-sm">
+                  {localizedMilestoneDescription}
+                  {overview.milestoneTitle || "FINAL MILESTONE"}
+                </Badge>
+                <h2 className="text-3xl font-black text-white font-manrope">
+                  {overview.examName || "License Exam"}
+                </h2>
+                <p className="text-blue-100 text-base leading-relaxed max-w-sm">
+                  {overview.milestoneDescription ||
+                    "Keep up your current practice pace."}
                   <br />
                   {overview.examLocation
                     ? `Location: ${overview.examLocation}`
@@ -1049,6 +1074,32 @@ export const ScheduleLearner = () => {
                 const locationType =
                   session.locationType || session.location_type || "physical";
 
+                    You have no sessions yet. Click <b>Book Session</b> to
+                    create your first one.
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {sessions.map((session, idx) => {
+                const sessionType =
+                  session.sessionType || session.type || "SESSION";
+                const badgeStyles =
+                  session.badgeStyles || getSessionBadgeStyles(sessionType);
+                const sessionIcon = session.icon || getSessionIcon(session);
+                const dateLabel = formatDateLabel(
+                  session.date || session.sessionDate || session.session_date,
+                );
+                const timeLabel = `${formatTimeLabel(session.startTime || session.start_time)} - ${formatTimeLabel(session.endTime || session.end_time)}`;
+                const instructorLabel =
+                  session.instructor ||
+                  (session.instructorId
+                    ? `Instructor #${session.instructorId}`
+                    : t("schedulePage.instructorTbd"));
+                    : "Instructor TBD");
+                const locationLabel = session.location || "TBD";
+                const locationType =
+                  session.locationType || session.location_type || "physical";
+
                 return (
                   <Card
                     key={session.id ?? idx}
@@ -1091,6 +1142,7 @@ export const ScheduleLearner = () => {
                       <div className="flex flex-col items-end gap-2 shrink-0 w-full md:w-auto text-right">
                         <p className="text-sm font-bold text-[#141b2b]">
                           {t("schedulePage.instructor")}: {instructorLabel}
+                          Instructor: {instructorLabel}
                         </p>
                         <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
                           {locationType === "virtual" ? (
@@ -1160,6 +1212,10 @@ export const ScheduleLearner = () => {
                 </p>
                 <h4 className="text-2xl font-black text-[#141b2b] leading-tight">
                   {selectedSessionDetail.title || t("schedulePage.session")}
+                  Session Details
+                </p>
+                <h4 className="text-2xl font-black text-[#141b2b] leading-tight">
+                  {selectedSessionDetail.title || "Session"}
                 </h4>
               </div>
               <Button
@@ -1180,6 +1236,7 @@ export const ScheduleLearner = () => {
                     <tr className="border-b border-slate-100">
                       <th className="w-42 bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("schedulePage.date")}
+                        Date
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {formatDateLabel(
@@ -1192,6 +1249,7 @@ export const ScheduleLearner = () => {
                     <tr className="border-b border-slate-100">
                       <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("schedulePage.time")}
+                        Time
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {formatTimeLabel(
@@ -1208,12 +1266,14 @@ export const ScheduleLearner = () => {
                     <tr className="border-b border-slate-100">
                       <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("schedulePage.instructor")}
+                        Instructor
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {selectedSessionDetail.instructor ||
                           (selectedSessionDetail.instructorId
                             ? `Instructor #${selectedSessionDetail.instructorId}`
                             : t("schedulePage.instructorTbd"))}
+                            : "Instructor TBD")}
                       </td>
                     </tr>
                     <tr
@@ -1225,6 +1285,7 @@ export const ScheduleLearner = () => {
                     >
                       <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("schedulePage.location")}
+                        Location
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {selectedSessionDetail.location || "TBD"}
@@ -1234,6 +1295,7 @@ export const ScheduleLearner = () => {
                       <tr>
                         <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 align-top">
                           {t("schedulePage.notes")}
+                          Notes
                         </th>
                         <td className="px-4 py-3 font-medium text-slate-700 whitespace-pre-wrap">
                           {selectedSessionDetail.notes}

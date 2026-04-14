@@ -209,6 +209,11 @@ export const DashboardLearner = () => {
         if (mounted) {
           setDashboardData(dashboardResponse || DASHBOARD_FALLBACK);
           setNextScheduleSession(nextSession);
+        console.log("🔄 Fetching learner dashboard...");
+        const data = await learnerDashboardApi.getLearnerDashboard();
+        console.log("✅ Dashboard data:", data);
+        if (mounted && data) {
+          setDashboardData(data);
         }
       } catch (error) {
         console.error("Error fetching dashboard:", error);
@@ -566,6 +571,7 @@ export const DashboardLearner = () => {
               <div className="space-y-1">
                 <p className="text-[11px] font-bold tracking-[0.14em] text-blue-600 uppercase">
                   {t("dashboardPage.sessionDetails")}
+                  Session Details
                 </p>
                 <h4 className="text-2xl font-black text-[#141b2b] leading-tight">
                   {scheduledCardTitle}
@@ -589,6 +595,7 @@ export const DashboardLearner = () => {
                     <tr className="border-b border-slate-100">
                       <th className="w-42 bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("dashboardPage.date")}
+                        Date
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {formatDateLabel(scheduledSessionDate)}
@@ -597,6 +604,7 @@ export const DashboardLearner = () => {
                     <tr className="border-b border-slate-100">
                       <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("dashboardPage.time")}
+                        Time
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {formatTimeLabel(scheduledSessionStartTime)} -{" "}
@@ -606,6 +614,7 @@ export const DashboardLearner = () => {
                     <tr className="border-b border-slate-100">
                       <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("dashboardPage.instructor")}
+                        Instructor
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {scheduledSessionInstructor}
@@ -614,6 +623,7 @@ export const DashboardLearner = () => {
                     <tr>
                       <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
                         {t("dashboardPage.location")}
+                        Location
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {scheduledSessionLocation}
@@ -641,6 +651,12 @@ export const DashboardLearner = () => {
             >
               {t(link.i18nKey)}
             </button>
+              {link === "SAFETY PROTOCOLS"
+                ? t("dashboardPage.footerSafetyProtocols")
+                : link === "PRIVACY POLICY"
+                  ? t("dashboardPage.footerPrivacyPolicy")
+                  : t("dashboardPage.footerSupport")}
+            </a>
           ))}
         </nav>
       </footer>
