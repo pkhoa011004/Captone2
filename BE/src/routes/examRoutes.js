@@ -1,12 +1,19 @@
 import express from 'express'
 import {
+  getAdminExamManagementData,
+  getAdminExamManagementDetail,
   getRandomExam,
   getExamFrom250,
   getExamFrom600,
   gradeExam,
 } from '../controllers/examController.js'
+import { authenticate, authorize } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
+
+// Admin routes (read-only)
+router.get('/admin/management', authenticate, authorize('admin'), getAdminExamManagementData)
+router.get('/admin/management/:examId', authenticate, authorize('admin'), getAdminExamManagementDetail)
 
 // Public routes
 /**

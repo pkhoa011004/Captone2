@@ -45,9 +45,49 @@ export const changePasswordSchema = Joi.object({
   }),
 })
 
+export const updateManagementStatusSchema = Joi.object({
+  status: Joi.string().valid('Active', 'Suspended').required().messages({
+    'any.only': 'Status must be Active or Suspended',
+    'any.required': 'Status is required',
+  }),
+})
+
+export const adminCreateUserSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    'string.email': 'Email must be valid',
+    'any.required': 'Email is required',
+  }),
+  password: Joi.string().min(6).required().messages({
+    'string.min': 'Password must be at least 6 characters',
+    'any.required': 'Password is required',
+  }),
+  name: Joi.string().min(2).required().messages({
+    'string.min': 'Name must be at least 2 characters',
+    'any.required': 'Name is required',
+  }),
+  phone: Joi.string().allow('').optional().default(''),
+  licenseType: Joi.string().valid('A1', 'B1').optional().default('A1').messages({
+    'any.only': 'License type must be A1 or B1',
+  }),
+  role: Joi.string()
+    .trim()
+    .lowercase()
+    .valid('user', 'learner', 'instructor')
+    .optional()
+    .default('learner')
+    .messages({
+      'any.only': 'Role must be learner (or user alias) or instructor',
+    }),
+  status: Joi.string().valid('Active', 'Offline', 'Suspended').optional().default('Active').messages({
+    'any.only': 'Status must be Active, Offline, or Suspended',
+  }),
+})
+
 export default {
   registerSchema,
   loginSchema,
   updateUserSchema,
   changePasswordSchema,
+  updateManagementStatusSchema,
+  adminCreateUserSchema,
 }
