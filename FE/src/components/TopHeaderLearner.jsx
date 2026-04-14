@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { useTranslation } from "react-i18next";
 import {
   Bell,
@@ -35,7 +41,8 @@ const navItems = [
   },
 ];
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
 
 export const TopHeaderLearner = () => {
   const { t } = useTranslation();
@@ -44,12 +51,21 @@ export const TopHeaderLearner = () => {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
   const profileMenuRef = useRef(null);
+
+  const parseJsonSafe = (value) => {
+    try {
+      return JSON.parse(value || "null");
+    } catch {
+      return null;
+    }
+  };
 
   // 1. Hàm đồng bộ user từ LocalStorage
   const syncUserFromLocalStorage = useCallback(() => {
     try {
-      const userData = JSON.parse(localStorage.getItem("user") || "null");
+      const userData = parseJsonSafe(localStorage.getItem("user"));
       setUser(userData);
     } catch (error) {
       console.error("Error parsing user data:", error);
@@ -60,7 +76,10 @@ export const TopHeaderLearner = () => {
   // 2. Fetch profile từ API khi component mount
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      syncUserFromLocalStorage();
+      return;
+    }
 
     const fetchUserProfile = async () => {
       try {
@@ -74,8 +93,30 @@ export const TopHeaderLearner = () => {
 
         if (response.ok) {
           const data = await response.json();
-          setUser(data.data);
-          localStorage.setItem("user", JSON.stringify(data.data));
+          const payloadUser = data?.data?.user || data?.data || {};
+          const existingUser =
+            parseJsonSafe(localStorage.getItem("user")) || {};
+          const cachedAvatar = localStorage.getItem(cachedAvatarKey) || "";
+          const mergedAvatar =
+            existingUser?.avatar ||
+            existingUser?.profileImage ||
+            cachedAvatar ||
+            payloadUser?.avatar ||
+            payloadUser?.profileImage ||
+            "";
+
+          const mergedUser = {
+            ...existingUser,
+            ...payloadUser,
+            avatar: mergedAvatar,
+            profileImage: mergedAvatar,
+          };
+
+          setUser(mergedUser);
+          localStorage.setItem("user", JSON.stringify(mergedUser));
+          if (mergedAvatar) {
+            localStorage.setItem(cachedAvatarKey, mergedAvatar);
+          }
         } else {
           syncUserFromLocalStorage();
         }
@@ -100,10 +141,17 @@ export const TopHeaderLearner = () => {
     };
   }, [syncUserFromLocalStorage]);
 
+  useEffect(() => {
+    setAvatarLoadError(false);
+  }, [user?.avatar, user?.profileImage]);
+
   // 4. Click outside để đóng menu
   useEffect(() => {
     const handleOutsideClick = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
         setIsProfileOpen(false);
       }
     };
@@ -119,21 +167,35 @@ export const TopHeaderLearner = () => {
 
   const isActive = (path) => location.pathname === path;
 
-  const avatarSrc = user?.avatar || user?.profileImage || localStorage.getItem(cachedAvatarKey) || "/user-profile.png";
+  const avatarSrc = useMemo(() => {
+    if (avatarLoadError) return undefined;
+    return (
+      user?.avatar ||
+      user?.profileImage ||
+      localStorage.getItem(cachedAvatarKey) ||
+      undefined
+    );
+  }, [avatarLoadError, user?.avatar, user?.profileImage]);
 
   return (
     <div className="w-full h-24 bg-white/85 backdrop-blur-md border-b border-slate-100 flex items-center px-10 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl w-full mx-auto flex items-center justify-between gap-8">
-        
         {/* LEFT: Logo */}
         <div className="flex items-center gap-10 shrink-0">
-          <div className="flex items-center gap-4 group cursor-pointer" onClick={() => navigate("/learner")}>
+          <div
+            className="flex items-center gap-4 group cursor-pointer"
+            onClick={() => navigate("/learner")}
+          >
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-200">
               <CarFront className="h-6 w-6" />
             </span>
             <div className="leading-tight">
-              <span className="block text-[1.4rem] font-black text-blue-700 tracking-tight">DriveMaster</span>
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Learner Portal</span>
+              <span className="block text-[1.4rem] font-black text-blue-700 tracking-tight">
+                DriveMaster
+              </span>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                Learner Portal
+              </span>
             </div>
           </div>
         </div>
@@ -183,7 +245,11 @@ export const TopHeaderLearner = () => {
                 </span>
               </div>
               <Avatar className="w-11 h-11 border-2 border-white shadow-md">
-                <AvatarImage src={avatarSrc} alt="Profile" />
+                <AvatarImage
+                  src={avatarSrc}
+                  alt="Profile"
+                  onError={() => setAvatarLoadError(true)}
+                />
                 <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
                   {user?.name?.substring(0, 2).toUpperCase() || "U"}
                 </AvatarFallback>
@@ -202,7 +268,10 @@ export const TopHeaderLearner = () => {
                 </div>
 
                 <button
-                  onClick={() => { navigate("/learner/profile"); setIsProfileOpen(false); }}
+                  onClick={() => {
+                    navigate("/learner/profile");
+                    setIsProfileOpen(false);
+                  }}
                   className="flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-[15px] font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
                 >
                   <span className="flex items-center gap-3">
@@ -215,7 +284,10 @@ export const TopHeaderLearner = () => {
                 </button>
 
                 <button
-                  onClick={() => { handleLogout(); setIsProfileOpen(false); }}
+                  onClick={() => {
+                    handleLogout();
+                    setIsProfileOpen(false);
+                  }}
                   className="mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-[15px] font-bold text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                 >
                   <span className="flex items-center gap-3">

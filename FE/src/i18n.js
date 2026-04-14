@@ -58,6 +58,9 @@ const resources = {
         dangerDesc:
           "Once you delete your account, there is no going back. Please be certain.",
         deleteAccount: "Delete Account",
+        saveAvatar: "Save Avatar",
+        avatarSaved: "Avatar saved successfully.",
+        avatarMissing: "Please choose an avatar first.",
       },
       studyPreferences: {
         title: "Study Preferences",
@@ -320,6 +323,9 @@ const resources = {
         dangerDesc:
           "Khi xoá tài khoản, bạn sẽ không thể khôi phục. Vui lòng cân nhắc kỹ.",
         deleteAccount: "Xoá tài khoản",
+        saveAvatar: "Lưu ảnh đại diện",
+        avatarSaved: "Lưu ảnh đại diện thành công.",
+        avatarMissing: "Vui lòng chọn ảnh đại diện trước.",
       },
       studyPreferences: {
         title: "Tùy chọn học tập",

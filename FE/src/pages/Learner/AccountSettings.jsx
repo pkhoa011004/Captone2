@@ -133,6 +133,7 @@ export const AccountSettings = () => {
     message: "",
   });
   const [avatarError, setAvatarError] = useState("");
+  const [avatarStatus, setAvatarStatus] = useState({ type: "", message: "" });
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const apiBaseUrl =
@@ -181,6 +182,7 @@ export const AccountSettings = () => {
       }
 
       setAvatarError("");
+      setAvatarStatus({ type: "", message: "" });
       setIsUploadingAvatar(true);
 
       const reader = new FileReader();
@@ -417,6 +419,26 @@ export const AccountSettings = () => {
     });
   };
 
+  const handleSaveAvatar = () => {
+    if (!learnerAvatar) {
+      setAvatarStatus({
+        type: "error",
+        message: t("accountSettings.avatarMissing"),
+      });
+      return;
+    }
+
+    syncLocalUser({
+      avatar: learnerAvatar,
+      profileImage: learnerAvatar,
+    });
+
+    setAvatarStatus({
+      type: "success",
+      message: t("accountSettings.avatarSaved"),
+    });
+  };
+
   const learnerName = personalForm.name || profile?.name || "User";
   const learnerEmail = personalForm.email || profile?.email || "";
   const learnerPhone = personalForm.phone || profile?.phone || "";
@@ -464,6 +486,26 @@ export const AccountSettings = () => {
                   {avatarError}
                 </p>
               ) : null}
+              {avatarStatus.message ? (
+                <p
+                  className={`text-xs font-medium ${
+                    avatarStatus.type === "success"
+                      ? "text-emerald-600"
+                      : "text-red-500"
+                  }`}
+                >
+                  {avatarStatus.message}
+                </p>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSaveAvatar}
+                disabled={isUploadingAvatar}
+                className="h-9 rounded-xl bg-[#e1e8fd] border-none text-blue-600 font-bold hover:bg-blue-100"
+              >
+                {t("accountSettings.saveAvatar")}
+              </Button>
 
               <div>
                 <h3 className="text-xl font-bold text-[#141b2b]">
