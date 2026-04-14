@@ -180,7 +180,7 @@ export const LogInLearner = () => {
       <header className="w-full bg-white/90 backdrop-blur-md border-b border-slate-100 fixed top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-10 h-24 flex items-center justify-between">
           <div
-            className="text-3xl font-black text-blue-600 tracking-tight cursor-pointer"
+            className="text-2xl md:text-3xl font-black text-blue-600 tracking-tight cursor-pointer"
             onClick={() => navigate("/")}
           >
             DriveMaster
@@ -189,14 +189,14 @@ export const LogInLearner = () => {
             <button
               type="button"
               onClick={() => navigate("/safety-protocols")}
-              className="text-base font-bold text-slate-700 hover:text-blue-600 transition-colors"
+              className="text-[15px] md:text-base font-semibold text-slate-700 hover:text-blue-600 transition-colors"
             >
               Safety Center
             </button>
             <button
               type="button"
               onClick={() => navigate("/support")}
-              className="text-base font-bold text-slate-700 hover:text-blue-600 transition-colors"
+              className="text-[15px] md:text-base font-semibold text-slate-700 hover:text-blue-600 transition-colors"
             >
               Help
             </button>
@@ -205,28 +205,31 @@ export const LogInLearner = () => {
       </header>
 
       <main className="flex-1 flex items-center justify-center pt-32 pb-16 px-4">
-        <Card className="w-full max-w-[550px] border-none shadow-xl shadow-blue-900/5 rounded-3xl overflow-hidden bg-white relative">
+        <Card className="w-full max-w-137.5 border-none shadow-xl shadow-blue-900/5 rounded-[32px] overflow-hidden bg-white relative">
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-100/50 rounded-full blur-3xl" />
 
-          <CardContent className="p-10 relative z-10">
-            <div className="space-y-3 mb-10">
-              <h1 className="text-4xl font-black text-[#141b2b] tracking-tight">
+          <CardContent className="p-12 relative z-10">
+            <div className="space-y-3 mb-10 text-center sm:text-left">
+              <h1 className="text-5xl font-black text-[#141b2b] tracking-tight">
                 Welcome Back
               </h1>
-              <p className="text-slate-500 font-semibold text-base">
+              <p className="text-slate-600 font-medium text-[17px] leading-7">
                 Enter your credentials to access your portal.
               </p>
             </div>
 
             <Tabs defaultValue="login" className="w-full mb-8">
               <TabsList className="grid w-full grid-cols-2 bg-slate-100/50 p-1 rounded-xl">
-                <TabsTrigger value="login" className="rounded-lg font-bold">
+                <TabsTrigger
+                  value="login"
+                  className="rounded-lg font-semibold text-[15px]"
+                >
                   Log In
                 </TabsTrigger>
                 <TabsTrigger
                   value="register"
                   onClick={() => navigate("/signup")}
-                  className="rounded-lg font-bold"
+                  className="rounded-lg font-semibold text-[15px]"
                 >
                   Register
                 </TabsTrigger>
@@ -253,7 +256,7 @@ export const LogInLearner = () => {
               )}
 
               <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-500 tracking-widest uppercase ml-1">
+                <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
                   Email Address
                 </Label>
                 <Input
@@ -261,19 +264,19 @@ export const LogInLearner = () => {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 bg-[#f0f2f9] border-none rounded-xl focus-visible:ring-blue-500 font-medium"
+                  className="h-16 bg-[#f0f2f9] border-none rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 font-medium text-base"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <Label className="text-xs font-bold text-slate-500 tracking-widest uppercase ml-1">
+                  <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
                     Password
                   </Label>
                   <button
                     type="button"
                     onClick={() => navigate("/forgot-password")}
-                    className="text-xs font-bold text-blue-600 hover:underline uppercase"
+                    className="text-sm font-bold text-blue-600 hover:underline uppercase"
                   >
                     Forgot Password?
                   </button>
@@ -284,7 +287,7 @@ export const LogInLearner = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-14 bg-[#f0f2f9] border-none rounded-xl focus-visible:ring-blue-500 font-medium"
+                    className="h-16 bg-[#f0f2f9] border-none rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 font-medium text-base"
                   />
                   <button
                     type="button"
@@ -305,7 +308,7 @@ export const LogInLearner = () => {
                 />
                 <label
                   htmlFor="remember"
-                  className="text-sm font-medium text-slate-600 cursor-pointer"
+                  className="text-[15px] font-medium text-slate-600 cursor-pointer"
                 >
                   Remember this device for 30 days
                 </label>
@@ -314,7 +317,7 @@ export const LogInLearner = () => {
               <Button
                 type="submit"
                 disabled={loading || !email || !password}
-                className="w-full h-14 bg-gradient-to-r from-blue-700 to-blue-500 hover:opacity-90 rounded-xl text-lg font-bold shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
+                className="w-full h-16 bg-linear-to-r from-blue-700 to-blue-500 hover:opacity-90 rounded-2xl text-[17px] font-bold shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
               >
                 {loading ? (
                   <Loader className="h-5 w-5 animate-spin" />
@@ -327,11 +330,11 @@ export const LogInLearner = () => {
             <div className="mt-8 space-y-3 pt-6 border-t border-slate-100">
               <Button
                 variant="outline"
-                className="w-full h-12 justify-between px-5 rounded-xl bg-slate-50 border-none hover:bg-blue-50 group"
+                className="w-full h-14 justify-between px-5 rounded-2xl bg-slate-50 border-none hover:bg-blue-50 group"
               >
                 <div className="flex items-center gap-3">
                   <GraduationCap size={18} className="text-blue-600" />
-                  <span className="font-bold text-slate-700">
+                  <span className="font-semibold text-[15px] text-slate-700">
                     Continue as Instructor
                   </span>
                 </div>
@@ -343,11 +346,11 @@ export const LogInLearner = () => {
 
               <Button
                 variant="outline"
-                className="w-full h-12 justify-between px-5 rounded-xl bg-slate-50 border-none hover:bg-blue-50 group"
+                className="w-full h-14 justify-between px-5 rounded-2xl bg-slate-50 border-none hover:bg-blue-50 group"
               >
                 <div className="flex items-center gap-3">
                   <ShieldCheck size={18} className="text-blue-600" />
-                  <span className="font-bold text-slate-700">
+                  <span className="font-semibold text-[15px] text-slate-700">
                     Continue as Administrator
                   </span>
                 </div>
@@ -363,20 +366,22 @@ export const LogInLearner = () => {
 
       <footer className="w-full bg-white py-10 border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="text-xl font-black text-blue-600">DriveMaster</div>
+          <div className="text-2xl font-black text-blue-600 tracking-tight">
+            DriveMaster
+          </div>
           <nav className="flex gap-8">
             {footerLinks.map((link) => (
               <button
                 key={`${link.label}-${link.path}`}
                 type="button"
                 onClick={() => navigate(link.path)}
-                className="text-sm font-semibold text-slate-500 hover:text-blue-600"
+                className="text-[15px] font-medium text-slate-500 hover:text-blue-600"
               >
                 {link.label}
               </button>
             ))}
           </nav>
-          <p className="text-sm font-medium text-slate-400">
+          <p className="text-[15px] font-medium text-slate-400">
             © 2026 DriveMaster Education.
           </p>
         </div>

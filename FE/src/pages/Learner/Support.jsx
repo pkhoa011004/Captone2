@@ -1,12 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  HelpCircle,
-  ArrowLeft,
-  Mail,
-  MessageSquare,
-  Phone,
-} from "lucide-react";
+import { HelpCircle, ArrowLeft, Mail, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +30,21 @@ const Support = () => {
       id: 4,
       questionKey: "support.faq4Question",
       answerKey: "support.faq4Answer",
+    },
+  ];
+
+  const policyLinks = [
+    {
+      label: t("dashboardPage.footerSafetyProtocols"),
+      path: "/safety-protocols",
+    },
+    {
+      label: t("dashboardPage.footerPrivacyPolicy"),
+      path: "/privacy-policy",
+    },
+    {
+      label: t("dashboardPage.footerSupport"),
+      path: "/support",
     },
   ];
 
@@ -98,6 +107,26 @@ const Support = () => {
           </Card>
         </div>
 
+        {/* Policy Navigation */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-12">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {t("dashboardPage.quickAccess")}
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {policyLinks.map((item) => (
+              <Button
+                key={`${item.label}-${item.path}`}
+                type="button"
+                variant="outline"
+                onClick={() => navigate(item.path)}
+                className="rounded-xl border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
+                {item.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         {/* FAQ Section */}
         <div className="bg-white rounded-lg shadow-sm p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -136,11 +165,6 @@ const Support = () => {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Last Updated */}
-        <div className="mt-8 text-center text-gray-500 text-sm">
-          {t("common.lastUpdated")}: {new Date().toLocaleDateString()}
         </div>
       </div>
     </div>

@@ -77,22 +77,20 @@ export const RegisterLearner = () => {
     setLoading(true);
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
-      const response = await fetch(
-        `${apiBaseUrl}/users/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: formData.fullName,
-            email: formData.email,
-            password: formData.password,
-            licenseType: formData.licenseType,
-          }),
+      const apiBaseUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+      const response = await fetch(`${apiBaseUrl}/users/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          licenseType: formData.licenseType,
+        }),
+      });
 
       const data = await response.json();
 
@@ -129,10 +127,10 @@ export const RegisterLearner = () => {
       {/* --- HEADER --- */}
       <header className="w-full bg-white/90 backdrop-blur-md border-b border-slate-100 fixed top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-10 h-24 flex items-center justify-between">
-          <div className="text-3xl font-black text-blue-600 tracking-tight cursor-pointer">
+          <div className="text-2xl md:text-3xl font-black text-blue-600 tracking-tight cursor-pointer">
             DriveMaster
           </div>
-          <nav className="flex items-center gap-10 text-base font-bold text-slate-700">
+          <nav className="flex items-center gap-10 text-[15px] md:text-base font-semibold text-slate-700">
             <a href="#" className="hover:text-blue-600 transition-colors">
               Safety Center
             </a>
@@ -155,7 +153,7 @@ export const RegisterLearner = () => {
               <h1 className="text-5xl font-black text-[#141b2b] tracking-tight">
                 Create Account
               </h1>
-              <p className="text-slate-500 font-semibold text-base">
+              <p className="text-slate-600 font-medium text-[17px] leading-7">
                 Join DriveMaster and start your journey today.
               </p>
             </div>
@@ -166,13 +164,13 @@ export const RegisterLearner = () => {
                 <TabsTrigger
                   value="login"
                   onClick={() => navigate("/login")}
-                  className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
+                  className="rounded-lg font-semibold text-[15px] data-[state=active]:bg-white data-[state=active]:text-blue-600"
                 >
                   Log In
                 </TabsTrigger>
                 <TabsTrigger
                   value="register"
-                  className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600 shadow-sm"
+                  className="rounded-lg font-semibold text-[15px] data-[state=active]:bg-white data-[state=active]:text-blue-600 shadow-sm"
                 >
                   Register
                 </TabsTrigger>
@@ -202,7 +200,7 @@ export const RegisterLearner = () => {
               )}
               {/* Full Name */}
               <div className="space-y-2.5">
-                <Label className="text-xs font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
+                <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
                   Full Name
                 </Label>
                 <div className="relative">
@@ -219,7 +217,7 @@ export const RegisterLearner = () => {
 
               {/* Email */}
               <div className="space-y-2.5">
-                <Label className="text-xs font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
+                <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
                   Email Address
                 </Label>
                 <div className="relative">
@@ -238,7 +236,7 @@ export const RegisterLearner = () => {
               {/* Passwords */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-2.5">
-                  <Label className="text-xs font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
+                  <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
                     Password
                   </Label>
                   <Input
@@ -251,7 +249,7 @@ export const RegisterLearner = () => {
                   />
                 </div>
                 <div className="space-y-2.5">
-                  <Label className="text-xs font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
+                  <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
                     Confirm
                   </Label>
                   <Input
@@ -270,7 +268,7 @@ export const RegisterLearner = () => {
 
               {/* License Type Select */}
               <div className="space-y-2.5">
-                <Label className="text-xs font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
+                <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
                   License Type
                 </Label>
                 <Select
@@ -318,7 +316,7 @@ export const RegisterLearner = () => {
               <Button
                 type="submit"
                 disabled={loading || success}
-                className="w-full h-16 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl text-lg font-bold shadow-xl shadow-blue-200 transition-all active:scale-[0.98] mt-6"
+                className="w-full h-16 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl text-[17px] font-bold shadow-xl shadow-blue-200 transition-all active:scale-[0.98] mt-6"
               >
                 {loading ? (
                   <Loader className="h-5 w-5 animate-spin" />
@@ -338,7 +336,7 @@ export const RegisterLearner = () => {
                   <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
                     <GraduationCap size={18} />
                   </div>
-                  <span className="font-bold text-[#141b2b]">
+                  <span className="font-semibold text-[15px] text-[#141b2b]">
                     Continue as Instructor
                   </span>
                 </div>
@@ -356,7 +354,7 @@ export const RegisterLearner = () => {
                   <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
                     <ShieldCheck size={18} />
                   </div>
-                  <span className="font-bold text-[#141b2b]">
+                  <span className="font-semibold text-[15px] text-[#141b2b]">
                     Continue as Administrator
                   </span>
                 </div>
@@ -382,14 +380,14 @@ export const RegisterLearner = () => {
               <a
                 key={link}
                 href="#"
-                className="text-base font-semibold text-slate-700 hover:text-blue-600 transition-colors"
+                className="text-[15px] font-medium text-slate-700 hover:text-blue-600 transition-colors"
               >
                 {link}
               </a>
             ))}
           </nav>
 
-          <p className="text-base font-medium text-slate-600 tracking-tight">
+          <p className="text-[15px] font-medium text-slate-600 tracking-tight">
             © 2026 DriveMaster Education. All rights reserved.
           </p>
         </div>

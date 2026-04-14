@@ -101,6 +101,10 @@ const writeAvatarToStorage = (userLike, avatar) => {
 
 export const AccountSettings = () => {
   const { t, i18n } = useTranslation();
+  const [activeSection, setActiveSection] = useState("account");
+  const accountSectionRef = React.useRef(null);
+  const securitySectionRef = React.useRef(null);
+  const subscriptionSectionRef = React.useRef(null);
 
   const parseJsonSafe = (value) => {
     try {
@@ -472,6 +476,52 @@ export const AccountSettings = () => {
     });
   };
 
+  const handleSidebarNavigation = (sectionId) => {
+    setActiveSection(sectionId);
+
+    const sectionMap = {
+      account: accountSectionRef,
+      security: securitySectionRef,
+      subscription: subscriptionSectionRef,
+    };
+
+    const targetRef = sectionMap[sectionId];
+    targetRef?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  useEffect(() => {
+    const sections = [
+      { id: "account", ref: accountSectionRef },
+      { id: "security", ref: securitySectionRef },
+      { id: "subscription", ref: subscriptionSectionRef },
+    ];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+        if (visibleEntries.length === 0) return;
+
+        visibleEntries.sort(
+          (a, b) => b.intersectionRatio - a.intersectionRatio,
+        );
+        const topSection =
+          visibleEntries[0]?.target?.getAttribute("data-section-id");
+        if (topSection) setActiveSection(topSection);
+      },
+      {
+        root: null,
+        threshold: [0.2, 0.35, 0.5, 0.65, 0.8],
+        rootMargin: "-20% 0px -55% 0px",
+      },
+    );
+
+    sections.forEach(({ ref }) => {
+      if (ref.current) observer.observe(ref.current);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const learnerName = personalForm.name || profile?.name || "User";
   const learnerEmail = personalForm.email || profile?.email || "";
   const learnerPhone = personalForm.phone || profile?.phone || "";
@@ -574,8 +624,10 @@ export const AccountSettings = () => {
             {SIDEBAR_NAV.map((item) => (
               <button
                 key={item.id}
+                type="button"
+                onClick={() => handleSidebarNavigation(item.id)}
                 className={`group w-full flex items-center justify-between gap-3 px-3 py-3 rounded-xl text-left transition-all ${
-                  item.active
+                  activeSection === item.id
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-100"
                     : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
                 }`}
@@ -583,7 +635,7 @@ export const AccountSettings = () => {
                 <div className="flex items-center gap-3 min-w-0">
                   <span
                     className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
-                      item.active
+                      activeSection === item.id
                         ? "bg-white/20 text-white"
                         : "bg-blue-100 text-blue-600 group-hover:bg-blue-200"
                     }`}
@@ -597,7 +649,9 @@ export const AccountSettings = () => {
                     </span>
                     <span
                       className={`block text-[11px] truncate ${
-                        item.active ? "text-blue-100" : "text-slate-400"
+                        activeSection === item.id
+                          ? "text-blue-100"
+                          : "text-slate-400"
                       }`}
                     >
                       {t(item.hintKey)}
@@ -607,7 +661,11 @@ export const AccountSettings = () => {
 
                 <ChevronRight
                   size={16}
-                  className={item.active ? "text-blue-100" : "text-slate-300"}
+                  className={
+                    activeSection === item.id
+                      ? "text-blue-100"
+                      : "text-slate-300"
+                  }
                 />
               </button>
             ))}
@@ -627,202 +685,210 @@ export const AccountSettings = () => {
           </div>
 
           {/* 1. Personal Information */}
-          <Card className="border-none shadow-sm bg-[#f1f3ff]">
-            <CardHeader className="flex flex-row items-center gap-3 pb-6">
-              <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                <User size={20} />
-              </div>
-              <CardTitle className="text-lg font-bold">
-                {t("accountSettings.personalInfo")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    {t("accountSettings.fullName")}
-                  </Label>
-                  <Input
-                    value={learnerName}
-                    onChange={(e) =>
-                      setPersonalForm((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    {t("accountSettings.emailAddress")}
-                  </Label>
-                  <Input
-                    value={learnerEmail}
-                    readOnly
-                    className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    {t("accountSettings.phoneNumber")}
-                  </Label>
-                  <Input
-                    value={learnerPhone}
-                    onChange={(e) =>
-                      setPersonalForm((prev) => ({
-                        ...prev,
-                        phone: e.target.value,
-                      }))
-                    }
-                    className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
-                  />
-                </div>
-              </div>
-              {personalStatus.message ? (
-                <p
-                  className={`text-sm font-semibold ${
-                    personalStatus.type === "success"
-                      ? "text-emerald-600"
-                      : "text-red-500"
-                  }`}
-                >
-                  {personalStatus.message}
-                </p>
-              ) : null}
-
-              <Button
-                type="button"
-                onClick={handleSavePersonalInfo}
-                disabled={isSavingProfile}
-                className="rounded-xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-200 disabled:opacity-70"
-              >
-                {t("accountSettings.saveChanges")}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* 2 & 3. Preferences & Notifications Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Study Preferences */}
-            <Card className="lg:col-span-7 border-none shadow-sm bg-[#f1f3ff]">
-              <CardHeader className="flex flex-row items-center gap-3">
+          <div
+            ref={accountSectionRef}
+            data-section-id="account"
+            className="scroll-mt-32"
+          >
+            <Card className="border-none shadow-sm bg-[#f1f3ff]">
+              <CardHeader className="flex flex-row items-center gap-3 pb-6">
                 <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                  <BookOpen size={20} />
+                  <User size={20} />
                 </div>
                 <CardTitle className="text-lg font-bold">
-                  {t("studyPreferences.title")}
+                  {t("accountSettings.personalInfo")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    {t("studyPreferences.dailyGoal")}
-                  </Label>
-                  <Select
-                    value={studyPreferences.dailyStudyGoal}
-                    onValueChange={(value) => {
-                      setStudyPreferences((prev) => ({
-                        ...prev,
-                        dailyStudyGoal: value,
-                      }));
-                      setStudyPreferencesStatus({ type: "", message: "" });
-                    }}
-                  >
-                    <SelectTrigger className="h-12 bg-[#dce2f7] border-none font-medium">
-                      <SelectValue placeholder="Select goal" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="30m">
-                        {t("studyPreferences.goal30m")}
-                      </SelectItem>
-                      <SelectItem value="1h">
-                        {t("studyPreferences.goal1h")}
-                      </SelectItem>
-                      <SelectItem value="2h">
-                        {t("studyPreferences.goal2h")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                      {t("studyPreferences.preferredTime")}
+                      {t("accountSettings.fullName")}
                     </Label>
-                    <Select
-                      value={studyPreferences.preferredTime}
-                      onValueChange={(value) => {
-                        setStudyPreferences((prev) => ({
+                    <Input
+                      value={learnerName}
+                      onChange={(e) =>
+                        setPersonalForm((prev) => ({
                           ...prev,
-                          preferredTime: value,
-                        }));
-                        setStudyPreferencesStatus({ type: "", message: "" });
-                      }}
-                    >
-                      <SelectTrigger className="h-12 bg-[#dce2f7] border-none font-medium">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="morning">
-                          {t("studyPreferences.morning")}
-                        </SelectItem>
-                        <SelectItem value="afternoon">
-                          {t("studyPreferences.afternoon")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                          name: e.target.value,
+                        }))
+                      }
+                      className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                      {t("studyPreferences.language")}
+                      {t("accountSettings.emailAddress")}
                     </Label>
-                    <Select
-                      value={studyPreferences.language}
-                      onValueChange={(value) => {
-                        setStudyPreferences((prev) => ({
+                    <Input
+                      value={learnerEmail}
+                      readOnly
+                      className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                      {t("accountSettings.phoneNumber")}
+                    </Label>
+                    <Input
+                      value={learnerPhone}
+                      onChange={(e) =>
+                        setPersonalForm((prev) => ({
                           ...prev,
-                          language: value,
-                        }));
-                        setStudyPreferencesStatus({ type: "", message: "" });
-                      }}
-                    >
-                      <SelectTrigger className="h-12 bg-[#dce2f7] border-none font-medium">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="en">
-                          {t("studyPreferences.englishUS")}
-                        </SelectItem>
-                        <SelectItem value="vi">
-                          {t("studyPreferences.vietnamese")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                          phone: e.target.value,
+                        }))
+                      }
+                      className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
+                    />
                   </div>
                 </div>
-                {studyPreferencesStatus.message ? (
+                {personalStatus.message ? (
                   <p
                     className={`text-sm font-semibold ${
-                      studyPreferencesStatus.type === "success"
+                      personalStatus.type === "success"
                         ? "text-emerald-600"
                         : "text-red-500"
                     }`}
                   >
-                    {studyPreferencesStatus.message}
+                    {personalStatus.message}
                   </p>
                 ) : null}
 
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={handleSaveStudyPreferences}
-                  className="w-full rounded-xl bg-[#e1e8fd] border-none text-blue-600 font-bold hover:bg-blue-100"
+                  onClick={handleSavePersonalInfo}
+                  disabled={isSavingProfile}
+                  className="rounded-xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-200 disabled:opacity-70"
                 >
-                  {t("studyPreferences.save")}
+                  {t("accountSettings.saveChanges")}
                 </Button>
               </CardContent>
             </Card>
+          </div>
+
+          {/* 2 & 3. Preferences & Notifications Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Study Preferences */}
+            <div className="lg:col-span-7">
+              <Card className="border-none shadow-sm bg-[#f1f3ff]">
+                <CardHeader className="flex flex-row items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                    <BookOpen size={20} />
+                  </div>
+                  <CardTitle className="text-lg font-bold">
+                    {t("studyPreferences.title")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                      {t("studyPreferences.dailyGoal")}
+                    </Label>
+                    <Select
+                      value={studyPreferences.dailyStudyGoal}
+                      onValueChange={(value) => {
+                        setStudyPreferences((prev) => ({
+                          ...prev,
+                          dailyStudyGoal: value,
+                        }));
+                        setStudyPreferencesStatus({ type: "", message: "" });
+                      }}
+                    >
+                      <SelectTrigger className="h-12 bg-[#dce2f7] border-none font-medium">
+                        <SelectValue placeholder="Select goal" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="30m">
+                          {t("studyPreferences.goal30m")}
+                        </SelectItem>
+                        <SelectItem value="1h">
+                          {t("studyPreferences.goal1h")}
+                        </SelectItem>
+                        <SelectItem value="2h">
+                          {t("studyPreferences.goal2h")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                        {t("studyPreferences.preferredTime")}
+                      </Label>
+                      <Select
+                        value={studyPreferences.preferredTime}
+                        onValueChange={(value) => {
+                          setStudyPreferences((prev) => ({
+                            ...prev,
+                            preferredTime: value,
+                          }));
+                          setStudyPreferencesStatus({ type: "", message: "" });
+                        }}
+                      >
+                        <SelectTrigger className="h-12 bg-[#dce2f7] border-none font-medium">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="morning">
+                            {t("studyPreferences.morning")}
+                          </SelectItem>
+                          <SelectItem value="afternoon">
+                            {t("studyPreferences.afternoon")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                        {t("studyPreferences.language")}
+                      </Label>
+                      <Select
+                        value={studyPreferences.language}
+                        onValueChange={(value) => {
+                          setStudyPreferences((prev) => ({
+                            ...prev,
+                            language: value,
+                          }));
+                          setStudyPreferencesStatus({ type: "", message: "" });
+                        }}
+                      >
+                        <SelectTrigger className="h-12 bg-[#dce2f7] border-none font-medium">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en">
+                            {t("studyPreferences.englishUS")}
+                          </SelectItem>
+                          <SelectItem value="vi">
+                            {t("studyPreferences.vietnamese")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {studyPreferencesStatus.message ? (
+                    <p
+                      className={`text-sm font-semibold ${
+                        studyPreferencesStatus.type === "success"
+                          ? "text-emerald-600"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {studyPreferencesStatus.message}
+                    </p>
+                  ) : null}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSaveStudyPreferences}
+                    className="w-full rounded-xl bg-[#e1e8fd] border-none text-blue-600 font-bold hover:bg-blue-100"
+                  >
+                    {t("studyPreferences.save")}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Notifications */}
             <Card className="lg:col-span-5 border-none shadow-sm bg-[#e1e8fd]">
@@ -872,80 +938,149 @@ export const AccountSettings = () => {
           </div>
 
           {/* 4. Account Security */}
-          <Card className="border-none shadow-sm bg-[#f1f3ff]">
-            <CardHeader className="flex flex-row items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                <Lock size={20} />
-              </div>
-              <CardTitle className="text-lg font-bold">
-                {t("accountSettings.accountSecurity")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    {t("accountSettings.currentPassword")}
-                  </Label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    className="h-12 bg-[#dce2f7] border-none font-medium"
-                  />
+          <section
+            ref={securitySectionRef}
+            data-section-id="security"
+            className="scroll-mt-32"
+          >
+            <Card className="border-none shadow-sm bg-[#f1f3ff]">
+              <CardHeader className="flex flex-row items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                  <Lock size={20} />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    {t("accountSettings.newPassword")}
-                  </Label>
-                  <Input
-                    type="password"
-                    placeholder={t("accountSettings.enterNewPassword")}
-                    className="h-12 bg-[#dce2f7] border-none font-medium"
-                  />
+                <CardTitle className="text-lg font-bold">
+                  {t("accountSettings.accountSecurity")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                      {t("accountSettings.currentPassword")}
+                    </Label>
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      className="h-12 bg-[#dce2f7] border-none font-medium"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                      {t("accountSettings.newPassword")}
+                    </Label>
+                    <Input
+                      type="password"
+                      placeholder={t("accountSettings.enterNewPassword")}
+                      className="h-12 bg-[#dce2f7] border-none font-medium"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                      {t("accountSettings.confirmNewPassword")}
+                    </Label>
+                    <Input
+                      type="password"
+                      placeholder={t(
+                        "accountSettings.confirmPasswordPlaceholder",
+                      )}
+                      className="h-12 bg-[#dce2f7] border-none font-medium"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    {t("accountSettings.confirmNewPassword")}
-                  </Label>
-                  <Input
-                    type="password"
-                    placeholder={t(
-                      "accountSettings.confirmPasswordPlaceholder",
-                    )}
-                    className="h-12 bg-[#dce2f7] border-none font-medium"
-                  />
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                className="rounded-xl bg-[#dce2f7] border-slate-200 text-slate-600 font-bold px-8 hover:bg-slate-200 transition-all"
-              >
-                {t("accountSettings.updatePassword")}
-              </Button>
-            </CardContent>
-          </Card>
+                <Button
+                  variant="outline"
+                  className="rounded-xl bg-[#dce2f7] border-slate-200 text-slate-600 font-bold px-8 hover:bg-slate-200 transition-all"
+                >
+                  {t("accountSettings.updatePassword")}
+                </Button>
+              </CardContent>
+            </Card>
+          </section>
 
-          {/* 5. Danger Zone */}
-          <Card className="border border-red-100 shadow-sm bg-[#ffdad61a] overflow-hidden">
-            <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-red-600 rounded-full text-white">
-                  <Trash2 size={24} />
+          <div
+            ref={subscriptionSectionRef}
+            data-section-id="subscription"
+            className="scroll-mt-32"
+          >
+            <Card className="border-none shadow-sm bg-[#f1f3ff]">
+              <CardHeader className="flex flex-row items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                  <CreditCard size={20} />
                 </div>
-                <div className="space-y-1">
-                  <h4 className="text-lg font-bold text-red-600">
-                    {t("accountSettings.dangerZone")}
-                  </h4>
-                  <p className="text-sm text-slate-500 font-medium">
-                    {t("accountSettings.dangerDesc")}
-                  </p>
+                <CardTitle className="text-lg font-bold">
+                  {t("accountSettings.subscription")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2 rounded-2xl bg-white p-5 border border-blue-100/60 shadow-sm">
+                    <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                      {t("accountSettings.currentPlan")}
+                    </Label>
+                    <div className="text-2xl font-black text-[#141b2b]">A1</div>
+                    <p className="text-sm text-slate-500 leading-6">
+                      {t("accountSettings.currentPlanDesc")}
+                    </p>
+                  </div>
+                  <div className="space-y-2 rounded-2xl bg-white p-5 border border-blue-100/60 shadow-sm">
+                    <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                      {t("accountSettings.renewalDate")}
+                    </Label>
+                    <div className="text-xl font-black text-[#141b2b]">
+                      April 14, 2026
+                    </div>
+                    <p className="text-sm text-slate-500 leading-6">
+                      {t("accountSettings.renewalDateDesc")}
+                    </p>
+                  </div>
+                  <div className="space-y-2 rounded-2xl bg-white p-5 border border-blue-100/60 shadow-sm">
+                    <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                      {t("accountSettings.billingEmail")}
+                    </Label>
+                    <div className="text-lg font-black text-[#141b2b] wrap-break-word">
+                      {learnerEmail || t("accountSettings.noEmail")}
+                    </div>
+                    <p className="text-sm text-slate-500 leading-6">
+                      {t("accountSettings.billingEmailDesc")}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <Button className="rounded-xl bg-red-600 hover:bg-red-700 font-bold px-8 h-12 shadow-lg shadow-red-100 transition-all">
-                {t("accountSettings.deleteAccount")}
-              </Button>
-            </CardContent>
-          </Card>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button className="rounded-xl bg-blue-600 hover:bg-blue-700 font-bold px-8 h-12 shadow-lg shadow-blue-200 transition-all">
+                    {t("accountSettings.upgradePlan")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-xl bg-[#dce2f7] border-slate-200 text-slate-600 font-bold px-8 h-12 hover:bg-slate-200 transition-all"
+                  >
+                    {t("accountSettings.manageBilling")}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 5. Danger Zone */}
+            <Card className="border border-red-100 shadow-sm bg-[#ffdad61a] overflow-hidden">
+              <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-red-600 rounded-full text-white">
+                    <Trash2 size={24} />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-lg font-bold text-red-600">
+                      {t("accountSettings.dangerZone")}
+                    </h4>
+                    <p className="text-sm text-slate-500 font-medium">
+                      {t("accountSettings.dangerDesc")}
+                    </p>
+                  </div>
+                </div>
+                <Button className="rounded-xl bg-red-600 hover:bg-red-700 font-bold px-8 h-12 shadow-lg shadow-red-100 transition-all">
+                  {t("accountSettings.deleteAccount")}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </section>
       </main>
     </div>

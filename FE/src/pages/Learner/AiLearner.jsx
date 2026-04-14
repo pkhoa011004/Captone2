@@ -624,7 +624,7 @@ ${correctAnswerLine}
         </section>
 
         {/* 2. Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 flex-1 min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1 min-h-0">
           {/* Left Sidebar */}
           <aside className="lg:col-span-1 flex flex-col gap-6 min-h-0">
             {/* Suggested Topics */}
@@ -699,16 +699,16 @@ ${correctAnswerLine}
           </aside>
 
           {/* Chat Workspace */}
-          <section className="lg:col-span-3 flex flex-col bg-white rounded-[36px] border border-slate-100 shadow-md min-h-0">
-            <div className="flex-1 min-h-0 p-10 space-y-10">
-              <div className="space-y-10">
+          <section className="lg:col-span-3 flex flex-col bg-white rounded-[32px] border border-slate-100 shadow-md">
+            <div className="p-8 space-y-8">
+              <div className="space-y-8">
                 {messages.map((msg, i) =>
                   msg.role === "assistant" ? (
                     <div key={i} className="flex gap-5 max-w-4xl">
                       <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
                         <Sparkles size={22} />
                       </div>
-                      <div className="bg-slate-50 p-6 rounded-3xl rounded-tl-none border border-slate-100 flex-1 shadow-sm">
+                      <div className="bg-slate-50 p-5 rounded-3xl rounded-tl-none border border-slate-100 flex-1 shadow-sm">
                         <p className="text-base text-slate-700 leading-relaxed font-medium whitespace-pre-wrap wrap-break-word">
                           {msg.content}
                         </p>
@@ -724,7 +724,7 @@ ${correctAnswerLine}
                           T
                         </AvatarFallback>
                       </Avatar>
-                      <div className="bg-blue-600 p-6 rounded-3xl rounded-tr-none shadow-md shadow-blue-100 max-w-3xl">
+                      <div className="bg-blue-600 p-5 rounded-3xl rounded-tr-none shadow-md shadow-blue-100 max-w-3xl">
                         <p className="text-base text-white font-medium whitespace-pre-wrap wrap-break-word">
                           {msg.content}
                         </p>
@@ -738,7 +738,7 @@ ${correctAnswerLine}
                     <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
                       <Loader size={22} className="animate-spin" />
                     </div>
-                    <div className="bg-slate-50 p-6 rounded-3xl rounded-tl-none border border-slate-100 shadow-sm">
+                    <div className="bg-slate-50 p-5 rounded-3xl rounded-tl-none border border-slate-100 shadow-sm">
                       <p className="text-base text-slate-500 font-medium">
                         {t("aiPage.analyzing")}
                         AI đang phân tích...
@@ -749,7 +749,7 @@ ${correctAnswerLine}
 
                 {/* Practice by Chapter Section */}
                 {weakTopics.length > 0 && !loading && (
-                  <div className="mt-14 space-y-5 max-w-4xl">
+                  <div className="mt-12 space-y-5 max-w-4xl">
                     <div className="flex items-center gap-3 mb-6">
                       <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
                         <BarChart2 size={20} />
@@ -764,7 +764,7 @@ ${correctAnswerLine}
                       {weakTopics.map((topic, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-2xl hover:shadow-md transition-all"
+                          className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl hover:shadow-md transition-all"
                         >
                           <div className="flex-1">
                             <h4 className="font-bold text-slate-900 text-base">
@@ -773,7 +773,7 @@ ${correctAnswerLine}
                           </div>
                           <Button
                             onClick={() => handlePracticeByChapter(topic)}
-                            className="ml-4 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-xl whitespace-nowrap transition-all"
+                            className="ml-4 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl whitespace-nowrap transition-all"
                           >
                             {t("aiPage.practiceNow")}
                           </Button>
@@ -788,7 +788,7 @@ ${correctAnswerLine}
 
               {/* Quick Suggestions Bubbles */}
               {messages.length <= 1 && (
-                <div className="flex flex-wrap justify-center gap-3 mt-12 mb-4">
+                <div className="flex flex-wrap justify-center gap-3 mt-10 mb-2">
                   {QUICK_SUGGESTIONS.map((s) => (
                     <Button
                       key={s.id}
@@ -807,8 +807,8 @@ ${correctAnswerLine}
             </div>
 
             {/* Input Bar */}
-            <div className="p-8 bg-slate-50/70 border-t border-slate-100">
-              <div className="max-w-5xl mx-auto space-y-5">
+            <div className="p-6 bg-slate-50/70 border-t border-slate-100">
+              <div className="max-w-5xl mx-auto space-y-4">
                 {error && (
                   <div className="p-4 bg-red-100 text-red-700 rounded-2xl text-sm font-medium">
                     {error}
@@ -819,6 +819,7 @@ ${correctAnswerLine}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder={t("aiPage.inputPlaceholder")}
+                    className="w-full h-16 pl-6 pr-28 rounded-3xl border-slate-200 shadow-md focus-visible:ring-blue-400 font-medium placeholder:text-slate-400 text-base bg-white"
                     placeholder="Ask a question about driving rules..."
                     className="w-full h-18 pl-6 pr-28 rounded-3xl border-slate-200 shadow-md focus-visible:ring-blue-400 font-medium placeholder:text-slate-400 text-base bg-white"
                     disabled={loading}
@@ -828,14 +829,14 @@ ${correctAnswerLine}
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="text-slate-400 hover:text-blue-600 rounded-2xl w-12 h-12"
+                      className="text-slate-400 hover:text-blue-600 rounded-2xl w-11 h-11"
                     >
                       <Mic size={20} />
                     </Button>
                     <Button
                       type="submit"
                       size="icon"
-                      className="bg-blue-600 hover:bg-blue-700 rounded-2xl w-12 h-12 shadow-lg shadow-blue-200 disabled:opacity-50"
+                      className="bg-blue-600 hover:bg-blue-700 rounded-2xl w-11 h-11 shadow-lg shadow-blue-200 disabled:opacity-50"
                       disabled={loading || !inputValue.trim()}
                     >
                       {loading ? (

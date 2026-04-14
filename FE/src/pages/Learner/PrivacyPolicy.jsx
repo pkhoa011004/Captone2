@@ -97,11 +97,6 @@ const PrivacyPolicy = () => {
             </p>
           </section>
         </div>
-
-        {/* Last Updated */}
-        <div className="mt-8 text-center text-gray-500 text-sm">
-          {t("common.lastUpdated")}: {new Date().toLocaleDateString()}
-        </div>
       </div>
     </div>
   );

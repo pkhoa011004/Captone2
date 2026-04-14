@@ -16,11 +16,11 @@ import { Card, CardContent } from "../../components/ui/card";
 import { Separator } from "../../components/ui/separator";
 
 const navLinks = [
-  { label: "Features", href: "#" },
-  { label: "How It Works", href: "#" },
-  { label: "Pricing", href: "#" },
-  { label: "About", href: "#" },
-  { label: "Contact", href: "#" },
+  { label: "Features", href: "#features" },
+  { label: "How It Works", href: "#how-it-works" },
+  { label: "Pricing", path: "/signup" },
+  { label: "About", href: "#about" },
+  { label: "Contact", path: "/support" },
 ];
 
 const stats = [
@@ -102,21 +102,21 @@ const additionalFeatures = [
 ];
 
 const footerProduct = [
-  { label: "Theory Learning", href: "#" },
-  { label: "3D Simulation", href: "#" },
-  { label: "AI Assistant", href: "#" },
+  { label: "Theory Learning", path: "/login" },
+  { label: "3D Simulation", path: "/login" },
+  { label: "AI Assistant", path: "/login" },
 ];
 
 const footerCompany = [
-  { label: "About Us", href: "#" },
-  { label: "Contact", href: "#" },
-  { label: "Careers", href: "#" },
+  { label: "About Us", href: "#about" },
+  { label: "Contact", path: "/support" },
+  { label: "Careers", path: "/support" },
 ];
 
 const footerSupport = [
-  { label: "Help Center", href: "#" },
-  { label: "Terms", href: "#" },
-  { label: "Privacy", href: "#" },
+  { label: "Help Center", path: "/support" },
+  { label: "Terms", path: "/safety-protocols" },
+  { label: "Privacy", path: "/privacy-policy" },
 ];
 
 export const LandingPage = () => {
@@ -148,6 +148,20 @@ export const LandingPage = () => {
     }
   };
 
+  const handleLinkAction = (item) => {
+    if (item?.path) {
+      navigate(item.path);
+      return;
+    }
+
+    if (item?.href?.startsWith("#")) {
+      const element = document.querySelector(item.href);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  };
+
   return (
     <div className="w-full flex flex-col min-h-screen bg-white font-sans">
       {/* Navigation */}
@@ -156,25 +170,30 @@ export const LandingPage = () => {
           <div className="w-7 h-7 bg-blue-600 rounded flex items-center justify-center">
             <BookOpenIcon className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-gray-900 text-lg">DriveMaster</span>
+          <span className="font-extrabold text-gray-900 text-xl tracking-tight">
+            DriveMaster
+          </span>
         </div>
         <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
-            <a
+            <button
               key={link.label}
-              href={link.href}
-              onClick={() => setActiveNav(link.label)}
-              className={`text-sm text-gray-600 hover:text-gray-900 transition-colors cursor-pointer ${
-                activeNav === link.label ? "text-gray-900 font-medium" : ""
+              type="button"
+              onClick={() => {
+                setActiveNav(link.label);
+                handleLinkAction(link);
+              }}
+              className={`text-[15px] font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer ${
+                activeNav === link.label ? "text-gray-900 font-semibold" : ""
               }`}
             >
               {link.label}
-            </a>
+            </button>
           ))}
         </nav>
         <div className="flex items-center gap-3">
           <Button
-            className="h-auto bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-md"
+            className="h-auto bg-blue-600 hover:bg-blue-700 text-white text-[15px] px-5 py-2.5 rounded-md font-semibold"
             onClick={() => navigate("/login")}
           >
             Get Started
@@ -182,7 +201,7 @@ export const LandingPage = () => {
           <button
             type="button"
             onClick={() => navigate("/login")}
-            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-[15px] font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
             Log in
           </button>
@@ -209,25 +228,25 @@ export const LandingPage = () => {
               Next-Gen Driver Education
             </span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
+          <h1 className="text-5xl md:text-6xl font-black text-gray-900 leading-[1.05] tracking-tight">
             Learn to Drive{" "}
             <span className="text-blue-600">Smarter &amp; Safer</span>
           </h1>
-          <p className="text-gray-500 text-base leading-relaxed max-w-md">
+          <p className="text-gray-600 text-[17px] leading-8 max-w-lg">
             Master the road with AI-powered personalized lessons, immersive 3D
             simulations, and comprehensive theory guides designed for the modern
             learner.
           </p>
           <div className="flex items-center gap-3 mt-2">
             <Button
-              className="h-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md text-sm font-medium"
+              className="h-auto bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-md text-[15px] font-semibold"
               onClick={() => navigate("/login")}
             >
               Log in →
             </Button>
             <Button
               variant="outline"
-              className="h-auto border border-gray-300 text-gray-700 px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-50"
+              className="h-auto border border-gray-300 text-gray-700 px-7 py-3.5 rounded-md text-[15px] font-semibold hover:bg-gray-50"
             >
               Register
             </Button>
@@ -249,14 +268,14 @@ export const LandingPage = () => {
           {stats.map((stat) => (
             <div key={stat.label} className="flex flex-col items-center gap-1">
               <div className="flex items-end gap-0.5">
-                <span className="text-5xl font-extrabold text-blue-600">
+                <span className="text-6xl font-black text-blue-600 tracking-tight">
                   {stat.value}
                 </span>
-                <span className="text-3xl font-extrabold text-blue-600 mb-1">
+                <span className="text-4xl font-black text-blue-600 mb-1 tracking-tight">
                   {stat.suffix}
                 </span>
               </div>
-              <span className="text-xs font-semibold text-gray-400 tracking-widest uppercase">
+              <span className="text-sm font-semibold text-gray-500 tracking-[0.2em] uppercase">
                 {stat.label}
               </span>
             </div>
@@ -265,19 +284,19 @@ export const LandingPage = () => {
       </section>
 
       {/* Core Platform Section */}
-      <section className="w-full py-16 bg-white">
+      <section id="features" className="w-full py-16 bg-white">
         <div className="max-w-6xl mx-auto px-8">
           <div className="flex flex-col md:flex-row gap-10 mb-12">
             <div className="flex-1">
-              <span className="text-xs font-semibold text-blue-600 tracking-widest uppercase">
+              <span className="text-sm font-semibold text-blue-600 tracking-[0.2em] uppercase">
                 CORE PLATFORM
               </span>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mt-2 leading-tight">
+              <h2 className="text-4xl md:text-5xl font-black text-gray-900 mt-2 leading-tight tracking-tight">
                 Everything you need to master the wheel.
               </h2>
             </div>
             <div className="flex-1 flex items-center">
-              <p className="text-gray-500 text-sm leading-relaxed">
+              <p className="text-gray-600 text-[16px] leading-7">
                 Built with advanced educational frameworks to ensure you
                 don&#39;t just pass, you excel.
               </p>
@@ -293,14 +312,14 @@ export const LandingPage = () => {
                   <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                     {feature.icon}
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">
+                  <h3 className="text-xl font-bold text-gray-900">
                     {feature.title}
                   </h3>
                   <ul className="flex flex-col gap-2">
                     {feature.items.map((item) => (
                       <li
                         key={item}
-                        className="flex items-center gap-2 text-sm text-gray-600"
+                        className="flex items-center gap-2 text-[15px] leading-7 text-gray-700"
                       >
                         <CheckCircle2Icon className="w-4 h-4 text-blue-500 shrink-0" />
                         {item}
@@ -315,15 +334,15 @@ export const LandingPage = () => {
       </section>
 
       {/* Steps Section */}
-      <section className="w-full py-16 bg-gray-50">
+      <section id="how-it-works" className="w-full py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-8 flex flex-col items-center">
-          <span className="text-xs font-semibold text-blue-600 tracking-widest uppercase mb-2">
+          <span className="text-sm font-semibold text-blue-600 tracking-[0.2em] uppercase mb-2">
             THE JOURNEY
           </span>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 text-center leading-tight">
+          <h2 className="text-4xl md:text-5xl font-black text-gray-900 text-center leading-tight tracking-tight">
             Simple Steps to Success
           </h2>
-          <p className="text-gray-400 text-sm mt-2 mb-12 text-center">
+          <p className="text-gray-600 text-[16px] mt-3 mb-12 text-center">
             Start learning in 3 simple steps
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full">
@@ -335,10 +354,10 @@ export const LandingPage = () => {
                 <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-extrabold shadow-md">
                   {step.number}
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-xl font-bold text-gray-900">
                   {step.title}
                 </h3>
-                <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+                <p className="text-[15px] text-gray-700 leading-7 max-w-xs">
                   {step.description}
                 </p>
               </div>
@@ -348,7 +367,7 @@ export const LandingPage = () => {
       </section>
 
       {/* Additional Features Section */}
-      <section className="w-full py-16 bg-white">
+      <section id="about" className="w-full py-16 bg-white">
         <div className="max-w-6xl mx-auto px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {additionalFeatures.map((feature) => (
@@ -356,10 +375,10 @@ export const LandingPage = () => {
                 <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                   {feature.icon}
                 </div>
-                <h3 className="text-base font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-gray-900">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
+                <p className="text-[15px] text-gray-700 leading-7">
                   {feature.description}
                 </p>
               </div>
@@ -377,63 +396,66 @@ export const LandingPage = () => {
                 <div className="w-7 h-7 bg-blue-600 rounded flex items-center justify-center">
                   <BookOpenIcon className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-bold text-white text-base">
+                <span className="font-bold text-white text-lg tracking-tight">
                   DriveMaster
                 </span>
               </div>
-              <p className="text-gray-400 text-xs leading-relaxed">
+              <p className="text-gray-300 text-sm leading-7">
                 Smart driver&#39;s education platform powered by AI. Master the
                 road with confidence.
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              <h4 className="text-sm font-semibold text-white">Product</h4>
+              <h4 className="text-base font-semibold text-white">Product</h4>
               <ul className="flex flex-col gap-2">
                 {footerProduct.map((item) => (
                   <li key={item.label}>
-                    <a
-                      href={item.href}
-                      className="text-gray-400 text-xs hover:text-white transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => handleLinkAction(item)}
+                      className="text-gray-300 text-sm hover:text-white transition-colors text-left"
                     >
                       {item.label}
-                    </a>
+                    </button>
                   </li>
                 ))}
               </ul>
             </div>
             <div className="flex flex-col gap-3">
-              <h4 className="text-sm font-semibold text-white">Company</h4>
+              <h4 className="text-base font-semibold text-white">Company</h4>
               <ul className="flex flex-col gap-2">
                 {footerCompany.map((item) => (
                   <li key={item.label}>
-                    <a
-                      href={item.href}
-                      className="text-gray-400 text-xs hover:text-white transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => handleLinkAction(item)}
+                      className="text-gray-300 text-sm hover:text-white transition-colors text-left"
                     >
                       {item.label}
-                    </a>
+                    </button>
                   </li>
                 ))}
               </ul>
             </div>
             <div className="flex flex-col gap-3">
-              <h4 className="text-sm font-semibold text-white">Support</h4>
+              <h4 className="text-base font-semibold text-white">Support</h4>
               <ul className="flex flex-col gap-2">
                 {footerSupport.map((item) => (
                   <li key={item.label}>
-                    <a
-                      href={item.href}
-                      className="text-gray-400 text-xs hover:text-white transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => handleLinkAction(item)}
+                      className="text-gray-300 text-sm hover:text-white transition-colors text-left"
                     >
                       {item.label}
-                    </a>
+                    </button>
                   </li>
                 ))}
               </ul>
             </div>
           </div>
           <Separator className="bg-gray-700 mb-6" />
-          <p className="text-center text-gray-500 text-xs">
+          <p className="text-center text-gray-400 text-sm">
             © 2026 DriveMaster. All rights reserved.
           </p>
         </div>
