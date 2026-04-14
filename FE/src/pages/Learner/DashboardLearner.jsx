@@ -42,7 +42,23 @@ const QUICK_LINKS = [
   },
 ];
 
-const FOOTER_LINKS = ["SAFETY PROTOCOLS", "PRIVACY POLICY", "SUPPORT"];
+const FOOTER_LINKS = [
+  {
+    label: "SAFETY PROTOCOLS",
+    path: "/learner/safety-protocols",
+    i18nKey: "dashboardPage.footerSafetyProtocols",
+  },
+  {
+    label: "PRIVACY POLICY",
+    path: "/learner/privacy-policy",
+    i18nKey: "dashboardPage.footerPrivacyPolicy",
+  },
+  {
+    label: "SUPPORT",
+    path: "/learner/support",
+    i18nKey: "dashboardPage.footerSupport",
+  },
+];
 const DEFAULT_SIMULATION_IMAGE =
   "https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/Cover_744a8e3903.jpg";
 
@@ -618,17 +634,13 @@ export const DashboardLearner = () => {
         </p>
         <nav className="flex flex-wrap justify-center gap-8">
           {FOOTER_LINKS.map((link) => (
-            <a
-              key={link}
-              href="#"
-              className="text-sm font-bold text-slate-500 tracking-[0.18em] hover:text-blue-600 transition-colors uppercase"
+            <button
+              key={link.label}
+              onClick={() => navigate(link.path)}
+              className="text-sm font-bold text-slate-500 tracking-[0.18em] hover:text-blue-600 transition-colors uppercase bg-transparent border-none cursor-pointer"
             >
-              {link === "SAFETY PROTOCOLS"
-                ? t("dashboardPage.footerSafetyProtocols")
-                : link === "PRIVACY POLICY"
-                  ? t("dashboardPage.footerPrivacyPolicy")
-                  : t("dashboardPage.footerSupport")}
-            </a>
+              {t(link.i18nKey)}
+            </button>
           ))}
         </nav>
       </footer>

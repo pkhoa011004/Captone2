@@ -47,6 +47,40 @@ const API_BASE_URL =
 export const TopHeaderLearner = () => {
   const { t } = useTranslation();
   const cachedAvatarKey = "learnerAvatar";
+
+  const getAvatarStorageKeys = (userLike) => {
+    const email = String(userLike?.email || "")
+      .trim()
+      .toLowerCase();
+    const id = String(userLike?.id ?? userLike?.user_id ?? "")
+      .trim()
+      .toLowerCase();
+
+    const keys = [];
+    if (email) keys.push(`${cachedAvatarKey}:email:${email}`);
+    if (id) {
+      keys.push(`${cachedAvatarKey}:id:${id}`);
+      // backward compatibility with old format
+      keys.push(`${cachedAvatarKey}:${id}`);
+    }
+    return keys;
+  };
+
+  const readAvatarFromStorage = (userLike) => {
+    const keys = getAvatarStorageKeys(userLike);
+    for (const key of keys) {
+      const value = localStorage.getItem(key);
+      if (value) return value;
+    }
+    return "";
+  };
+
+  const writeAvatarToStorage = (userLike, avatar) => {
+    if (!avatar) return;
+    const keys = getAvatarStorageKeys(userLike);
+    keys.forEach((key) => localStorage.setItem(key, avatar));
+  };
+
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(null);
@@ -66,7 +100,17 @@ export const TopHeaderLearner = () => {
   const syncUserFromLocalStorage = useCallback(() => {
     try {
       const userData = parseJsonSafe(localStorage.getItem("user"));
-      setUser(userData);
+      const scopedAvatar = readAvatarFromStorage(userData);
+      const mergedUser = userData
+        ? {
+            ...userData,
+            avatar:
+              scopedAvatar || userData?.avatar || userData?.profileImage || "",
+            profileImage:
+              scopedAvatar || userData?.profileImage || userData?.avatar || "",
+          }
+        : null;
+      setUser(mergedUser);
     } catch (error) {
       console.error("Error parsing user data:", error);
       setUser(null);
@@ -96,11 +140,13 @@ export const TopHeaderLearner = () => {
           const payloadUser = data?.data?.user || data?.data || {};
           const existingUser =
             parseJsonSafe(localStorage.getItem("user")) || {};
-          const cachedAvatar = localStorage.getItem(cachedAvatarKey) || "";
+          const cachedAvatar = readAvatarFromStorage(
+            payloadUser || existingUser,
+          );
           const mergedAvatar =
+            cachedAvatar ||
             existingUser?.avatar ||
             existingUser?.profileImage ||
-            cachedAvatar ||
             payloadUser?.avatar ||
             payloadUser?.profileImage ||
             "";
@@ -115,7 +161,7 @@ export const TopHeaderLearner = () => {
           setUser(mergedUser);
           localStorage.setItem("user", JSON.stringify(mergedUser));
           if (mergedAvatar) {
-            localStorage.setItem(cachedAvatarKey, mergedAvatar);
+            writeAvatarToStorage(mergedUser, mergedAvatar);
           }
         } else {
           syncUserFromLocalStorage();
@@ -162,6 +208,8 @@ export const TopHeaderLearner = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    // cleanup legacy shared key to avoid cross-session avatar bleed
+    localStorage.removeItem(cachedAvatarKey);
     navigate("/login");
   };
 
@@ -172,7 +220,7 @@ export const TopHeaderLearner = () => {
     return (
       user?.avatar ||
       user?.profileImage ||
-      localStorage.getItem(cachedAvatarKey) ||
+      readAvatarFromStorage(user) ||
       undefined
     );
   }, [avatarLoadError, user?.avatar, user?.profileImage]);

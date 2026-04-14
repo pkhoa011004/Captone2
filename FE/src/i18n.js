@@ -18,6 +18,10 @@ const getInitialLanguage = () => {
 const resources = {
   en: {
     translation: {
+      common: {
+        back: "Back",
+        lastUpdated: "Last Updated",
+      },
       accountSettings: {
         title: "Account Settings",
         subtitle:
@@ -280,10 +284,98 @@ const resources = {
         fastLearner: "Fast Learner",
         locked: "Locked",
       },
+      safetyProtocols: {
+        title: "Safety Protocols",
+        subtitle:
+          "Guidelines to ensure a safe learning and driving environment",
+        section1Title: "Simulator Safety Rules",
+        section1Content:
+          "Our advanced simulator is designed with safety in mind. Please follow these protocols when using the virtual driving environment:",
+        section1Item1:
+          "Treat the simulator like real driving - maintain focus and avoid distractions",
+        section1Item2:
+          "Follow all traffic laws and regulations in the simulation",
+        section1Item3:
+          "Report any technical issues immediately to our support team",
+        section2Title: "Platform Security",
+        section2Content:
+          "Your account security is our top priority. Follow these guidelines:",
+        section2Item1: "Keep your password strong and unique",
+        section2Item2: "Never share your login credentials with others",
+        section2Item3: "Log out of your account on shared devices",
+        section3Title: "Learning Environment",
+        section3Content: "To maintain a positive and safe learning community:",
+        section3Item1: "Treat other learners and instructors with respect",
+        section3Item2: "Report any inappropriate behavior to administrators",
+        section3Item3: "Follow the community guidelines at all times",
+        section4Title: "Reporting Issues",
+        section4Content:
+          "If you encounter any safety concerns or suspicious activity, please contact our support team immediately at support@drivemasters.com or call +84 (123) 456-789.",
+      },
+      privacyPolicy: {
+        title: "Privacy Policy",
+        subtitle: "How we protect and use your personal information",
+        section1Title: "Information We Collect",
+        section1Content:
+          "DriveMasters collects information necessary to provide and improve our services, including: your name, email address, phone number, driving license information, training progress, test results, and usage analytics.",
+        section2Title: "How We Use Your Information",
+        section2Content: "We use your information to:",
+        section2Item1: "Provide personalized learning experiences",
+        section2Item2: "Track your progress and provide recommendations",
+        section2Item3: "Improve our platform and services",
+        section2Item4: "Communicate with you about your account and updates",
+        section3Title: "Data Protection",
+        section3Content:
+          "We implement industry-standard security measures to protect your data:",
+        section3Item1: "Encryption of sensitive information",
+        section3Item2: "Regular security audits and updates",
+        section3Item3: "Restricted access to personal data",
+        section4Title: "Your Rights",
+        section4Content: "You have the right to:",
+        section4Item1: "Access, update, or delete your personal information",
+        section4Item2: "Opt-out of marketing communications",
+        section5Title: "Contact Us",
+        section5Content:
+          "If you have questions about this Privacy Policy, please contact us at privacy@drivemasters.com.",
+      },
+      support: {
+        title: "Support & Help Center",
+        subtitle: "Get help whenever you need it",
+        emailTitle: "Email Support",
+        emailDesc:
+          "Send us a detailed message and we'll respond within 24 hours",
+        chatTitle: "Live Chat",
+        chatDesc:
+          "Chat with our team for instant assistance during business hours",
+        phoneTitle: "Phone Support",
+        phoneDesc: "Call our support team for urgent issues",
+        startChat: "Start Chat",
+        faqTitle: "Frequently Asked Questions",
+        faq1Question: "How do I reset my password?",
+        faq1Answer:
+          "Click on 'Forgot Password' on the login page and follow the instructions sent to your email.",
+        faq2Question: "How can I track my learning progress?",
+        faq2Answer:
+          "Your progress is displayed on the Dashboard with detailed analytics and personalized recommendations.",
+        faq3Question: "Is the simulator available offline?",
+        faq3Answer:
+          "The simulator requires an internet connection. Some features may be limited offline.",
+        faq4Question: "How do I purchase a subscription?",
+        faq4Answer:
+          "Go to your Account Settings and select a subscription plan that suits your needs.",
+        needMoreHelp: "Still Need Help?",
+        needMoreHelpDesc:
+          "Our support team is here to help. Contact us anytime with your questions.",
+        contactSupport: "Contact Support Team",
+      },
     },
   },
   vi: {
     translation: {
+      common: {
+        back: "Quay Lại",
+        lastUpdated: "Cập Nhật Lần Cuối",
+      },
       accountSettings: {
         title: "Cài đặt tài khoản",
         subtitle: "Quản lý thông tin cá nhân và tùy chọn lộ trình học của bạn.",
@@ -544,6 +636,92 @@ const resources = {
         safeDriver: "Lái xe an toàn",
         fastLearner: "Tiến bộ nhanh",
         locked: "Đã khoá",
+      },
+      safetyProtocols: {
+        title: "Quy Tắc An Toàn",
+        subtitle: "Hướng dẫn đảm bảo môi trường học tập và lái xe an toàn",
+        section1Title: "Quy Tắc An Toàn Mô Phỏng",
+        section1Content:
+          "Máy mô phỏng nâng cao của chúng tôi được thiết kế với ưu tiên an toàn. Vui lòng tuân theo các giao thức này khi sử dụng môi trường lái xe ảo:",
+        section1Item1:
+          "Cứ xử như lái xe thực - duy trì tập trung và tránh phân tán",
+        section1Item2: "Tuân theo tất cả luật lệ giao thông trong mô phỏng",
+        section1Item3: "Báo cáo ngay bất kỳ vấn đề kỹ thuật nào cho đội hỗ trợ",
+        section2Title: "Bảo Mật Nền Tảng",
+        section2Content:
+          "Bảo mật tài khoản của bạn là ưu tiên hàng đầu của chúng tôi. Hãy tuân theo các hướng dẫn này:",
+        section2Item1: "Giữ mật khẩu của bạn mạnh và độc đáo",
+        section2Item2:
+          "Không bao giờ chia sẻ thông tin đăng nhập của bạn với người khác",
+        section2Item3:
+          "Đăng xuất tài khoản của bạn trên những thiết bị được chia sẻ",
+        section3Title: "Môi Trường Học Tập",
+        section3Content:
+          "Để duy trì một cộng đồng học tập tích cực và an toàn:",
+        section3Item1:
+          "Xử lý các học viên và giảng viên khác một cách tôn trọng",
+        section3Item2:
+          "Báo cáo bất kỳ hành vi không phù hợp nào cho quản trị viên",
+        section3Item3: "Luôn tuân theo các hướng dẫn cộng đồng",
+        section4Title: "Báo Cáo Vấn Đề",
+        section4Content:
+          "Nếu bạn gặp bất kỳ mối quan tâm về an toàn hoặc hoạt động đáng ngờ, vui lòng liên hệ với đội hỗ trợ của chúng tôi ngay lập tức tại support@drivemasters.com hoặc gọi +84 (123) 456-789.",
+      },
+      privacyPolicy: {
+        title: "Chính Sách Bảo Mật",
+        subtitle: "Cách chúng tôi bảo vệ và sử dụng thông tin cá nhân của bạn",
+        section1Title: "Thông Tin Chúng Tôi Thu Thập",
+        section1Content:
+          "DriveMasters thu thập thông tin cần thiết để cung cấp và cải thiện dịch vụ của chúng tôi, bao gồm: tên của bạn, địa chỉ email, số điện thoại, thông tin bằng lái xe, tiến độ đào tạo, kết quả kiểm tra và phân tích sử dụng.",
+        section2Title: "Cách Chúng Tôi Sử Dụng Thông Tin Của Bạn",
+        section2Content: "Chúng tôi sử dụng thông tin của bạn để:",
+        section2Item1: "Cung cấp trải nghiệm học tập được cá nhân hóa",
+        section2Item2: "Theo dõi tiến độ và cung cấp khuyến nghị của bạn",
+        section2Item3: "Cải thiện nền tảng và dịch vụ của chúng tôi",
+        section2Item4: "Liên lạc với bạn về tài khoản và cập nhật của bạn",
+        section3Title: "Bảo Vệ Dữ Liệu",
+        section3Content:
+          "Chúng tôi thực hiện các biện pháp bảo mật theo tiêu chuẩn ngành để bảo vệ dữ liệu của bạn:",
+        section3Item1: "Mã hóa thông tin nhạy cảm",
+        section3Item2: "Kiểm toán bảo mật định kỳ và cập nhật",
+        section3Item3: "Hạn chế quyền truy cập vào dữ liệu cá nhân",
+        section4Title: "Quyền Của Bạn",
+        section4Content: "Bạn có quyền:",
+        section4Item1: "Truy cập, cập nhật hoặc xóa thông tin cá nhân của bạn",
+        section4Item2: "Từ chối các thông báo tiếp thị",
+        section5Title: "Liên Hệ Với Chúng Tôi",
+        section5Content:
+          "Nếu bạn có câu hỏi về Chính sách bảo mật này, vui lòng liên hệ với chúng tôi tại privacy@drivemasters.com.",
+      },
+      support: {
+        title: "Hỗ Trợ & Trung Tâm Trợ Giúp",
+        subtitle: "Nhận trợ giúp bất cứ khi nào bạn cần",
+        emailTitle: "Hỗ Trợ Qua Email",
+        emailDesc:
+          "Gửi cho chúng tôi một tin nhắn chi tiết và chúng tôi sẽ phản hồi trong vòng 24 giờ",
+        chatTitle: "Trò Chuyện Trực Tiếp",
+        chatDesc:
+          "Trò chuyện với đội của chúng tôi để được hỗ trợ tức thì trong giờ làm việc",
+        phoneTitle: "Hỗ Trợ Qua Điện Thoại",
+        phoneDesc: "Gọi đội hỗ trợ của chúng tôi cho các vấn đề khẩn cấp",
+        startChat: "Bắt Đầu Trò Chuyện",
+        faqTitle: "Các Câu Hỏi Thường Gặp",
+        faq1Question: "Làm cách nào để đặt lại mật khẩu của tôi?",
+        faq1Answer:
+          "Nhấp vào 'Quên mật khẩu' trên trang đăng nhập và làm theo hướng dẫn được gửi đến email của bạn.",
+        faq2Question: "Làm cách nào để theo dõi tiến độ học tập của tôi?",
+        faq2Answer:
+          "Tiến độ của bạn được hiển thị trên Bảng điều khiển với phân tích chi tiết và khuyến nghị được cá nhân hóa.",
+        faq3Question: "Máy mô phỏng có sẵn ngoại tuyến không?",
+        faq3Answer:
+          "Máy mô phỏng yêu cầu kết nối Internet. Một số tính năng có thể bị hạn chế ngoại tuyến.",
+        faq4Question: "Làm cách nào để mua gói đăng ký?",
+        faq4Answer:
+          "Đi đến Cài đặt tài khoản của bạn và chọn gói đăng ký phù hợp với nhu cầu của bạn.",
+        needMoreHelp: "Vẫn Cần Trợ Giúp?",
+        needMoreHelpDesc:
+          "Đội hỗ trợ của chúng tôi luôn sẵn sàng giúp. Liên hệ với chúng tôi bất cứ lúc nào nếu bạn có câu hỏi.",
+        contactSupport: "Liên Hệ Đội Hỗ Trợ",
       },
     },
   },
