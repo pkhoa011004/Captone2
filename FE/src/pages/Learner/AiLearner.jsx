@@ -175,6 +175,7 @@ export const AiLearner = () => {
     {
       role: "assistant",
       content: t("aiPage.greeting", { learnerName }),
+      content: `Hi ${learnerName}! I'm your AI driving assistant. I can help explain traffic rules, clarify practice test questions, or give you tips for your upcoming exam. What would you like to learn today?`,
     },
   ]);
   const [conversationId, setConversationId] = useState(null);
@@ -611,6 +612,10 @@ ${correctAnswerLine}
             </h1>
             <p className="text-lg text-slate-500 font-semibold">
               {t("aiPage.subtitle")}
+              AI Assistant
+            </h1>
+            <p className="text-lg text-slate-500 font-semibold">
+              Get instant help with driving questions
             </p>
           </div>
         </section>
@@ -624,6 +629,7 @@ ${correctAnswerLine}
               <CardContent className="p-6 space-y-5">
                 <h3 className="text-base font-black text-[#141b2b] tracking-tight">
                   {t("aiPage.suggestedTopics")}
+                  Suggested Topics
                 </h3>
                 <div className="flex flex-col gap-2">
                   {SUGGESTED_TOPICS.map((topic) => (
@@ -635,6 +641,10 @@ ${correctAnswerLine}
                           null,
                           TOPIC_PROMPTS[topic.id] || t(topic.labelKey),
                         )
+                      key={topic}
+                      className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 text-slate-700 text-base font-semibold transition-colors group"
+                      onClick={() =>
+                        handleSendMessage(null, TOPIC_PROMPTS[topic] || topic)
                       }
                       disabled={loading}
                     >
@@ -654,6 +664,7 @@ ${correctAnswerLine}
               <CardContent className="p-6 space-y-5">
                 <h3 className="text-base font-black text-[#141b2b] tracking-tight">
                   {t("aiPage.pastConversations")}
+                  Past Conversations
                 </h3>
                 <div className="flex flex-col gap-3">
                   {PAST_CONVERSATIONS.map((convo, i) => (
@@ -672,6 +683,10 @@ ${correctAnswerLine}
                       </p>
                       <p className="text-xs text-slate-400 font-medium mt-1">
                         {t(convo.dateKey)}
+                        {convo.title}
+                      </p>
+                      <p className="text-xs text-slate-400 font-medium mt-1">
+                        {convo.date}
                       </p>
                     </div>
                   ))}
@@ -723,6 +738,7 @@ ${correctAnswerLine}
                     <div className="bg-slate-50 p-6 rounded-3xl rounded-tl-none border border-slate-100 shadow-sm">
                       <p className="text-base text-slate-500 font-medium">
                         {t("aiPage.analyzing")}
+                        AI đang phân tích...
                       </p>
                     </div>
                   </div>
@@ -737,6 +753,7 @@ ${correctAnswerLine}
                       </div>
                       <h3 className="text-xl font-black text-[#141b2b] tracking-tight">
                         {t("aiPage.practiceByChapter")}
+                        Ôn tập theo chương
                       </h3>
                     </div>
 
@@ -799,6 +816,7 @@ ${correctAnswerLine}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder={t("aiPage.inputPlaceholder")}
+                    placeholder="Ask a question about driving rules..."
                     className="w-full h-18 pl-6 pr-28 rounded-3xl border-slate-200 shadow-md focus-visible:ring-blue-400 font-medium placeholder:text-slate-400 text-base bg-white"
                     disabled={loading}
                   />
@@ -832,6 +850,10 @@ ${correctAnswerLine}
                   </button>
                   <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
                     <MapIcon size={12} /> {t("aiPage.map")}
+                    <BarChart2 size={12} /> Progress
+                  </button>
+                  <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
+                    <MapIcon size={12} /> Map
                   </button>
                 </div>
               </div>
