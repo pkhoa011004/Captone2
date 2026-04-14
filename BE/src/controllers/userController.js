@@ -181,7 +181,12 @@ export const getUserById = async (req, res, next) => {
 
 export const updateUser = async (req, res, next) => {
   try {
-    const { id } = req.params
+    const id = req.params?.id || req.user?.id
+
+    if (!id) {
+      return errorResponse(res, 'User id is required', 400)
+    }
+
     const updateData = req.validatedData
 
     const user = await UserService.updateUser(id, updateData)

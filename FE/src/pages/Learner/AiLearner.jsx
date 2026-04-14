@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
@@ -21,25 +22,37 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const SUGGESTED_TOPICS = [
-  "Traffic Signs",
-  "Right of Way",
-  "Speed Limits",
-  "Parking Rules",
-  "Emergency",
-  "Vehicle Maintenance",
+  { id: "Traffic Signs", labelKey: "aiPage.topicTrafficSigns" },
+  { id: "Right of Way", labelKey: "aiPage.topicRightOfWay" },
+  { id: "Speed Limits", labelKey: "aiPage.topicSpeedLimits" },
+  { id: "Parking Rules", labelKey: "aiPage.topicParkingRules" },
+  { id: "Emergency", labelKey: "aiPage.topicEmergency" },
+  { id: "Vehicle Maintenance", labelKey: "aiPage.topicVehicleMaintenance" },
 ];
 
 const PAST_CONVERSATIONS = [
-  { title: "Navigating roundabouts...", date: "Today, 10:45 AM", active: true },
-  { title: "Parallel parking tips", date: "Yesterday", active: false },
-  { title: "Hazard perception", date: "Oct 24, 2023", active: false },
+  {
+    titleKey: "aiPage.pastRoundabouts",
+    dateKey: "aiPage.today1045",
+    active: true,
+  },
+  {
+    titleKey: "aiPage.pastParallelParking",
+    dateKey: "aiPage.yesterday",
+    active: false,
+  },
+  {
+    titleKey: "aiPage.pastHazardPerception",
+    dateKey: "aiPage.oct242023",
+    active: false,
+  },
 ];
 
 const QUICK_SUGGESTIONS = [
-  "Explain roundabout rules",
-  "What are speed limits?",
-  "Parking regulations",
-  "Emergency procedures",
+  { id: "Explain roundabout rules", labelKey: "aiPage.quickExplainRoundabout" },
+  { id: "What are speed limits?", labelKey: "aiPage.quickSpeedLimits" },
+  { id: "Parking regulations", labelKey: "aiPage.quickParkingRegulations" },
+  { id: "Emergency procedures", labelKey: "aiPage.quickEmergencyProcedures" },
 ];
 
 const TOPIC_PROMPTS = {
@@ -117,6 +130,7 @@ const computeWeakTopics = (quizAnalysis) => {
 };
 
 export const AiLearner = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const chatEndRef = useRef(null);
@@ -160,6 +174,7 @@ export const AiLearner = () => {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
+      content: t("aiPage.greeting", { learnerName }),
       content: `Hi ${learnerName}! I'm your AI driving assistant. I can help explain traffic rules, clarify practice test questions, or give you tips for your upcoming exam. What would you like to learn today?`,
     },
   ]);
@@ -341,7 +356,7 @@ export const AiLearner = () => {
     } catch (err) {
       console.error("❌ Error in handleSendMessage:", err);
       console.error("📍 Error stack:", err.stack);
-      setError("Failed to send message. Please try again.");
+      setError(t("aiPage.sendFailed"));
       // Remove the user message on error
       setMessages((prev) => prev.slice(0, -1));
     } finally {
@@ -593,6 +608,10 @@ ${correctAnswerLine}
         <section className="space-y-6">
           <div>
             <h1 className="text-4xl font-black text-[#141b2b] tracking-tight font-manrope">
+              {t("aiPage.title")}
+            </h1>
+            <p className="text-lg text-slate-500 font-semibold">
+              {t("aiPage.subtitle")}
               AI Assistant
             </h1>
             <p className="text-lg text-slate-500 font-semibold">
@@ -609,11 +628,19 @@ ${correctAnswerLine}
             <Card className="border-none shadow-md rounded-3xl bg-white/95">
               <CardContent className="p-6 space-y-5">
                 <h3 className="text-base font-black text-[#141b2b] tracking-tight">
+                  {t("aiPage.suggestedTopics")}
                   Suggested Topics
                 </h3>
                 <div className="flex flex-col gap-2">
                   {SUGGESTED_TOPICS.map((topic) => (
                     <button
+                      key={topic.id}
+                      className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 text-slate-700 text-base font-semibold transition-colors group"
+                      onClick={() =>
+                        handleSendMessage(
+                          null,
+                          TOPIC_PROMPTS[topic.id] || t(topic.labelKey),
+                        )
                       key={topic}
                       className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 text-slate-700 text-base font-semibold transition-colors group"
                       onClick={() =>
@@ -621,7 +648,7 @@ ${correctAnswerLine}
                       }
                       disabled={loading}
                     >
-                      {topic}
+                      {t(topic.labelKey)}
                       <ChevronRight
                         size={16}
                         className="text-slate-300 group-hover:text-blue-600"
@@ -636,6 +663,7 @@ ${correctAnswerLine}
             <Card className="border-none shadow-md rounded-3xl bg-white/95">
               <CardContent className="p-6 space-y-5">
                 <h3 className="text-base font-black text-[#141b2b] tracking-tight">
+                  {t("aiPage.pastConversations")}
                   Past Conversations
                 </h3>
                 <div className="flex flex-col gap-3">
@@ -651,6 +679,10 @@ ${correctAnswerLine}
                       <p
                         className={`text-sm font-bold truncate ${convo.active ? "text-[#141b2b]" : "text-slate-600"}`}
                       >
+                        {t(convo.titleKey)}
+                      </p>
+                      <p className="text-xs text-slate-400 font-medium mt-1">
+                        {t(convo.dateKey)}
                         {convo.title}
                       </p>
                       <p className="text-xs text-slate-400 font-medium mt-1">
@@ -705,6 +737,7 @@ ${correctAnswerLine}
                     </div>
                     <div className="bg-slate-50 p-6 rounded-3xl rounded-tl-none border border-slate-100 shadow-sm">
                       <p className="text-base text-slate-500 font-medium">
+                        {t("aiPage.analyzing")}
                         AI đang phân tích...
                       </p>
                     </div>
@@ -719,6 +752,7 @@ ${correctAnswerLine}
                         <BarChart2 size={20} />
                       </div>
                       <h3 className="text-xl font-black text-[#141b2b] tracking-tight">
+                        {t("aiPage.practiceByChapter")}
                         Ôn tập theo chương
                       </h3>
                     </div>
@@ -738,7 +772,7 @@ ${correctAnswerLine}
                             onClick={() => handlePracticeByChapter(topic)}
                             className="ml-4 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-xl whitespace-nowrap transition-all"
                           >
-                            Luyện Tập
+                            {t("aiPage.practiceNow")}
                           </Button>
                         </div>
                       ))}
@@ -754,15 +788,15 @@ ${correctAnswerLine}
                 <div className="flex flex-wrap justify-center gap-3 mt-12 mb-4">
                   {QUICK_SUGGESTIONS.map((s) => (
                     <Button
-                      key={s}
+                      key={s.id}
                       variant="secondary"
                       className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm h-11 px-5 shadow-sm"
                       onClick={() => {
-                        console.log("✅ Quick suggestion clicked:", s);
-                        handleSendMessage(null, s);
+                        console.log("✅ Quick suggestion clicked:", s.id);
+                        handleSendMessage(null, t(s.labelKey));
                       }}
                     >
-                      {s}
+                      {t(s.labelKey)}
                     </Button>
                   ))}
                 </div>
@@ -781,6 +815,7 @@ ${correctAnswerLine}
                   <Input
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
+                    placeholder={t("aiPage.inputPlaceholder")}
                     placeholder="Ask a question about driving rules..."
                     className="w-full h-18 pl-6 pr-28 rounded-3xl border-slate-200 shadow-md focus-visible:ring-blue-400 font-medium placeholder:text-slate-400 text-base bg-white"
                     disabled={loading}
@@ -811,6 +846,10 @@ ${correctAnswerLine}
 
                 <div className="flex justify-center gap-6">
                   <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
+                    <BarChart2 size={12} /> {t("aiPage.progress")}
+                  </button>
+                  <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">
+                    <MapIcon size={12} /> {t("aiPage.map")}
                     <BarChart2 size={12} /> Progress
                   </button>
                   <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-blue-600 tracking-widest uppercase transition-colors">

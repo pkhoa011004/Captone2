@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { useTranslation } from "react-i18next";
 import {
   User,
   UserCircle2,
@@ -36,30 +37,38 @@ import {
 const SIDEBAR_NAV = [
   {
     id: "account",
-    label: "Account Details",
-    hint: "Profile information & avatar",
+    labelKey: "accountSettings.navAccountDetails",
+    hintKey: "accountSettings.navAccountHint",
     icon: UserCircle2,
     active: true,
   },
   {
     id: "security",
-    label: "Security & Privacy",
-    hint: "Password and protection settings",
+    labelKey: "accountSettings.navSecurity",
+    hintKey: "accountSettings.navSecurityHint",
     icon: ShieldCheck,
     active: false,
   },
   {
     id: "subscription",
-    label: "Subscription",
-    hint: "Plan and billing overview",
+    labelKey: "accountSettings.navSubscription",
+    hintKey: "accountSettings.navSubscriptionHint",
     icon: CreditCard,
     active: false,
   },
 ];
 
 const AVATAR_STORAGE_KEY = "learnerAvatar";
+const STUDY_PREFERENCES_STORAGE_KEY = "learnerStudyPreferences";
+const DEFAULT_STUDY_PREFERENCES = {
+  dailyStudyGoal: "1h",
+  preferredTime: "morning",
+  language: "en",
+};
 
 export const AccountSettings = () => {
+  const { t, i18n } = useTranslation();
+
   const parseJsonSafe = (value) => {
     try {
       return JSON.parse(value || "null");
@@ -97,7 +106,32 @@ export const AccountSettings = () => {
     ...(initialLocalProfile || {}),
     avatar: cachedAvatar,
   });
-  const [email, setEmail] = useState("");
+  const [personalForm, setPersonalForm] = useState({
+    name: initialLocalProfile?.name || "",
+    email: initialLocalProfile?.email || "",
+    phone: initialLocalProfile?.phone || "",
+  });
+  const [personalStatus, setPersonalStatus] = useState({
+    type: "",
+    message: "",
+  });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [studyPreferences, setStudyPreferences] = useState(() => {
+    const saved = parseJsonSafe(
+      localStorage.getItem(STUDY_PREFERENCES_STORAGE_KEY),
+    );
+    return {
+      dailyStudyGoal:
+        saved?.dailyStudyGoal || DEFAULT_STUDY_PREFERENCES.dailyStudyGoal,
+      preferredTime:
+        saved?.preferredTime || DEFAULT_STUDY_PREFERENCES.preferredTime,
+      language: saved?.language || DEFAULT_STUDY_PREFERENCES.language,
+    };
+  });
+  const [studyPreferencesStatus, setStudyPreferencesStatus] = useState({
+    type: "",
+    message: "",
+  });
   const [avatarError, setAvatarError] = useState("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
@@ -204,8 +238,13 @@ export const AccountSettings = () => {
   });
 
   useEffect(() => {
-    if (initialLocalProfile?.email) {
-      setEmail(initialLocalProfile.email);
+    if (initialLocalProfile) {
+      setPersonalForm((prev) => ({
+        ...prev,
+        name: initialLocalProfile.name || "",
+        email: initialLocalProfile.email || "",
+        phone: initialLocalProfile.phone || "",
+      }));
     }
 
     const fetchProfile = async () => {
@@ -241,7 +280,11 @@ export const AccountSettings = () => {
         };
 
         setProfile(mergedUserData);
-        setEmail(userData?.email || "");
+        setPersonalForm({
+          name: userData?.name || "",
+          email: userData?.email || "",
+          phone: userData?.phone || "",
+        });
 
         // Keep local user cache in sync for other screens using localStorage user.
         syncLocalUser(mergedUserData);
@@ -267,9 +310,116 @@ export const AccountSettings = () => {
     });
   }, [profile]);
 
-  const learnerName = profile?.name || "User";
-  const learnerEmail = profile?.email || "";
-  const learnerPhone = profile?.phone || "";
+  const handleSavePersonalInfo = async () => {
+    const trimmedName = String(personalForm.name || "").trim();
+    const trimmedPhone = String(personalForm.phone || "").trim();
+
+    if (trimmedName.length < 2) {
+      setPersonalStatus({
+        type: "error",
+        message: t("accountSettings.fullNameMin"),
+      });
+      return;
+    }
+
+    try {
+      setIsSavingProfile(true);
+      setPersonalStatus({ type: "", message: "" });
+
+      const userInfo = parseJsonSafe(localStorage.getItem("userInfo"));
+      const token = localStorage.getItem("token") || userInfo?.accessToken;
+      if (!token) {
+        setPersonalStatus({
+          type: "error",
+          message: t("accountSettings.loginAgain"),
+        });
+        return;
+      }
+
+      const response = await fetch(`${apiBaseUrl}/users/profile`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: trimmedName,
+          phone: trimmedPhone,
+        }),
+      });
+
+      if (!response.ok) {
+        const errPayload = await response.json().catch(() => null);
+        const detailedMessage =
+          errPayload?.errors?.[0]?.message ||
+          errPayload?.details?.[0]?.message ||
+          errPayload?.details?.[0] ||
+          "";
+        const message =
+          detailedMessage ||
+          errPayload?.message ||
+          errPayload?.error ||
+          t("accountSettings.failedUpdate");
+        throw new Error(message);
+      }
+
+      const payload = await response.json();
+      const userDataRaw = payload?.data?.user || payload?.data || payload;
+      const userData = normalizeProfile(userDataRaw) || {};
+
+      const mergedUserData = {
+        ...profile,
+        ...userData,
+        name: userData.name || trimmedName,
+        phone: userData.phone ?? trimmedPhone,
+        email: userData.email || personalForm.email || "",
+      };
+
+      setProfile(mergedUserData);
+      setPersonalForm((prev) => ({
+        ...prev,
+        name: mergedUserData.name || "",
+        phone: mergedUserData.phone || "",
+        email: mergedUserData.email || prev.email || "",
+      }));
+      syncLocalUser(mergedUserData);
+      setPersonalStatus({
+        type: "success",
+        message: t("accountSettings.profileUpdated"),
+      });
+    } catch (err) {
+      console.error("Failed to update learner profile:", err);
+      setPersonalStatus({
+        type: "error",
+        message: err?.message || t("accountSettings.failedUpdate"),
+      });
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleSaveStudyPreferences = () => {
+    const nextPreferences = {
+      dailyStudyGoal: studyPreferences.dailyStudyGoal,
+      preferredTime: studyPreferences.preferredTime,
+      language: studyPreferences.language,
+    };
+
+    localStorage.setItem(
+      STUDY_PREFERENCES_STORAGE_KEY,
+      JSON.stringify(nextPreferences),
+    );
+    syncLocalUser({ studyPreferences: nextPreferences });
+    i18n.changeLanguage(nextPreferences.language);
+    setStudyPreferencesStatus({
+      type: "success",
+      message: t("studyPreferences.saved"),
+    });
+  };
+
+  const learnerName = personalForm.name || profile?.name || "User";
+  const learnerEmail = personalForm.email || profile?.email || "";
+  const learnerPhone = personalForm.phone || profile?.phone || "";
   const learnerLicense = profile?.license_type || "N/A";
   const learnerAvatar = profile?.avatar || profile?.profileImage || "";
 
@@ -320,14 +470,14 @@ export const AccountSettings = () => {
                   {learnerName}
                 </h3>
                 <p className="text-sm text-slate-500 font-medium">
-                  {learnerEmail || "No email"}
+                  {learnerEmail || t("accountSettings.noEmail")}
                 </p>
               </div>
 
               <div className="pt-4 border-t border-slate-50 flex flex-col gap-3">
                 <div className="flex justify-between items-center px-4">
                   <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
-                    License Type
+                    {t("accountSettings.licenseType")}
                   </span>
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md text-[10px] font-bold">
                     {learnerLicense}
@@ -335,7 +485,7 @@ export const AccountSettings = () => {
                 </div>
                 <div className="flex justify-between items-center px-4">
                   <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
-                    Joined
+                    {t("accountSettings.joined")}
                   </span>
                   <span className="text-xs font-bold text-[#141b2b]">
                     {joinedLabel}
@@ -368,14 +518,14 @@ export const AccountSettings = () => {
 
                   <span className="min-w-0">
                     <span className="block text-sm font-bold truncate">
-                      {item.label}
+                      {t(item.labelKey)}
                     </span>
                     <span
                       className={`block text-[11px] truncate ${
                         item.active ? "text-blue-100" : "text-slate-400"
                       }`}
                     >
-                      {item.hint}
+                      {t(item.hintKey)}
                     </span>
                   </span>
                 </div>
@@ -394,10 +544,10 @@ export const AccountSettings = () => {
           {/* Header */}
           <div className="space-y-1">
             <h1 className="text-3xl font-black text-[#141b2b] tracking-tight font-manrope">
-              Account Settings
+              {t("accountSettings.title")}
             </h1>
             <p className="text-slate-500 font-medium leading-relaxed">
-              Manage your personal information and learning journey preferences.
+              {t("accountSettings.subtitle")}
             </p>
           </div>
 
@@ -408,44 +558,71 @@ export const AccountSettings = () => {
                 <User size={20} />
               </div>
               <CardTitle className="text-lg font-bold">
-                Personal Information
+                {t("accountSettings.personalInfo")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    Full Name
+                    {t("accountSettings.fullName")}
                   </Label>
                   <Input
                     value={learnerName}
+                    onChange={(e) =>
+                      setPersonalForm((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
+                    {t("accountSettings.emailAddress")}
+                  </Label>
+                  <Input
+                    value={learnerEmail}
                     readOnly
                     className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    Email Address
-                  </Label>
-                  <Input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    Phone Number
+                    {t("accountSettings.phoneNumber")}
                   </Label>
                   <Input
                     value={learnerPhone}
-                    readOnly
+                    onChange={(e) =>
+                      setPersonalForm((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
                     className="h-12 bg-[#dce2f7] border-none focus-visible:ring-blue-600 font-medium"
                   />
                 </div>
               </div>
-              <Button className="rounded-xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-200">
-                Save Changes
+              {personalStatus.message ? (
+                <p
+                  className={`text-sm font-semibold ${
+                    personalStatus.type === "success"
+                      ? "text-emerald-600"
+                      : "text-red-500"
+                  }`}
+                >
+                  {personalStatus.message}
+                </p>
+              ) : null}
+
+              <Button
+                type="button"
+                onClick={handleSavePersonalInfo}
+                disabled={isSavingProfile}
+                className="rounded-xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-200 disabled:opacity-70"
+              >
+                {t("accountSettings.saveChanges")}
               </Button>
             </CardContent>
           </Card>
@@ -459,64 +636,115 @@ export const AccountSettings = () => {
                   <BookOpen size={20} />
                 </div>
                 <CardTitle className="text-lg font-bold">
-                  Study Preferences
+                  {t("studyPreferences.title")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    Daily Study Goal
+                    {t("studyPreferences.dailyGoal")}
                   </Label>
-                  <Select defaultValue="1h">
+                  <Select
+                    value={studyPreferences.dailyStudyGoal}
+                    onValueChange={(value) => {
+                      setStudyPreferences((prev) => ({
+                        ...prev,
+                        dailyStudyGoal: value,
+                      }));
+                      setStudyPreferencesStatus({ type: "", message: "" });
+                    }}
+                  >
                     <SelectTrigger className="h-12 bg-[#dce2f7] border-none font-medium">
                       <SelectValue placeholder="Select goal" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="30m">30 Minutes (Beginner)</SelectItem>
-                      <SelectItem value="1h">1 Hour (Consistent)</SelectItem>
-                      <SelectItem value="2h">2 Hours (Intense)</SelectItem>
+                      <SelectItem value="30m">
+                        {t("studyPreferences.goal30m")}
+                      </SelectItem>
+                      <SelectItem value="1h">
+                        {t("studyPreferences.goal1h")}
+                      </SelectItem>
+                      <SelectItem value="2h">
+                        {t("studyPreferences.goal2h")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                      Preferred Time
+                      {t("studyPreferences.preferredTime")}
                     </Label>
-                    <Select defaultValue="morning">
+                    <Select
+                      value={studyPreferences.preferredTime}
+                      onValueChange={(value) => {
+                        setStudyPreferences((prev) => ({
+                          ...prev,
+                          preferredTime: value,
+                        }));
+                        setStudyPreferencesStatus({ type: "", message: "" });
+                      }}
+                    >
                       <SelectTrigger className="h-12 bg-[#dce2f7] border-none font-medium">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="morning">
-                          Morning (8AM - 11AM)
+                          {t("studyPreferences.morning")}
                         </SelectItem>
                         <SelectItem value="afternoon">
-                          Afternoon (1PM - 4PM)
+                          {t("studyPreferences.afternoon")}
                         </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                      Language
+                      {t("studyPreferences.language")}
                     </Label>
-                    <Select defaultValue="en">
+                    <Select
+                      value={studyPreferences.language}
+                      onValueChange={(value) => {
+                        setStudyPreferences((prev) => ({
+                          ...prev,
+                          language: value,
+                        }));
+                        setStudyPreferencesStatus({ type: "", message: "" });
+                      }}
+                    >
                       <SelectTrigger className="h-12 bg-[#dce2f7] border-none font-medium">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="en">English (US)</SelectItem>
-                        <SelectItem value="vi">Vietnamese</SelectItem>
+                        <SelectItem value="en">
+                          {t("studyPreferences.englishUS")}
+                        </SelectItem>
+                        <SelectItem value="vi">
+                          {t("studyPreferences.vietnamese")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
+                {studyPreferencesStatus.message ? (
+                  <p
+                    className={`text-sm font-semibold ${
+                      studyPreferencesStatus.type === "success"
+                        ? "text-emerald-600"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {studyPreferencesStatus.message}
+                  </p>
+                ) : null}
+
                 <Button
+                  type="button"
                   variant="outline"
+                  onClick={handleSaveStudyPreferences}
                   className="w-full rounded-xl bg-[#e1e8fd] border-none text-blue-600 font-bold hover:bg-blue-100"
                 >
-                  Save Preferences
+                  {t("studyPreferences.save")}
                 </Button>
               </CardContent>
             </Card>
@@ -528,25 +756,25 @@ export const AccountSettings = () => {
                   <Bell size={20} />
                 </div>
                 <CardTitle className="text-lg font-bold">
-                  Notifications
+                  {t("accountSettings.notifications")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
                   {
                     id: "email",
-                    label: "Email Reports",
-                    desc: "Weekly progress summary",
+                    label: t("accountSettings.emailReports"),
+                    desc: t("accountSettings.emailReportsDesc"),
                   },
                   {
                     id: "sms",
-                    label: "SMS Reminders",
-                    desc: "Alerts for upcoming bookings",
+                    label: t("accountSettings.smsReminders"),
+                    desc: t("accountSettings.smsRemindersDesc"),
                   },
                   {
                     id: "exam",
-                    label: "Exam Reminders",
-                    desc: "24h before test time",
+                    label: t("accountSettings.examReminders"),
+                    desc: t("accountSettings.examRemindersDesc"),
                   },
                 ].map((item) => (
                   <div
@@ -575,14 +803,14 @@ export const AccountSettings = () => {
                 <Lock size={20} />
               </div>
               <CardTitle className="text-lg font-bold">
-                Account Security
+                {t("accountSettings.accountSecurity")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    Current Password
+                    {t("accountSettings.currentPassword")}
                   </Label>
                   <Input
                     type="password"
@@ -592,21 +820,23 @@ export const AccountSettings = () => {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    New Password
+                    {t("accountSettings.newPassword")}
                   </Label>
                   <Input
                     type="password"
-                    placeholder="Enter new password"
+                    placeholder={t("accountSettings.enterNewPassword")}
                     className="h-12 bg-[#dce2f7] border-none font-medium"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold text-slate-500 tracking-widest uppercase ml-1">
-                    Confirm New Password
+                    {t("accountSettings.confirmNewPassword")}
                   </Label>
                   <Input
                     type="password"
-                    placeholder="Confirm new password"
+                    placeholder={t(
+                      "accountSettings.confirmPasswordPlaceholder",
+                    )}
                     className="h-12 bg-[#dce2f7] border-none font-medium"
                   />
                 </div>
@@ -615,7 +845,7 @@ export const AccountSettings = () => {
                 variant="outline"
                 className="rounded-xl bg-[#dce2f7] border-slate-200 text-slate-600 font-bold px-8 hover:bg-slate-200 transition-all"
               >
-                Update Password
+                {t("accountSettings.updatePassword")}
               </Button>
             </CardContent>
           </Card>
@@ -629,16 +859,15 @@ export const AccountSettings = () => {
                 </div>
                 <div className="space-y-1">
                   <h4 className="text-lg font-bold text-red-600">
-                    Danger Zone
+                    {t("accountSettings.dangerZone")}
                   </h4>
                   <p className="text-sm text-slate-500 font-medium">
-                    Once you delete your account, there is no going back. Please
-                    be certain.
+                    {t("accountSettings.dangerDesc")}
                   </p>
                 </div>
               </div>
               <Button className="rounded-xl bg-red-600 hover:bg-red-700 font-bold px-8 h-12 shadow-lg shadow-red-100 transition-all">
-                Delete Account
+                {t("accountSettings.deleteAccount")}
               </Button>
             </CardContent>
           </Card>

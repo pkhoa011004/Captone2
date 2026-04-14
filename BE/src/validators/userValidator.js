@@ -30,8 +30,8 @@ export const loginSchema = Joi.object({
 })
 
 export const updateUserSchema = Joi.object({
-  name: Joi.string().min(2).optional(),
-  phone: Joi.string().optional(),
+  name: Joi.string().trim().min(2).optional(),
+  phone: Joi.string().trim().allow('').optional(),
   email: Joi.string().email().optional(),
 })
 

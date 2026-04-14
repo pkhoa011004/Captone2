@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Bell,
   CarFront,
@@ -11,16 +12,33 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const navItems = [
-  { label: "Dashboard", path: "/learner" },
-  { label: "Practice Tests", path: "/learner/practice-tests" },
-  { label: "AI Assistant", path: "/learner/ai-assistant" },
-  { label: "Simulation", path: "/learner/simulator" },
-  { label: "Schedule", path: "/learner/schedule" },
+  { labelKey: "learnerHeader.dashboard", path: "/learner", active: true },
+  {
+    labelKey: "learnerHeader.practiceTests",
+    path: "/learner/practice-tests",
+    active: false,
+  },
+  {
+    labelKey: "learnerHeader.aiAssistant",
+    path: "/learner/ai-assistant",
+    active: false,
+  },
+  {
+    labelKey: "learnerHeader.simulation",
+    path: "/learner/simulator",
+    active: false,
+  },
+  {
+    labelKey: "learnerHeader.schedule",
+    path: "/learner/schedule",
+    active: false,
+  },
 ];
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
 
 export const TopHeaderLearner = () => {
+  const { t } = useTranslation();
   const cachedAvatarKey = "learnerAvatar";
   const navigate = useNavigate();
   const location = useLocation();
@@ -132,7 +150,7 @@ export const TopHeaderLearner = () => {
                   : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
-              {item.label}
+              {t(item.labelKey)}
             </button>
           ))}
         </nav>
@@ -160,7 +178,9 @@ export const TopHeaderLearner = () => {
                 <span className="text-[15px] font-black text-[#141b2b] group-hover:text-blue-600 transition-colors">
                   {user?.name || "User"}
                 </span>
-                <span className="text-[12px] font-semibold text-slate-400">Learner</span>
+                <span className="text-[12px] font-semibold text-slate-400">
+                  {t("learnerHeader.learner")}
+                </span>
               </div>
               <Avatar className="w-11 h-11 border-2 border-white shadow-md">
                 <AvatarImage src={avatarSrc} alt="Profile" />
@@ -172,9 +192,13 @@ export const TopHeaderLearner = () => {
 
             {isProfileOpen && (
               <div className="absolute right-0 top-14 w-72 rounded-3xl border border-blue-100 bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] z-50">
-                <div className="mb-3 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border border-blue-100/70">
-                  <p className="text-[11px] font-black tracking-[0.18em] text-blue-500 uppercase">Profile - Learner</p>
-                  <p className="mt-1 text-sm font-bold text-slate-800 truncate">{user?.email || "No email"}</p>
+                <div className="mb-3 rounded-2xl bg-linear-to-r from-blue-50 to-indigo-50 px-4 py-3 border border-blue-100/70">
+                  <p className="text-[11px] font-black tracking-[0.18em] text-blue-500 uppercase">
+                    {t("learnerHeader.profileMenu")}
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-slate-800 truncate">
+                    {user?.email || "No email"}
+                  </p>
                 </div>
 
                 <button
@@ -185,7 +209,7 @@ export const TopHeaderLearner = () => {
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
                       <UserCircle2 className="h-5 w-5" />
                     </span>
-                    Profile
+                    {t("learnerHeader.profile")}
                   </span>
                   <ChevronRight className="h-5 w-5 text-slate-300" />
                 </button>
@@ -198,7 +222,7 @@ export const TopHeaderLearner = () => {
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
                       <LogOut className="h-5 w-5" />
                     </span>
-                    Logout
+                    {t("learnerHeader.logout")}
                   </span>
                   <ChevronRight className="h-5 w-5 text-slate-300" />
                 </button>

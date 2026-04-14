@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   FileText,
@@ -70,12 +71,12 @@ const PRACTICE_TOPICS = [
 ];
 
 const CATEGORY_LABELS = {
-  REGULATIONS: "Khái niệm & quy tắc",
-  TRAFFIC_CULTURE: "Văn hóa giao thông",
-  DRIVING_TECHNIQUE: "Kỹ thuật lái xe",
-  VEHICLE_REPAIR: "Cấu tạo & sửa chữa",
-  TRAFFIC_SIGNS: "Biển báo đường bộ",
-  SITUATION_HANDLING: "Sa hình & tình huống",
+  REGULATIONS: "practiceTestsPage.categoryRegulations",
+  TRAFFIC_CULTURE: "practiceTestsPage.categoryTrafficCulture",
+  DRIVING_TECHNIQUE: "practiceTestsPage.categoryDrivingTechnique",
+  VEHICLE_REPAIR: "practiceTestsPage.categoryVehicleRepair",
+  TRAFFIC_SIGNS: "practiceTestsPage.categoryTrafficSigns",
+  SITUATION_HANDLING: "practiceTestsPage.categorySituationHandling",
 };
 
 const LEGACY_TOPIC_TITLES = {
@@ -88,11 +89,14 @@ const LEGACY_TOPIC_TITLES = {
   "night-weather-driving": "Night & Weather Driving",
 };
 
-const buildTopicTitle = (topic, index) => {
+const buildTopicTitle = (topic, index, t) => {
   if (topic?.isCustom) {
     const customTitle =
-      topic.titleOverride || topic.examName || topic.title || "Đề tự tạo";
-    return String(customTitle).trim() || "Đề tự tạo";
+      topic.titleOverride ||
+      topic.examName ||
+      topic.title ||
+      t("practiceTestsPage.customExam");
+    return String(customTitle).trim() || t("practiceTestsPage.customExam");
   }
 
   if (topic.titleOverride) {
@@ -100,15 +104,15 @@ const buildTopicTitle = (topic, index) => {
   }
 
   const labels = (topic.selectedCategories || [])
-    .map((category) => CATEGORY_LABELS[category] || category)
+    .map((category) => t(CATEGORY_LABELS[category] || category))
     .filter(Boolean);
 
   if (!labels.length) {
-    return `Đề ${index + 1} - ${topic.questions} câu`;
+    return `${t("practiceTestsPage.exam")} ${index + 1} - ${topic.questions} ${t("practiceTestsPage.questions")}`;
   }
 
   const shortLabel = labels.slice(0, 2).join(" + ");
-  return `Đề ${index + 1}: ${shortLabel}`;
+  return `${t("practiceTestsPage.exam")} ${index + 1}: ${shortLabel}`;
 };
 
 const PRACTICE_RESULTS_STORAGE_KEY = "practiceTopicResults";
@@ -216,6 +220,7 @@ const getDifficultyStyles = (level) => {
 };
 
 export const PracticeTests = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [storedResults] = useState(() => readPracticeResults());
   const [customTopics] = useState(() => readCustomPracticeTopics());
@@ -259,7 +264,7 @@ export const PracticeTests = () => {
   const topicsWithResults = useMemo(
     () =>
       filteredPracticeTopics.map((topic, index) => {
-        const topicTitle = buildTopicTitle(topic, index);
+        const topicTitle = buildTopicTitle(topic, index, t);
         const result =
           storedResults[topic.id] ||
           storedResults[topicTitle] ||
@@ -277,7 +282,7 @@ export const PracticeTests = () => {
           attemptCount: Number(result?.attemptCount || 0),
         };
       }),
-    [filteredPracticeTopics, storedResults],
+    [filteredPracticeTopics, storedResults, t],
   );
 
   const handleStartOrRetake = (topic) => {
@@ -325,38 +330,42 @@ export const PracticeTests = () => {
     }, 0);
 
     const readinessScore =
-      averageScore >= 80 ? "High" : averageScore >= 60 ? "Medium" : "Low";
+      averageScore >= 80
+        ? t("practiceTestsPage.high")
+        : averageScore >= 60
+          ? t("practiceTestsPage.medium")
+          : t("practiceTestsPage.low");
 
     return [
       {
-        label: "Tests Completed",
+        label: t("practiceTestsPage.testsCompleted"),
         value: String(testsCompleted),
         icon: <FileText size={20} />,
-        badge: "OVERALL",
+        badge: t("practiceTestsPage.overall"),
         color: "bg-slate-100",
       },
       {
-        label: "Average Score",
+        label: t("practiceTestsPage.averageScore"),
         value: `${averageScore}%`,
         icon: <Trophy size={20} />,
         color: "bg-blue-100",
         highlight: true,
       },
       {
-        label: "Questions Answered",
+        label: t("practiceTestsPage.questionsAnswered"),
         value: String(questionsAnswered),
         icon: <HelpCircle size={20} />,
         color: "bg-slate-100",
       },
       {
-        label: "Readiness Score",
+        label: t("practiceTestsPage.readinessScore"),
         value: readinessScore,
         icon: <Activity size={20} />,
         color: "bg-slate-100",
         textColor: "text-blue-600",
       },
     ];
-  }, [topicsWithResults, storedResults]);
+  }, [topicsWithResults, storedResults, t]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
@@ -364,10 +373,10 @@ export const PracticeTests = () => {
         {/* 1. Header */}
         <header className="space-y-1">
           <h1 className="text-4xl font-extrabold text-[#141b2b] tracking-tight font-manrope">
-            Practice Tests
+            {t("practiceTestsPage.title")}
           </h1>
           <p className="text-lg text-slate-500">
-            Choose a topic and test your knowledge
+            {t("practiceTestsPage.subtitle")}
           </p>
         </header>
 
@@ -415,7 +424,7 @@ export const PracticeTests = () => {
         {/* 3. Filter Row */}
         <section className="flex flex-col md:flex-row justify-between items-center gap-4">
           <h2 className="text-2xl font-bold text-[#141b2b]">
-            Choose a Practice Test
+            {t("practiceTestsPage.choosePracticeTest")}
           </h2>
           <div className="flex gap-2">
             <Button
@@ -427,14 +436,14 @@ export const PracticeTests = () => {
               }}
               className="rounded-xl bg-[#e1e8fd] text-blue-700 hover:bg-blue-100 font-bold px-6 border-none"
             >
-              All Topics
+              {t("practiceTestsPage.allTopics")}
             </Button>
             <Button
               type="button"
               onClick={() => navigate("/learner/create-exam")}
               className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 border-none"
             >
-              Create Exam
+              {t("practiceTestsPage.createExam")}
             </Button>
             <Button
               type="button"
@@ -443,7 +452,7 @@ export const PracticeTests = () => {
               variant="ghost"
               className={`rounded-xl font-bold px-6 gap-2 transition-colors ${showFilters ? "text-blue-700 bg-blue-50 hover:bg-blue-100" : "text-slate-500 hover:bg-slate-100"}`}
             >
-              <Filter size={16} /> Filter
+              <Filter size={16} /> {t("practiceTestsPage.filter")}
             </Button>
           </div>
         </section>
@@ -452,14 +461,17 @@ export const PracticeTests = () => {
           <section className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4 shadow-sm">
             <div className="space-y-2">
               <p className="text-sm font-bold text-[#141b2b]">
-                Lọc theo độ khó
+                {t("practiceTestsPage.filterDifficulty")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { value: "ALL", label: "All" },
-                  { value: "EASY", label: "Easy" },
-                  { value: "MEDIUM", label: "Medium" },
-                  { value: "HARD", label: "Hard" },
+                  { value: "ALL", label: t("practiceTestsPage.all") },
+                  { value: "EASY", label: t("practiceTestsPage.easy") },
+                  {
+                    value: "MEDIUM",
+                    label: t("practiceTestsPage.mediumDifficulty"),
+                  },
+                  { value: "HARD", label: t("practiceTestsPage.hard") },
                 ].map((item) => {
                   const active = difficultyFilter === item.value;
                   return (
@@ -483,15 +495,15 @@ export const PracticeTests = () => {
 
             <div className="space-y-2">
               <p className="text-sm font-bold text-[#141b2b]">
-                Lọc theo chủ đề
+                {t("practiceTestsPage.filterTopic")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {availableCategories.map((category) => {
                   const active = categoryFilter === category;
                   const label =
                     category === "ALL"
-                      ? "All categories"
-                      : CATEGORY_LABELS[category] || category;
+                      ? t("practiceTestsPage.allCategories")
+                      : t(CATEGORY_LABELS[category] || category);
 
                   return (
                     <Button
@@ -514,7 +526,9 @@ export const PracticeTests = () => {
 
             <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
               <p className="text-sm text-slate-500 font-medium">
-                Showing <b>{topicsWithResults.length}</b> topic(s)
+                {t("practiceTestsPage.showing")}{" "}
+                <b>{topicsWithResults.length}</b>{" "}
+                {t("practiceTestsPage.topics")}
               </p>
               <Button
                 type="button"
@@ -526,7 +540,7 @@ export const PracticeTests = () => {
                 }}
                 className="rounded-xl text-slate-500 font-bold"
               >
-                Reset filters
+                {t("practiceTestsPage.resetFilters")}
               </Button>
             </div>
           </section>
@@ -554,7 +568,11 @@ export const PracticeTests = () => {
                   <Badge
                     className={`${getDifficultyStyles(topic.difficulty)} border rounded-full px-3 py-1 font-bold tracking-widest text-[10px]`}
                   >
-                    {topic.difficulty}
+                    {topic.difficulty === "EASY"
+                      ? t("practiceTestsPage.easy")
+                      : topic.difficulty === "MEDIUM"
+                        ? t("practiceTestsPage.mediumDifficulty")
+                        : t("practiceTestsPage.hard")}
                   </Badge>
                   {topic.attempted ? (
                     <div className="flex items-baseline gap-1">
@@ -562,12 +580,12 @@ export const PracticeTests = () => {
                         {topic.bestScore}%
                       </span>
                       <span className="text-[10px] font-bold text-slate-400 uppercase">
-                        best
+                        {t("practiceTestsPage.best")}
                       </span>
                     </div>
                   ) : (
                     <span className="text-sm font-bold text-slate-400 italic">
-                      Not attempted
+                      {t("practiceTestsPage.notAttempted")}
                     </span>
                   )}
                 </div>
@@ -580,7 +598,7 @@ export const PracticeTests = () => {
                   <div className="flex items-center gap-2 text-slate-500">
                     <HelpCircle size={14} />
                     <span className="text-sm font-medium">
-                      {topic.questions} questions
+                      {topic.questions} {t("practiceTestsPage.questions")}
                     </span>
                   </div>
                 </div>
@@ -603,7 +621,7 @@ export const PracticeTests = () => {
                         handleStartOrRetake(topic);
                       }}
                     >
-                      <RotateCcw size={16} /> Retake
+                      <RotateCcw size={16} /> {t("practiceTestsPage.retake")}
                     </Button>
                   ) : (
                     <Button
@@ -613,7 +631,8 @@ export const PracticeTests = () => {
                         handleStartOrRetake(topic);
                       }}
                     >
-                      <Play size={16} fill="currentColor" /> Start Test
+                      <Play size={16} fill="currentColor" />{" "}
+                      {t("practiceTestsPage.startTest")}
                     </Button>
                   )}
                 </div>
