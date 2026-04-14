@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import {
   Plus,
@@ -48,6 +49,16 @@ const DEFAULT_STUDY_PLAN = [
   { label: "Practice", percent: 0 },
   { label: "Mock Tests", percent: 0 },
 ];
+
+const translateStudyPlanLabel = (label, t) => {
+  const normalized = String(label || "")
+    .trim()
+    .toLowerCase();
+  if (normalized === "theory") return t("schedulePage.studyTheory");
+  if (normalized === "practice") return t("schedulePage.studyPractice");
+  if (normalized === "mock tests") return t("schedulePage.studyMockTests");
+  return label;
+};
 
 const EMPTY_FORM = {
   title: "",
@@ -175,6 +186,7 @@ const buildCalendarDays = (monthDate, sessions = []) => {
 };
 
 export const ScheduleLearner = () => {
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const [scheduleData, setScheduleData] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
@@ -287,6 +299,45 @@ export const ScheduleLearner = () => {
   const hasInsightsData =
     insightStats.totalSessions > 0 ||
     studyPlan.some((item) => Number(item?.percent || 0) > 0);
+
+  const localizedMilestoneTitle = useMemo(() => {
+    const raw = String(overview.milestoneTitle || "").trim();
+    if (!raw) return t("schedulePage.finalMilestone");
+    if (i18n.language === "vi" && /^final\s+milestone$/i.test(raw)) {
+      return t("schedulePage.finalMilestone");
+    }
+    return raw;
+  }, [overview.milestoneTitle, i18n.language, t]);
+
+  const localizedExamName = useMemo(() => {
+    const raw = String(overview.examName || "").trim();
+    if (!raw) return t("schedulePage.licenseExam");
+
+    if (
+      i18n.language === "vi" &&
+      /(a1|b1).*(license\s*exam)|license\s*exam.*(a1|b1)/i.test(raw)
+    ) {
+      const level = (raw.match(/\b(A1|B1)\b/i)?.[1] || "A1").toUpperCase();
+      return t("schedulePage.licenseExamWithLevel", { level });
+    }
+
+    if (i18n.language === "vi" && /^license\s*exam$/i.test(raw)) {
+      return t("schedulePage.licenseExam");
+    }
+
+    return raw;
+  }, [overview.examName, i18n.language, t]);
+
+  const localizedMilestoneDescription = useMemo(() => {
+    const raw = String(overview.milestoneDescription || "").trim();
+    if (!raw) return t("schedulePage.keepMomentum");
+
+    if (i18n.language === "vi" && /^keep\s+your\s+momentum/i.test(raw)) {
+      return t("schedulePage.keepMomentum");
+    }
+
+    return raw;
+  }, [overview.milestoneDescription, i18n.language, t]);
 
   useEffect(() => {
     if (overviewDirty) return;
@@ -614,7 +665,7 @@ export const ScheduleLearner = () => {
           <Card className="border-none shadow-[0_12px_32px_rgba(20,27,43,0.04)] rounded-2xl">
             <CardHeader>
               <CardTitle className="text-lg font-bold font-manrope text-[#141b2b]">
-                Weekly Study Plan
+                {t("schedulePage.weeklyStudyPlan")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -622,7 +673,7 @@ export const ScheduleLearner = () => {
                 <div key={item.label} className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-slate-600">
-                      {item.label}
+                      {translateStudyPlanLabel(item.label, t)}
                     </span>
                     <span className="text-xs font-bold text-blue-600">
                       {item.percent}%
@@ -640,7 +691,7 @@ export const ScheduleLearner = () => {
                 className="w-full h-12 rounded-xl bg-[#004ac6] hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-100"
                 onClick={handleViewInsights}
               >
-                View Detailed Insights
+                {t("schedulePage.viewDetailedInsights")}
               </Button>
 
               {showInsights ? (
@@ -650,7 +701,7 @@ export const ScheduleLearner = () => {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-extrabold text-[#141b2b] tracking-wide uppercase">
-                      Detailed Insights
+                      {t("schedulePage.detailedInsights")}
                     </p>
                     <Button
                       type="button"
@@ -666,7 +717,7 @@ export const ScheduleLearner = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-xl bg-white p-3 border border-blue-100">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        Avg. Progress
+                        {t("schedulePage.avgProgress")}
                       </p>
                       <p className="text-xl font-black text-[#004ac6]">
                         {insightStats.averageProgress}%
@@ -674,7 +725,7 @@ export const ScheduleLearner = () => {
                     </div>
                     <div className="rounded-xl bg-white p-3 border border-blue-100">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        Total Sessions
+                        {t("schedulePage.totalSessions")}
                       </p>
                       <p className="text-xl font-black text-[#004ac6]">
                         {insightStats.totalSessions}
@@ -682,7 +733,7 @@ export const ScheduleLearner = () => {
                     </div>
                     <div className="rounded-xl bg-white p-3 border border-blue-100">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        Upcoming
+                        {t("schedulePage.upcoming")}
                       </p>
                       <p className="text-xl font-black text-amber-600">
                         {insightStats.upcomingSessions}
@@ -690,7 +741,7 @@ export const ScheduleLearner = () => {
                     </div>
                     <div className="rounded-xl bg-white p-3 border border-blue-100">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        Completed
+                        {t("schedulePage.completed")}
                       </p>
                       <p className="text-xl font-black text-emerald-600">
                         {insightStats.completedSessions}
@@ -707,10 +758,10 @@ export const ScheduleLearner = () => {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h1 className="text-4xl font-black text-[#141b2b] font-manrope tracking-tight">
-                Schedule
+                {t("schedulePage.title")}
               </h1>
               <p className="text-lg text-slate-500 font-medium mt-1">
-                Manage your classes and exam preparation
+                {t("schedulePage.subtitle")}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -731,7 +782,7 @@ export const ScheduleLearner = () => {
                 className="h-12 px-6 rounded-xl bg-[#e1e8fd] text-[#004ac6] hover:bg-blue-100 font-bold gap-2"
               >
                 <Plus size={18} strokeWidth={3} />
-                Book Session
+                {t("schedulePage.bookSession")}
               </Button>
             </div>
           </div>
@@ -744,7 +795,7 @@ export const ScheduleLearner = () => {
               >
                 <div className="flex-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
-                    Exam Date (for Days Left)
+                    {t("schedulePage.examDateForDaysLeft")}
                   </p>
                   <input
                     type="date"
@@ -763,7 +814,7 @@ export const ScheduleLearner = () => {
                   type="submit"
                   className="h-11 px-5 rounded-xl bg-[#004ac6] hover:bg-blue-700 text-white font-bold"
                 >
-                  Save Exam Date
+                  {t("schedulePage.saveExamDate")}
                 </Button>
               </form>
             </CardContent>
@@ -781,8 +832,8 @@ export const ScheduleLearner = () => {
               <Loader className="h-5 w-5 animate-spin text-blue-600" />
               <p className="text-sm font-medium">
                 {saving
-                  ? "Saving schedule changes..."
-                  : "Loading schedule data..."}
+                  ? t("schedulePage.savingSchedule")
+                  : t("schedulePage.loadingSchedule")}
               </p>
             </div>
           )}
@@ -927,14 +978,13 @@ export const ScheduleLearner = () => {
             <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
               <div className="space-y-4 text-center md:text-left">
                 <Badge className="bg-white/20 text-white border-none font-bold tracking-widest px-3">
-                  {overview.milestoneTitle || "FINAL MILESTONE"}
+                  {localizedMilestoneTitle}
                 </Badge>
                 <h2 className="text-3xl font-black text-white font-manrope">
-                  {overview.examName || "License Exam"}
+                  {localizedExamName}
                 </h2>
                 <p className="text-blue-100 text-base leading-relaxed max-w-sm">
-                  {overview.milestoneDescription ||
-                    "Keep up your current practice pace."}
+                  {localizedMilestoneDescription}
                   <br />
                   {overview.examLocation
                     ? `Location: ${overview.examLocation}`
@@ -948,7 +998,7 @@ export const ScheduleLearner = () => {
                     : 0}
                 </span>
                 <span className="text-[10px] font-bold text-blue-100 tracking-[2px] mt-1 uppercase">
-                  Days Left
+                  {t("schedulePage.daysLeft")}
                 </span>
               </div>
             </div>
@@ -957,7 +1007,7 @@ export const ScheduleLearner = () => {
           <div id="upcoming-sessions" className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-[#141b2b] font-manrope">
-                Upcoming Sessions
+                {t("schedulePage.upcomingSessions")}
               </h3>
               <Button
                 variant="ghost"
@@ -973,8 +1023,9 @@ export const ScheduleLearner = () => {
               {sessions.length === 0 && !loading ? (
                 <Card className="border-dashed border-blue-200 bg-white rounded-2xl">
                   <CardContent className="p-6 text-center text-slate-500 font-medium">
-                    You have no sessions yet. Click <b>Book Session</b> to
-                    create your first one.
+                    {t("schedulePage.noSessionsPrefix")}{" "}
+                    <b>{t("schedulePage.bookSession")}</b>{" "}
+                    {t("schedulePage.noSessionsSuffix")}
                   </CardContent>
                 </Card>
               ) : null}
@@ -993,7 +1044,7 @@ export const ScheduleLearner = () => {
                   session.instructor ||
                   (session.instructorId
                     ? `Instructor #${session.instructorId}`
-                    : "Instructor TBD");
+                    : t("schedulePage.instructorTbd"));
                 const locationLabel = session.location || "TBD";
                 const locationType =
                   session.locationType || session.location_type || "physical";
@@ -1039,7 +1090,7 @@ export const ScheduleLearner = () => {
 
                       <div className="flex flex-col items-end gap-2 shrink-0 w-full md:w-auto text-right">
                         <p className="text-sm font-bold text-[#141b2b]">
-                          Instructor: {instructorLabel}
+                          {t("schedulePage.instructor")}: {instructorLabel}
                         </p>
                         <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
                           {locationType === "virtual" ? (
@@ -1105,10 +1156,10 @@ export const ScheduleLearner = () => {
             <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-100">
               <div className="space-y-1">
                 <p className="text-[11px] font-bold tracking-[0.14em] text-blue-600 uppercase">
-                  Session Details
+                  {t("schedulePage.sessionDetails")}
                 </p>
                 <h4 className="text-2xl font-black text-[#141b2b] leading-tight">
-                  {selectedSessionDetail.title || "Session"}
+                  {selectedSessionDetail.title || t("schedulePage.session")}
                 </h4>
               </div>
               <Button
@@ -1128,7 +1179,7 @@ export const ScheduleLearner = () => {
                   <tbody>
                     <tr className="border-b border-slate-100">
                       <th className="w-42 bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        Date
+                        {t("schedulePage.date")}
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {formatDateLabel(
@@ -1140,7 +1191,7 @@ export const ScheduleLearner = () => {
                     </tr>
                     <tr className="border-b border-slate-100">
                       <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        Time
+                        {t("schedulePage.time")}
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {formatTimeLabel(
@@ -1156,13 +1207,13 @@ export const ScheduleLearner = () => {
                     </tr>
                     <tr className="border-b border-slate-100">
                       <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        Instructor
+                        {t("schedulePage.instructor")}
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {selectedSessionDetail.instructor ||
                           (selectedSessionDetail.instructorId
                             ? `Instructor #${selectedSessionDetail.instructorId}`
-                            : "Instructor TBD")}
+                            : t("schedulePage.instructorTbd"))}
                       </td>
                     </tr>
                     <tr
@@ -1173,7 +1224,7 @@ export const ScheduleLearner = () => {
                       }
                     >
                       <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        Location
+                        {t("schedulePage.location")}
                       </th>
                       <td className="px-4 py-3 font-semibold text-[#141b2b]">
                         {selectedSessionDetail.location || "TBD"}
@@ -1182,7 +1233,7 @@ export const ScheduleLearner = () => {
                     {selectedSessionDetail.notes ? (
                       <tr>
                         <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 align-top">
-                          Notes
+                          {t("schedulePage.notes")}
                         </th>
                         <td className="px-4 py-3 font-medium text-slate-700 whitespace-pre-wrap">
                           {selectedSessionDetail.notes}
