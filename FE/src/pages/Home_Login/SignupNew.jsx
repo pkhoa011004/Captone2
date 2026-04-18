@@ -78,7 +78,7 @@ export const RegisterLearner = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/users/register`,
+        `${import.meta.env.VITE_API_URL}/users/register`,
         {
           method: "POST",
           headers: {

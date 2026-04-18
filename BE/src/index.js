@@ -9,8 +9,11 @@ import { logger } from './utils/logger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import userRoutes from './routes/userRoutes.js'
 import questionRoutes from './routes/questionRoutes.js'
+import classroomRoutes from './routes/classroomRoutes.js'
+import examRoutes from './routes/examRoutes.js'
 import { testConnection } from './config/database.js'
 import emailService from './services/EmailService.js'
+import { ensureUsersEmailVerificationSchema, ensureLearnerScheduleSchema, ensureTestResultsSchema } from './config/migrations.js'
 
 // Load environment variables
 dotenv.config()
@@ -28,8 +31,8 @@ const NODE_ENV = process.env.NODE_ENV || 'development'
 app.use(helmet())
 
 // CORS Configuration - Allow localhost on any port for development
-const allowedOrigins = NODE_ENV === 'development' 
-  ? [/^http:\/\/localhost:\d+$/] 
+const allowedOrigins = NODE_ENV === 'development'
+  ? [/^http:\/\/localhost:\d+$/]
   : process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173']
 
 app.use(
@@ -66,6 +69,8 @@ app.get('/api/v1/health', (req, res) => {
 // API Routes
 app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/questions', questionRoutes)
+app.use('/api/v1/classrooms', classroomRoutes)
+app.use('/api/v1/exams', examRoutes)
 
 // 404 Handler
 app.use((req, res) => {
@@ -83,10 +88,15 @@ app.use(errorHandler)
 const server = app.listen(PORT, async () => {
   logger.info(`✅ Server running on http://localhost:${PORT}`)
   logger.info(`Environment: ${NODE_ENV}`)
-  
+
   // Test database connection
   await testConnection()
-  
+
+  // Run migrations
+  await ensureUsersEmailVerificationSchema()
+  await ensureLearnerScheduleSchema()
+  await ensureTestResultsSchema()
+
   // Initialize email service
   await emailService.init()
 })

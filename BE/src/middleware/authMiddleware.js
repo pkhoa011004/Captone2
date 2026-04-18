@@ -57,6 +57,7 @@ export const authorize = (...roles) => {
     const roleAliases = {
       admin: [1, 'admin'],
       user: [2, 'user'],
+      instructor: [3, 'instructor']
     }
 
     const isAllowed = roles.length === 0

@@ -42,7 +42,7 @@ export const LogInLearner = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/users/login`,
+        `${import.meta.env.VITE_API_URL}/users/login`,
         {
           method: "POST",
           headers: {
@@ -57,7 +57,7 @@ export const LogInLearner = () => {
       if (!response.ok) {
         setError(
           data.message ||
-            "Login failed. Please check your credentials."
+          "Login failed. Please check your credentials."
         );
         setLoading(false);
         return;
@@ -66,9 +66,16 @@ export const LogInLearner = () => {
       // Login success - save token and redirect
       localStorage.setItem("token", data.data.token);
       localStorage.setItem("user", JSON.stringify(data.data.user));
-      
-      // Redirect to learner dashboard
-      navigate("/learner");
+
+      // Navigate based on role_id
+      const roleId = Number(data.data.user.role_id || data.data.user.roleId || 1);
+      if (roleId === 2) {
+        navigate("/admin");
+      } else if (roleId === 3) {
+        navigate("/instructor/classrooms");
+      } else {
+        navigate("/learner");
+      }
     } catch (err) {
       console.error("Login error:", err);
       setError("An error occurred. Please try again.");

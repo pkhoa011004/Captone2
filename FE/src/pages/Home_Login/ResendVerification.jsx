@@ -14,7 +14,7 @@ export default function ResendVerification() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/users/resend-verification-email`,
+        `${import.meta.env.VITE_API_URL}/users/resend-verification-email`,
         {
           method: "POST",
           headers: {
