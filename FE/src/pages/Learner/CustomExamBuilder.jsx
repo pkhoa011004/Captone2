@@ -14,6 +14,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { TopHeaderLearner } from "@/components/TopHeaderLearner";
+import { getStoredLicenseType } from "@/lib/license";
 
 const CATEGORY_META = [
   {
@@ -83,7 +84,8 @@ const ALL_CATEGORY_KEYS = CATEGORY_META.map((item) => item.key);
 export default function CustomExamBuilder() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [licenseType, setLicenseType] = useState("A1");
+  const learnerLicenseType = getStoredLicenseType();
+  const [licenseType, setLicenseType] = useState(learnerLicenseType);
   const [selectedCategories, setSelectedCategories] =
     useState(ALL_CATEGORY_KEYS);
   const [examName, setExamName] = useState(DEFAULT_TITLE.A1);
@@ -189,9 +191,9 @@ export default function CustomExamBuilder() {
   };
 
   const handleReset = () => {
-    setLicenseType("A1");
+    setLicenseType(learnerLicenseType);
     setSelectedCategories(ALL_CATEGORY_KEYS);
-    setExamName(DEFAULT_TITLE.A1);
+    setExamName(DEFAULT_TITLE[learnerLicenseType]);
   };
 
   const selectedCount = selectedCategories.length;
@@ -226,7 +228,9 @@ export default function CustomExamBuilder() {
                 Loại bằng lái
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {Object.entries(LICENSE_OPTIONS).map(([key, option]) => {
+                {Object.entries(LICENSE_OPTIONS)
+                  .filter(([key]) => key === learnerLicenseType)
+                  .map(([key, option]) => {
                   const active = licenseType === key;
                   return (
                     <button

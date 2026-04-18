@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,57 +18,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-
-// --- Dữ liệu Các Bài Kiểm tra ---
-const PRACTICE_TOPICS = [
-  {
-    id: "fatal-questions-only",
-    difficulty: "HARD",
-    questions: 10,
-    selectedCategories: ["REGULATIONS", "TRAFFIC_SIGNS", "SITUATION_HANDLING"],
-    fatalOnly: true,
-    titleOverride: "Đề điểm liệt (thử nghiệm)",
-    decoIcon: <Shield />,
-  },
-  {
-    id: "traffic-signs-signals",
-    difficulty: "EASY",
-    questions: 25,
-    selectedCategories: ["TRAFFIC_SIGNS"],
-  },
-  {
-    id: "right-of-way-rules",
-    difficulty: "MEDIUM",
-    questions: 20,
-    selectedCategories: ["REGULATIONS", "TRAFFIC_CULTURE"],
-  },
-  {
-    id: "speed-limits-zones",
-    difficulty: "EASY",
-    questions: 15,
-    selectedCategories: ["REGULATIONS"],
-  },
-  {
-    id: "parking-regulations",
-    difficulty: "MEDIUM",
-    questions: 30,
-    selectedCategories: ["REGULATIONS", "DRIVING_TECHNIQUE"],
-  },
-  {
-    id: "emergency-procedures",
-    difficulty: "HARD",
-    questions: 15,
-    selectedCategories: ["SITUATION_HANDLING"],
-    decoIcon: <Shield />,
-  },
-  {
-    id: "night-weather-driving",
-    difficulty: "HARD",
-    questions: 20,
-    selectedCategories: ["DRIVING_TECHNIQUE", "SITUATION_HANDLING"],
-    decoIcon: <CloudRain />,
-  },
-];
+import {
+  getExamSourceForLicenseType,
+  getStoredLicenseType,
+  normalizeLicenseType,
+} from "@/lib/license";
+import { learnerExamsApi } from "@/services/api/LearnerExams";
 
 const CATEGORY_LABELS = {
   REGULATIONS: "practiceTestsPage.categoryRegulations",
@@ -77,46 +32,26 @@ const CATEGORY_LABELS = {
   VEHICLE_REPAIR: "practiceTestsPage.categoryVehicleRepair",
   TRAFFIC_SIGNS: "practiceTestsPage.categoryTrafficSigns",
   SITUATION_HANDLING: "practiceTestsPage.categorySituationHandling",
-};
-
-const LEGACY_TOPIC_TITLES = {
-  "fatal-questions-only": "Fatal Questions Only",
-  "traffic-signs-signals": "Traffic Signs & Signals",
-  "right-of-way-rules": "Right of Way Rules",
-  "speed-limits-zones": "Speed Limits & Zones",
-  "parking-regulations": "Parking Regulations",
-  "emergency-procedures": "Emergency Procedures",
-  "night-weather-driving": "Night & Weather Driving",
+  A1: "A1",
+  B1: "B1",
+  exam_250: "250 câu",
+  exam_600: "600 câu",
 };
 
 const buildTopicTitle = (topic, index, t) => {
-  if (topic?.isCustom) {
-    const customTitle =
-      topic.titleOverride ||
-      topic.examName ||
-      topic.title ||
-      t("practiceTestsPage.customExam");
-    return String(customTitle).trim() || t("practiceTestsPage.customExam");
-  }
+  const title = String(topic?.title || topic?.examName || "").trim();
+  if (title) return title;
 
-  if (topic.titleOverride) {
-    return topic.titleOverride;
-  }
-
-  const labels = (topic.selectedCategories || [])
-    .map((category) => t(CATEGORY_LABELS[category] || category))
-    .filter(Boolean);
-
-  if (!labels.length) {
-    return `${t("practiceTestsPage.exam")} ${index + 1} - ${topic.questions} ${t("practiceTestsPage.questions")}`;
-  }
-
-  const shortLabel = labels.slice(0, 2).join(" + ");
-  return `${t("practiceTestsPage.exam")} ${index + 1}: ${shortLabel}`;
+  const license = String(topic?.licenseType || "A1").trim().toUpperCase();
+  const source = String(topic?.source || topic?.examsSource || "").trim().toLowerCase();
+  const sourceLabel = CATEGORY_LABELS[source] || source || t("practiceTestsPage.customExam");
+  return `${t("practiceTestsPage.exam")} ${index + 1} - ${license} - ${sourceLabel}`;
 };
 
 const PRACTICE_RESULTS_STORAGE_KEY = "practiceTopicResults";
-const CUSTOM_PRACTICE_TOPICS_STORAGE_KEY = "learnerCustomPracticeTopics";
+
+// Legacy mapping for backward compatibility with old topic titles
+const LEGACY_TOPIC_TITLES = {};
 
 const readPracticeResults = () => {
   try {
@@ -128,82 +63,15 @@ const readPracticeResults = () => {
   }
 };
 
-const readCustomPracticeTopics = () => {
-  try {
-    const raw = localStorage.getItem(CUSTOM_PRACTICE_TOPICS_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed
-      .filter((item) => item && typeof item === "object")
-      .map((item) => ({
-        id: String(item.id || `custom-${Date.now()}`),
-        difficulty: item.difficulty || "MEDIUM",
-        questions: Number(item.questions || item.questionCount || 25),
-        questionCount: Number(item.questionCount || item.questions || 25),
-        selectedCategories: Array.isArray(item.selectedCategories)
-          ? item.selectedCategories
-          : [],
-        fatalOnly: Boolean(item.fatalOnly),
-        title:
-          typeof item.title === "string" && item.title.trim()
-            ? item.title.trim()
-            : typeof item.examName === "string" && item.examName.trim()
-              ? item.examName.trim()
-              : typeof item.titleOverride === "string" &&
-                  item.titleOverride.trim()
-                ? item.titleOverride.trim()
-                : "Đề tự tạo",
-        examName:
-          typeof item.examName === "string" && item.examName.trim()
-            ? item.examName.trim()
-            : typeof item.title === "string" && item.title.trim()
-              ? item.title.trim()
-              : "Đề tự tạo",
-        titleOverride:
-          typeof item.titleOverride === "string" && item.titleOverride.trim()
-            ? item.titleOverride.trim()
-            : typeof item.examName === "string" && item.examName.trim()
-              ? item.examName.trim()
-              : typeof item.title === "string" && item.title.trim()
-                ? item.title.trim()
-                : "Đề tự tạo",
-        licenseType:
-          String(item.licenseType || "A1")
-            .trim()
-            .toUpperCase() === "B1"
-            ? "B1"
-            : "A1",
-        examsSource:
-          String(item.examsSource || "exam_250")
-            .trim()
-            .toLowerCase() === "exam_600"
-            ? "exam_600"
-            : "exam_250",
-        isCustom: true,
-        createdAt: item.createdAt || null,
-      }))
-      .sort((a, b) => {
-        const timeA = Date.parse(a.createdAt || 0);
-        const timeB = Date.parse(b.createdAt || 0);
-        return timeB - timeA;
-      });
-  } catch {
-    return [];
-  }
-};
-
-const getQuizConfigForTopic = (topic) => ({
-  topicId: topic.id,
-  licenseType: topic.licenseType || "A1",
+const getQuizConfigForTopic = (topic, licenseType, examsSource) => ({
+  topicId: String(topic.id || topic.examId || "").trim() || null,
+  licenseType: normalizeLicenseType(topic.licenseType, licenseType),
   questionCount: Number(topic.questionCount || topic.questions || 25),
-  examName: topic.titleOverride || topic.examName || topic.title || "Đề tự tạo",
-  generationMode: "random",
-  examsSource: topic.examsSource || "exam_250",
-  fatalOnly: Boolean(topic.fatalOnly),
-  selectedCategories: Array.isArray(topic.selectedCategories)
-    ? topic.selectedCategories
-    : [],
+  examName: topic.title || topic.examName || "Đề tự tạo",
+  generationMode: "structured",
+  examsSource,
+  fatalOnly: false,
+  selectedCategories: [],
 });
 
 const getDifficultyStyles = (level) => {
@@ -223,18 +91,82 @@ export const PracticeTests = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [storedResults] = useState(() => readPracticeResults());
-  const [customTopics] = useState(() => readCustomPracticeTopics());
+  const currentLicenseType = getStoredLicenseType();
+  const currentExamSource = getExamSourceForLicenseType(currentLicenseType);
+  const [catalogExamRows, setCatalogExamRows] = useState([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
+  const [catalogError, setCatalogError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [difficultyFilter, setDifficultyFilter] = useState("ALL");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
 
+  useEffect(() => {
+    let active = true;
+
+    const loadCatalog = async () => {
+      try {
+        setLoadingCatalog(true);
+        setCatalogError("");
+
+        const result = await learnerExamsApi.getExamCatalog({
+          licenseType: currentLicenseType,
+          limit: 100,
+        });
+
+        if (!active) return;
+
+        const rows = Array.isArray(result.exams) ? result.exams : [];
+        setCatalogExamRows(rows);
+      } catch (error) {
+        if (!active) return;
+        setCatalogError(error?.message || "Không thể tải bộ đề từ DB.");
+        setCatalogExamRows([]);
+      } finally {
+        if (active) {
+          setLoadingCatalog(false);
+        }
+      }
+    };
+
+    loadCatalog();
+
+    return () => {
+      active = false;
+    };
+  }, [currentLicenseType, currentExamSource]);
+
   const allPracticeTopics = useMemo(() => {
-    const staticIds = new Set(PRACTICE_TOPICS.map((item) => item.id));
-    const sanitizedCustom = customTopics.filter(
-      (item) => !staticIds.has(item.id),
-    );
-    return [...sanitizedCustom, ...PRACTICE_TOPICS];
-  }, [customTopics]);
+    return catalogExamRows
+      .map((item) => {
+        const questionCount = Number(item.questionCount || 0);
+        const difficulty =
+          questionCount >= 35 ? "HARD" : questionCount >= 25 ? "MEDIUM" : "EASY";
+
+        return {
+          id: String(item.id || `exam-${questionCount}`),
+          title: item.title || item.examName || t("practiceTestsPage.customExam"),
+          examName: item.title || item.examName || t("practiceTestsPage.customExam"),
+          titleOverride: item.title || item.examName || t("practiceTestsPage.customExam"),
+          difficulty,
+          questions: questionCount,
+          questionCount,
+          selectedCategories: [
+            normalizeLicenseType(item.licenseType, currentLicenseType),
+            String(item.source || currentExamSource).trim().toLowerCase(),
+          ],
+          licenseType: normalizeLicenseType(item.licenseType, currentLicenseType),
+          examsSource: String(item.source || currentExamSource).trim().toLowerCase(),
+          createdAt: item.createdAt || null,
+          status: item.status || "Published",
+          source: item.source || currentExamSource,
+        };
+      })
+      .sort((a, b) => {
+        const timeA = Date.parse(a.createdAt || 0);
+        const timeB = Date.parse(b.createdAt || 0);
+        return timeB - timeA;
+      });
+  }, [catalogExamRows, currentExamSource, currentLicenseType, t]);
 
   const availableCategories = useMemo(() => {
     const categories = new Set();
@@ -268,7 +200,6 @@ export const PracticeTests = () => {
         const result =
           storedResults[topic.id] ||
           storedResults[topicTitle] ||
-          storedResults[LEGACY_TOPIC_TITLES[topic.id]] ||
           null;
         const bestScore = Number.isFinite(Number(result?.bestScore))
           ? Number(result.bestScore)
@@ -286,7 +217,11 @@ export const PracticeTests = () => {
   );
 
   const handleStartOrRetake = (topic) => {
-    const examConfig = getQuizConfigForTopic(topic);
+    const examConfig = getQuizConfigForTopic(
+      topic,
+      currentLicenseType,
+      currentExamSource,
+    );
     sessionStorage.setItem("quizExamConfig", JSON.stringify(examConfig));
     navigate("/learner/quiz", {
       state: { examConfig },
@@ -421,6 +356,12 @@ export const PracticeTests = () => {
           ))}
         </section>
 
+        {catalogError && (
+          <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+            {catalogError}
+          </p>
+        )}
+
         {/* 3. Filter Row */}
         <section className="flex flex-col md:flex-row justify-between items-center gap-4">
           <h2 className="text-2xl font-bold text-[#141b2b]">
@@ -548,21 +489,28 @@ export const PracticeTests = () => {
 
         {/* 4. Topics Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {topicsWithResults.map((topic, idx) => (
-            <Card
-              key={idx}
-              className="border-none shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-300 cursor-pointer"
-              role="button"
-              tabIndex={0}
-              onClick={() => handleStartOrRetake(topic)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  handleStartOrRetake(topic);
-                }
-              }}
-            >
-              <CardContent className="p-8 flex flex-col h-full min-h-68.5">
+              {loadingCatalog ? (
+                <Card className="border-none shadow-sm bg-white">
+                  <CardContent className="p-6 text-sm text-slate-500">
+                    Đang tải bộ đề từ DB...
+                  </CardContent>
+                </Card>
+              ) : (
+                topicsWithResults.map((topic, idx) => (
+                  <Card
+                    key={idx}
+                    className="border-none shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-300 cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleStartOrRetake(topic)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleStartOrRetake(topic);
+                      }
+                    }}
+                  >
+                    <CardContent className="p-8 flex flex-col h-full min-h-68.5">
                 {/* Topic Header */}
                 <div className="flex justify-between items-start mb-6">
                   <Badge
@@ -643,9 +591,10 @@ export const PracticeTests = () => {
                     {React.cloneElement(topic.decoIcon, { size: 120 })}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          ))}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
         </section>
       </main>
     </div>

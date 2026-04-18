@@ -25,6 +25,12 @@ import {
 import { useQuizQuestions } from "@/hooks/useQuizQuestions";
 import { useQuizGrading } from "@/hooks/useQuizGrading";
 import { learnerDashboardApi } from "@/services/api/learnerDashboard";
+import {
+  getExamSourceForLicenseType,
+  getStoredLicenseType,
+  getStoredUserRole,
+  normalizeLicenseType,
+} from "@/lib/license";
 
 const DEFAULT_EXAM_CONFIG = {
   topicId: null,
@@ -38,6 +44,8 @@ const DEFAULT_EXAM_CONFIG = {
 };
 
 const PRACTICE_RESULTS_STORAGE_KEY = "practiceTopicResults";
+const PRACTICE_HISTORY_STORAGE_KEY = "practiceExamHistory";
+const MAX_HISTORY_ITEMS = 200;
 const QUIZ_DRAFT_STORAGE_PREFIX = "quizDraft";
 
 const getQuizDraftStorageKey = (config = {}) => {
@@ -229,6 +237,69 @@ const savePracticeResult = ({ topicId, examName, totalQuestions, result }) => {
   }
 };
 
+const savePracticeHistoryEntry = ({ examConfig, totalQuestions, result }) => {
+  const nowIso = new Date().toISOString();
+  const scorePercentRaw = Number(
+    result?.score_percent ?? result?.scorePercent ?? result?.score ?? 0,
+  );
+  const scorePercent = Number.isFinite(scorePercentRaw)
+    ? Math.round(scorePercentRaw)
+    : 0;
+
+  const totalFromResult = Number(
+    result?.total_questions ?? result?.totalQuestions ?? totalQuestions ?? 0,
+  );
+  const safeTotal = Number.isFinite(totalFromResult) ? totalFromResult : 0;
+
+  const correctFromResult = Number(
+    result?.correct_count ?? result?.correctCount,
+  );
+  const inferredCorrectFromScore =
+    safeTotal > 0
+      ? Math.round((Math.max(0, Math.min(100, scorePercent)) / 100) * safeTotal)
+      : 0;
+  const safeCorrect = Number.isFinite(correctFromResult)
+    ? Math.max(0, Math.min(safeTotal, correctFromResult))
+    : inferredCorrectFromScore;
+
+  const incorrectFromResult = Number(
+    result?.incorrect_count ?? result?.wrong_count ?? result?.wrongCount,
+  );
+  const safeWrong = Number.isFinite(incorrectFromResult)
+    ? Math.max(0, Math.min(safeTotal, incorrectFromResult))
+    : Math.max(safeTotal - safeCorrect, 0);
+
+  const passedValue =
+    typeof result?.passed === "boolean"
+      ? result.passed
+      : typeof result?.is_passed === "boolean"
+        ? result.is_passed
+        : scorePercent >= 80;
+
+  const entry = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    examName: examConfig?.examName || "Practice Exam",
+    licenseType: examConfig?.licenseType || "A1",
+    examsSource: examConfig?.examsSource || "exam_250",
+    questionCount: safeTotal,
+    correctCount: safeCorrect,
+    wrongCount: safeWrong,
+    scorePercent,
+    passed: passedValue,
+    submittedAt: nowIso,
+  };
+
+  try {
+    const raw = localStorage.getItem(PRACTICE_HISTORY_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    const prev = Array.isArray(parsed) ? parsed : [];
+    const next = [entry, ...prev].slice(0, MAX_HISTORY_ITEMS);
+    localStorage.setItem(PRACTICE_HISTORY_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Ignore storage errors and keep quiz flow intact.
+  }
+};
+
 const CATEGORY_LABELS = {
   REGULATIONS: "Regulations",
   TRAFFIC_CULTURE: "Traffic culture",
@@ -252,12 +323,20 @@ const resolveAiMessage = ({ focusTopic, scorePercent }) => {
 };
 
 const normalizeExamConfig = (config = {}) => {
-  const rawLicense = String(config?.licenseType || "A1")
-    .trim()
-    .toUpperCase();
-  const licenseType = rawLicense === "B1" ? "B1" : "A1";
+  const accountRole = getStoredUserRole("user");
+  const forceLearnerLicense = accountRole === "user" || accountRole === "learner";
 
-  const examsSource = config?.examsSource || "exam_250";
+  const licenseType = forceLearnerLicense
+    ? getStoredLicenseType("A1")
+    : normalizeLicenseType(config?.licenseType, "A1");
+
+  const examsSource = forceLearnerLicense
+    ? getExamSourceForLicenseType(licenseType)
+    : String(config?.examsSource || getExamSourceForLicenseType(licenseType))
+          .trim()
+          .toLowerCase() === "exam_600"
+      ? "exam_600"
+      : "exam_250";
   const selectedCategories = Array.isArray(config?.selectedCategories)
     ? [
         ...new Set(
@@ -739,6 +818,11 @@ export default function QuizLearner() {
     savePracticeResult({
       topicId: examConfig.topicId,
       examName: examConfig.examName,
+      totalQuestions,
+      result,
+    });
+    savePracticeHistoryEntry({
+      examConfig,
       totalQuestions,
       result,
     });

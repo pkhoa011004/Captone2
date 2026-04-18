@@ -16,45 +16,45 @@ import { Card, CardContent } from "../../components/ui/card";
 import { Separator } from "../../components/ui/separator";
 
 const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Pricing", path: "/signup" },
-  { label: "About", href: "#about" },
-  { label: "Contact", path: "/support" },
+  { label: "Tính năng", href: "#features" },
+  { label: "Cách hoạt động", href: "#how-it-works" },
+  { label: "Bảng giá", path: "/signup" },
+  { label: "Giới thiệu", href: "#about" },
+  { label: "Liên hệ", path: "/support" },
 ];
 
 const stats = [
-  { value: "95", suffix: "%", label: "PASS RATE" },
-  { value: "10K", suffix: "+", label: "STUDENTS" },
-  { value: "600", suffix: "+", label: "QUESTIONS" },
+  { value: "95", suffix: "%", label: "TỶ LỆ ĐẠT" },
+  { value: "10K", suffix: "+", label: "HỌC VIÊN" },
+  { value: "600", suffix: "+", label: "CÂU HỎI" },
 ];
 
 const platformFeatures = [
   {
     icon: <BookOpenIcon className="w-6 h-6 text-blue-600" />,
-    title: "Theory Learning",
+    title: "Học lý thuyết",
     items: [
-      "Interactive digital handbook",
-      "Updated for 2026 regulations",
-      "Quick-glance summary cards",
+      "Sổ tay số tương tác",
+      "Cập nhật theo quy định 2026",
+      "Thẻ tổng hợp để ôn tập nhanh",
     ],
   },
   {
     icon: <BotIcon className="w-6 h-6 text-blue-600" />,
-    title: "AI Assistant",
+    title: "Trợ lý AI",
     items: [
-      "Personalized study paths",
-      "Smart error detection",
-      "Instant doubt clarification",
+      "Lộ trình học cá nhân hóa",
+      "Phát hiện lỗi thông minh",
+      "Giải đáp tức thì",
     ],
   },
   {
     icon: <MonitorIcon className="w-6 h-6 text-blue-600" />,
-    title: "3D Simulation",
+    title: "Mô phỏng 3D",
     items: [
-      "Lifelike hazard perception",
-      "Multi-weather driving scenarios",
-      "VR ready experiences",
+      "Tình huống nguy hiểm chân thực",
+      "Nhiều bối cảnh thời tiết",
+      "Sẵn sàng trải nghiệm VR",
     ],
   },
 ];
@@ -62,61 +62,61 @@ const platformFeatures = [
 const steps = [
   {
     number: "1",
-    title: "Create Account",
+    title: "Tạo tài khoản",
     description:
-      "Sign up for free and choose your course to personalize your path.",
+      "Đăng ký miễn phí và chọn lộ trình học phù hợp với bạn.",
   },
   {
     number: "2",
-    title: "Learn & Practice",
-    description: "Complete quizzes and practice with lifelike 3D simulations.",
+    title: "Học và luyện tập",
+    description: "Làm quiz và luyện lái xe với mô phỏng 3D chân thực.",
   },
   {
     number: "3",
-    title: "Pass Your Test",
-    description: "Take mock exams and confidently pass your driver's test.",
+    title: "Vượt qua kỳ thi",
+    description: "Thi thử để tự tin đạt kết quả tốt trong kỳ thi thật.",
   },
 ];
 
 const additionalFeatures = [
   {
     icon: <BarChart2Icon className="w-6 h-6 text-blue-600" />,
-    title: "Track Progress",
-    description: "View detailed reports on your learning journey.",
+    title: "Theo dõi tiến độ",
+    description: "Xem báo cáo chi tiết trong suốt quá trình học.",
   },
   {
     icon: <CalendarIcon className="w-6 h-6 text-blue-600" />,
-    title: "Flexible Schedule",
-    description: "Learn at your own pace with flexible scheduling options.",
+    title: "Lịch học linh hoạt",
+    description: "Học theo tốc độ của bạn với lịch học dễ dàng tùy chỉnh.",
   },
   {
     icon: <CreditCardIcon className="w-6 h-6 text-blue-600" />,
-    title: "Easy Payment",
-    description: "Multiple secure and convenient payment methods available.",
+    title: "Thanh toán dễ dàng",
+    description: "Nhiều hình thức thanh toán an toàn và tiện lợi.",
   },
   {
     icon: <HeadphonesIcon className="w-6 h-6 text-blue-600" />,
-    title: "24/7 Support",
-    description: "Dedicated support team ready to help you anytime.",
+    title: "Hỗ trợ 24/7",
+    description: "Đội ngũ hỗ trợ sẵn sàng giúp bạn bất cứ lúc nào.",
   },
 ];
 
 const footerProduct = [
-  { label: "Theory Learning", path: "/login" },
-  { label: "3D Simulation", path: "/login" },
-  { label: "AI Assistant", path: "/login" },
+  { label: "Học lý thuyết", path: "/login" },
+  { label: "Mô phỏng 3D", path: "/login" },
+  { label: "Trợ lý AI", path: "/login" },
 ];
 
 const footerCompany = [
-  { label: "About Us", href: "#about" },
-  { label: "Contact", path: "/support" },
-  { label: "Careers", path: "/support" },
+  { label: "Về chúng tôi", href: "#about" },
+  { label: "Liên hệ", path: "/support" },
+  { label: "Tuyển dụng", path: "/support" },
 ];
 
 const footerSupport = [
-  { label: "Help Center", path: "/support" },
-  { label: "Terms", path: "/safety-protocols" },
-  { label: "Privacy", path: "/privacy-policy" },
+  { label: "Trung tâm hỗ trợ", path: "/support" },
+  { label: "Điều khoản", path: "/safety-protocols" },
+  { label: "Bảo mật", path: "/privacy-policy" },
 ];
 
 export const LandingPage = () => {
@@ -165,46 +165,52 @@ export const LandingPage = () => {
   return (
     <div className="w-full flex flex-col min-h-screen bg-white font-sans">
       {/* Navigation */}
-      <header className="w-full flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-blue-600 rounded flex items-center justify-center">
-            <BookOpenIcon className="w-4 h-4 text-white" />
+      <header className="w-full h-24 bg-white/85 backdrop-blur-md border-b border-slate-100 flex items-center px-10 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl w-full mx-auto flex items-center justify-between gap-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-md shadow-blue-200">
+              <BookOpenIcon className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-extrabold text-[#141b2b] text-xl tracking-tight">
+              DriveMaster
+            </span>
           </div>
-          <span className="font-extrabold text-gray-900 text-xl tracking-tight">
-            DriveMaster
-          </span>
-        </div>
-        <nav className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              type="button"
-              onClick={() => {
-                setActiveNav(link.label);
-                handleLinkAction(link);
-              }}
-              className={`text-[15px] font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer ${
-                activeNav === link.label ? "text-gray-900 font-semibold" : ""
-              }`}
+
+          <nav className="hidden lg:flex items-center gap-2">
+            {navLinks.map((link) => (
+              <button
+                key={link.label}
+                type="button"
+                onClick={() => {
+                  setActiveNav(link.label);
+                  handleLinkAction(link);
+                }}
+                className={`px-5 py-3 rounded-xl text-[15px] font-bold transition-all cursor-pointer ${
+                  activeNav === link.label
+                    ? "text-blue-600 bg-blue-50"
+                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                }`}
+              >
+                {link.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-4 shrink-0">
+            <Button
+              className="h-11 bg-blue-600 hover:bg-blue-700 text-white text-[15px] px-6 rounded-xl font-bold shadow-sm"
+              onClick={() => navigate("/login")}
             >
-              {link.label}
+              Bắt đầu
+            </Button>
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="px-5 py-3 rounded-xl text-[15px] font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all"
+            >
+              Đăng nhập
             </button>
-          ))}
-        </nav>
-        <div className="flex items-center gap-3">
-          <Button
-            className="h-auto bg-blue-600 hover:bg-blue-700 text-white text-[15px] px-5 py-2.5 rounded-md font-semibold"
-            onClick={() => navigate("/login")}
-          >
-            Get Started
-          </Button>
-          <button
-            type="button"
-            onClick={() => navigate("/login")}
-            className="text-[15px] font-medium text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Log in
-          </button>
+          </div>
         </div>
       </header>
 
@@ -225,30 +231,29 @@ export const LandingPage = () => {
           <div>
             <span className="text-xs font-semibold text-blue-600 tracking-widest uppercase flex items-center gap-1">
               <span className="w-2 h-2 bg-blue-600 rounded-full inline-block"></span>
-              Next-Gen Driver Education
+              Nền tảng học lái xe thế hệ mới
             </span>
           </div>
           <h1 className="text-5xl md:text-6xl font-black text-gray-900 leading-[1.05] tracking-tight">
-            Learn to Drive{" "}
-            <span className="text-blue-600">Smarter &amp; Safer</span>
+            Học lái xe{" "}
+            <span className="text-blue-600">Thông minh và an toàn hơn</span>
           </h1>
           <p className="text-gray-600 text-[17px] leading-8 max-w-lg">
-            Master the road with AI-powered personalized lessons, immersive 3D
-            simulations, and comprehensive theory guides designed for the modern
-            learner.
+            Làm chủ tay lái với bài học cá nhân hóa bằng AI, mô phỏng 3D sống
+            động và bộ tài liệu lý thuyết đầy đủ dành cho học viên hiện đại.
           </p>
           <div className="flex items-center gap-3 mt-2">
             <Button
               className="h-auto bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-md text-[15px] font-semibold"
               onClick={() => navigate("/login")}
             >
-              Log in →
+              Đăng nhập →
             </Button>
             <Button
               variant="outline"
               className="h-auto border border-gray-300 text-gray-700 px-7 py-3.5 rounded-md text-[15px] font-semibold hover:bg-gray-50"
             >
-              Register
+              Đăng ký
             </Button>
           </div>
         </div>
@@ -289,16 +294,16 @@ export const LandingPage = () => {
           <div className="flex flex-col md:flex-row gap-10 mb-12">
             <div className="flex-1">
               <span className="text-sm font-semibold text-blue-600 tracking-[0.2em] uppercase">
-                CORE PLATFORM
+                NỀN TẢNG CỐT LÕI
               </span>
               <h2 className="text-4xl md:text-5xl font-black text-gray-900 mt-2 leading-tight tracking-tight">
-                Everything you need to master the wheel.
+                Tất cả những gì bạn cần để làm chủ tay lái.
               </h2>
             </div>
             <div className="flex-1 flex items-center">
               <p className="text-gray-600 text-[16px] leading-7">
-                Built with advanced educational frameworks to ensure you
-                don&#39;t just pass, you excel.
+                Xây dựng trên nền tảng học tập hiện đại để bạn không chỉ
+                vượt qua kỳ thi mà còn lái xe tự tin hơn.
               </p>
             </div>
           </div>
@@ -337,13 +342,13 @@ export const LandingPage = () => {
       <section id="how-it-works" className="w-full py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-8 flex flex-col items-center">
           <span className="text-sm font-semibold text-blue-600 tracking-[0.2em] uppercase mb-2">
-            THE JOURNEY
+            HÀNH TRÌNH
           </span>
           <h2 className="text-4xl md:text-5xl font-black text-gray-900 text-center leading-tight tracking-tight">
-            Simple Steps to Success
+            3 bước đơn giản để thành công
           </h2>
           <p className="text-gray-600 text-[16px] mt-3 mb-12 text-center">
-            Start learning in 3 simple steps
+            Bắt đầu học ngay chỉ với 3 bước
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full">
             {steps.map((step) => (
@@ -401,12 +406,12 @@ export const LandingPage = () => {
                 </span>
               </div>
               <p className="text-gray-300 text-sm leading-7">
-                Smart driver&#39;s education platform powered by AI. Master the
-                road with confidence.
+                Nền tảng học lái xe thông minh ứng dụng AI. Làm chủ tay lái
+                với sự tự tin.
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              <h4 className="text-base font-semibold text-white">Product</h4>
+              <h4 className="text-base font-semibold text-white">Sản phẩm</h4>
               <ul className="flex flex-col gap-2">
                 {footerProduct.map((item) => (
                   <li key={item.label}>
@@ -422,7 +427,7 @@ export const LandingPage = () => {
               </ul>
             </div>
             <div className="flex flex-col gap-3">
-              <h4 className="text-base font-semibold text-white">Company</h4>
+              <h4 className="text-base font-semibold text-white">Công ty</h4>
               <ul className="flex flex-col gap-2">
                 {footerCompany.map((item) => (
                   <li key={item.label}>
@@ -438,7 +443,7 @@ export const LandingPage = () => {
               </ul>
             </div>
             <div className="flex flex-col gap-3">
-              <h4 className="text-base font-semibold text-white">Support</h4>
+              <h4 className="text-base font-semibold text-white">Hỗ trợ</h4>
               <ul className="flex flex-col gap-2">
                 {footerSupport.map((item) => (
                   <li key={item.label}>
@@ -456,7 +461,7 @@ export const LandingPage = () => {
           </div>
           <Separator className="bg-gray-700 mb-6" />
           <p className="text-center text-gray-400 text-sm">
-            © 2026 DriveMaster. All rights reserved.
+            © 2026 DriveMaster. Đã đăng ký bản quyền.
           </p>
         </div>
       </footer>

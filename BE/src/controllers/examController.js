@@ -158,6 +158,60 @@ export const getAdminExamManagementData = async (req, res, next) => {
   }
 }
 
+export const getInstructorExamManagementData = async (req, res, next) => {
+  try {
+    const { search, licenseType, license, source, status, page, limit } = req.query
+    const data = await ExamService.getAdminExamManagementData({
+      search,
+      licenseType: licenseType || license,
+      source,
+      status,
+      page,
+      limit,
+    })
+
+    successResponse(res, data, 'Instructor exam management data retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getPublicExamCatalogData = async (req, res, next) => {
+  try {
+    const { search, licenseType, source, page, limit } = req.query
+    const data = await ExamService.getAdminExamManagementData({
+      search,
+      licenseType,
+      source,
+      page,
+      limit,
+    })
+
+    successResponse(res, data, 'Public exam catalog retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const createInstructorExam = async (req, res, next) => {
+  try {
+    const createdExam = await ExamService.createInstructorExam({
+      title: req.body?.title || req.body?.examName,
+      examName: req.body?.examName,
+      licenseType: req.body?.licenseType,
+      source: req.body?.source || req.body?.examsSource,
+      questionCount: req.body?.questionCount,
+      durationMinutes: req.body?.durationMinutes,
+      passThreshold: req.body?.passThreshold,
+      status: req.body?.status,
+    })
+
+    successResponse(res, { exam: createdExam }, 'Exam created successfully', 201)
+  } catch (error) {
+    next(error)
+  }
+}
+
 /**
  * Get detail of one admin exam (read-only)
  * GET /api/v1/exams/admin/management/:examId

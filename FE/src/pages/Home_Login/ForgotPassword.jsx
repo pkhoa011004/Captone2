@@ -17,10 +17,10 @@ export const ForgotPassword = () => {
   const [success, setSuccess] = useState(false);
 
   const footerLinks = [
-    "Privacy Policy",
-    "Terms of Service",
-    "Safety Center",
-    "Contact",
+    "Chính sách bảo mật",
+    "Điều khoản dịch vụ",
+    "Trung tâm an toàn",
+    "Liên hệ",
   ];
 
   const handleSubmit = async (e) => {
@@ -29,7 +29,7 @@ export const ForgotPassword = () => {
     setSuccess(false);
 
     if (!email) {
-      setError("Please enter your email address");
+      setError("Vui lòng nhập địa chỉ email");
       return;
     }
 
@@ -49,7 +49,7 @@ export const ForgotPassword = () => {
       if (!response.ok) {
         setError(
           data.message ||
-            "Failed to send password reset email. Please try again.",
+            "Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.",
         );
         setLoading(false);
         return;
@@ -66,7 +66,7 @@ export const ForgotPassword = () => {
       }, 3000);
     } catch (err) {
       console.error("Forgot password error:", err);
-      setError("An error occurred. Please try again.");
+      setError("Đã xảy ra lỗi. Vui lòng thử lại.");
       setLoading(false);
     }
   };
@@ -87,13 +87,13 @@ export const ForgotPassword = () => {
               href="#"
               className="text-base font-bold text-slate-700 hover:text-blue-600 transition-colors"
             >
-              Safety Center
+              Trung tâm an toàn
             </a>
             <a
               href="#"
               className="text-base font-bold text-slate-700 hover:text-blue-600 transition-colors"
             >
-              Help
+              Hỗ trợ
             </a>
           </nav>
         </div>
@@ -112,17 +112,17 @@ export const ForgotPassword = () => {
               className="flex items-center gap-2 text-blue-600 font-bold text-base mb-8 cursor-pointer hover:text-blue-700 transition-colors"
             >
               <ArrowLeft size={20} />
-              Back to Login
+              Quay lại đăng nhập
             </button>
 
             {/* Title Section */}
             <div className="space-y-3 mb-12 text-center sm:text-left">
               <h1 className="text-5xl font-black text-[#141b2b] tracking-tight">
-                Reset Password
+                Đặt lại mật khẩu
               </h1>
               <p className="text-slate-500 font-semibold text-base leading-relaxed">
-                Enter your email address and we'll send you instructions to
-                reset your password.
+                Nhập địa chỉ email và chúng tôi sẽ gửi hướng dẫn đặt lại mật
+                khẩu cho bạn.
               </p>
             </div>
 
@@ -140,10 +140,10 @@ export const ForgotPassword = () => {
                   <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-semibold text-green-700">
-                      Email sent successfully!
+                      Gửi email thành công!
                     </p>
                     <p className="text-xs text-green-600 mt-1">
-                      Check your inbox for password reset instructions.
+                      Vui lòng kiểm tra hộp thư để xem hướng dẫn đặt lại mật khẩu.
                     </p>
                   </div>
                 </div>
@@ -152,7 +152,7 @@ export const ForgotPassword = () => {
               {/* Email Input */}
               <div className="space-y-2.5">
                 <Label className="text-xs font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
-                  Email Address
+                  Địa chỉ email
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -176,9 +176,9 @@ export const ForgotPassword = () => {
                 {loading ? (
                   <Loader className="h-5 w-5 animate-spin" />
                 ) : success ? (
-                  "Email Sent"
+                  "Đã gửi email"
                 ) : (
-                  "Send Reset Link"
+                  "Gửi liên kết đặt lại"
                 )}
               </Button>
             </form>
@@ -186,12 +186,12 @@ export const ForgotPassword = () => {
             {/* Divider */}
             <div className="mt-10 pt-8 border-t border-slate-100">
               <p className="text-center text-slate-600 font-medium">
-                Remember your password?{" "}
+                Bạn đã nhớ mật khẩu?{" "}
                 <button
                   onClick={() => navigate("/login")}
                   className="text-blue-600 font-bold hover:underline"
                 >
-                  Log in here
+                  Đăng nhập tại đây
                 </button>
               </p>
             </div>
@@ -219,7 +219,7 @@ export const ForgotPassword = () => {
           </nav>
 
           <p className="text-base font-medium text-slate-600 tracking-tight">
-            © 2026 DriveMaster Education. All rights reserved.
+            © 2026 DriveMaster Education. Đã đăng ký bản quyền.
           </p>
         </div>
       </footer>

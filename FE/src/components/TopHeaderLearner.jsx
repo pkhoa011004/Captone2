@@ -12,6 +12,7 @@ import {
   LogOut,
   UserCircle2,
   ChevronRight,
+  History,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -327,6 +328,22 @@ export const TopHeaderLearner = () => {
                       <UserCircle2 className="h-5 w-5" />
                     </span>
                     {t("learnerHeader.profile")}
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-slate-300" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    navigate("/learner/history-exam");
+                    setIsProfileOpen(false);
+                  }}
+                  className="mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-[15px] font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                      <History className="h-5 w-5" />
+                    </span>
+                    {t("learnerHeader.historyExam")}
                   </span>
                   <ChevronRight className="h-5 w-5 text-slate-300" />
                 </button>

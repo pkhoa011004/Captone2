@@ -1,3 +1,4 @@
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronLeft,
@@ -12,9 +13,10 @@ import {
   Trash2,
   TrendingUp,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { instructorExamsApi } from "@/services/api/InstructorExams";
 
-const summaryCards = [
+const fallbackSummaryCards = [
   {
     label: "Total Exams",
     value: "24",
@@ -39,7 +41,7 @@ const summaryCards = [
   },
 ];
 
-const examRows = [
+const fallbackExamRows = [
   {
     id: "#EX-801",
     title: "De thi ly thuyet B2 - De so 1",
@@ -93,10 +95,139 @@ const examRows = [
 const statusStyles = {
   Active: "text-emerald-600",
   Draft: "text-amber-600",
+  Unavailable: "text-slate-500",
+};
+
+const getLicenseClass = (licenseType) => {
+  const normalized = String(licenseType || "").trim().toUpperCase();
+  if (normalized === "B1") return "bg-purple-100 text-purple-700";
+  if (normalized === "A1") return "bg-slate-200 text-slate-600";
+  return "bg-blue-100 text-blue-700";
+};
+
+const mapExamToRow = (exam = {}) => {
+  const license = String(exam.licenseType || "A1").trim().toUpperCase();
+  const status = String(exam.status || "").trim().toLowerCase();
+  const normalizedStatus =
+    status === "published"
+      ? "Active"
+      : status === "unavailable"
+        ? "Unavailable"
+        : "Draft";
+
+  return {
+    id: (() => {
+      const rawId = String(exam.id || "--").trim();
+      if (!rawId || rawId === "--") return "--";
+      return rawId.startsWith("#") ? rawId : `#${rawId}`;
+    })(),
+    title:
+      String(exam.title || exam.examName || "").trim() ||
+      `De thi ly thuyet ${license} - Moi tao`,
+    lastEdit: exam.updatedAt
+      ? `Last edited: ${new Date(exam.updatedAt).toLocaleDateString()}`
+      : exam.createdAt
+        ? `Last edited: ${new Date(exam.createdAt).toLocaleDateString()}`
+        : "Last edited: just now",
+    license,
+    licenseClass: getLicenseClass(license),
+    questions: Number(exam.questionCount || (license === "B1" ? 35 : 25)),
+    time: `${Number(exam.durationMinutes || (license === "B1" ? 22 : 19))} min`,
+    status: normalizedStatus,
+    passRate: String(exam.passScore || "N/A"),
+    attempts: "0 attempts",
+  };
 };
 
 export function InstructorExercisesPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [summary, setSummary] = useState(null);
+  const [dbRows, setDbRows] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setLoadError("");
+        const result = await instructorExamsApi.getExamManagementData({
+          page: 1,
+          limit: 100,
+        });
+
+        if (!isMounted) return;
+
+        setSummary(result.summary || null);
+        setDbRows(Array.isArray(result.exams) ? result.exams.map(mapExamToRow) : []);
+      } catch (error) {
+        if (!isMounted) return;
+        setLoadError(error?.message || "Không thể tải danh sách đề từ DB.");
+        setSummary(null);
+        setDbRows([]);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const tableRows = useMemo(() => {
+    const rows = [...dbRows];
+
+    const createdExam = location.state?.createdExam;
+    if (createdExam && typeof createdExam === "object") {
+      const mappedCreatedExam = mapExamToRow(createdExam);
+      const duplicate = rows.some(
+        (row) => row.title === mappedCreatedExam.title && row.license === mappedCreatedExam.license,
+      );
+
+      if (!duplicate) {
+        rows.unshift(mappedCreatedExam);
+      }
+    }
+
+    return rows.length > 0 ? rows : fallbackExamRows;
+  }, [dbRows, location.state?.createdExam]);
+
+  const summaryCards = useMemo(() => {
+    if (!summary) return fallbackSummaryCards;
+
+    return [
+      {
+        label: "Total Exams",
+        value: String(summary.totalExams ?? 0),
+        icon: ClipboardList,
+        trend: "DB backed",
+        trendClass: "text-emerald-600",
+      },
+      {
+        label: "Active Exams",
+        value: String(summary.publishedExams ?? 0),
+        icon: ShieldCheck,
+      },
+      {
+        label: "Draft Exams",
+        value: String(summary.draftExams ?? 0),
+        icon: FileText,
+      },
+      {
+        label: "AVG QUESTIONS",
+        value: String(summary.averageQuestions ?? 0),
+        icon: TrendingUp,
+      },
+    ];
+  }, [summary]);
 
   const handleEditExam = (examId) => {
     navigate(`/instructor/exercises/${examId}`);
@@ -131,6 +262,12 @@ export function InstructorExercisesPage() {
           </button>
         </div>
       </section>
+
+      {loadError && (
+        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          {loadError}
+        </p>
+      )}
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => {
@@ -204,7 +341,14 @@ export function InstructorExercisesPage() {
               </tr>
             </thead>
             <tbody>
-              {examRows.map((row) => (
+              {loading ? (
+                <tr>
+                  <td className="px-3 py-6 text-sm text-slate-500" colSpan={8}>
+                    Đang tải danh sách đề từ DB...
+                  </td>
+                </tr>
+              ) : (
+                tableRows.map((row) => (
                 <tr key={row.id} className="border-b border-slate-100">
                   <td className="px-3 py-4 text-xs font-semibold text-slate-400">
                     {row.id}
@@ -276,13 +420,16 @@ export function InstructorExercisesPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-slate-400">Showing 1 to 4 of 24 exams</p>
+          <p className="text-xs text-slate-400">
+            Showing 1 to {tableRows.length} of {tableRows.length} exams
+          </p>
           <div className="flex items-center gap-1">
             <button
               type="button"

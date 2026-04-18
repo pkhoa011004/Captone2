@@ -35,6 +35,7 @@ import CreateExamLearner from "./pages/Learner/CreateExamLearner";
 import SafetyProtocols from "./pages/Learner/SafetyProtocols";
 import PrivacyPolicy from "./pages/Learner/PrivacyPolicy";
 import Support from "./pages/Learner/Support";
+import HistoryExam from "./pages/Learner/HistoryExam";
 
 const App = () => {
   return (
@@ -62,6 +63,7 @@ const App = () => {
           <Route path="profile" element={<AccountSettings />} />
           <Route path="account-settings" element={<AccountSettings />} />
           <Route path="quiz" element={<QuizLearner />} />
+          <Route path="history-exam" element={<HistoryExam />} />
           <Route path="safety-protocols" element={<SafetyProtocols />} />
           <Route path="privacy-policy" element={<PrivacyPolicy />} />
           <Route path="support" element={<Support />} />

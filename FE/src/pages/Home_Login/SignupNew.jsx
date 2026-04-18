@@ -1,13 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  GraduationCap,
-  ShieldCheck,
-  ChevronRight,
   User,
   Mail,
-  Lock,
-  ArrowRight,
   AlertCircle,
   Loader,
   Check,
@@ -42,10 +37,10 @@ export const RegisterLearner = () => {
   const [success, setSuccess] = useState(false);
 
   const footerLinks = [
-    "Privacy Policy",
-    "Terms of Service",
-    "Safety Center",
-    "Contact",
+    "Chính sách bảo mật",
+    "Điều khoản dịch vụ",
+    "Trung tâm an toàn",
+    "Liên hệ",
   ];
 
   const handleSubmit = async (e) => {
@@ -55,22 +50,22 @@ export const RegisterLearner = () => {
 
     // Validation
     if (!formData.fullName || !formData.email || !formData.password) {
-      setError("Please fill in all required fields");
+      setError("Vui lòng điền đầy đủ các trường bắt buộc");
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError("Mật khẩu xác nhận không khớp");
       return;
     }
 
     if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError("Mật khẩu phải có ít nhất 6 ký tự");
       return;
     }
 
     if (!formData.agreeToTerms) {
-      setError("You must agree to the Terms of Service");
+      setError("Bạn cần đồng ý với Điều khoản dịch vụ");
       return;
     }
 
@@ -95,7 +90,7 @@ export const RegisterLearner = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Registration failed. Please try again.");
+        setError(data.message || "Đăng ký thất bại. Vui lòng thử lại.");
         setLoading(false);
         return;
       }
@@ -117,7 +112,7 @@ export const RegisterLearner = () => {
       }, 2000);
     } catch (err) {
       console.error("Registration error:", err);
-      setError("An error occurred. Please try again.");
+      setError("Đã xảy ra lỗi. Vui lòng thử lại.");
       setLoading(false);
     }
   };
@@ -132,10 +127,10 @@ export const RegisterLearner = () => {
           </div>
           <nav className="flex items-center gap-10 text-[15px] md:text-base font-semibold text-slate-700">
             <a href="#" className="hover:text-blue-600 transition-colors">
-              Safety Center
+              Trung tâm an toàn
             </a>
             <a href="#" className="hover:text-blue-600 transition-colors">
-              Help
+              Hỗ trợ
             </a>
           </nav>
         </div>
@@ -151,10 +146,10 @@ export const RegisterLearner = () => {
             {/* Header Text */}
             <div className="space-y-3 mb-12 text-center sm:text-left">
               <h1 className="text-5xl font-black text-[#141b2b] tracking-tight">
-                Create Account
+                Tạo tài khoản
               </h1>
               <p className="text-slate-600 font-medium text-[17px] leading-7">
-                Join DriveMaster and start your journey today.
+                Tham gia DriveMaster và bắt đầu hành trình ngay hôm nay.
               </p>
             </div>
 
@@ -166,13 +161,13 @@ export const RegisterLearner = () => {
                   onClick={() => navigate("/login")}
                   className="rounded-lg font-semibold text-[15px] data-[state=active]:bg-white data-[state=active]:text-blue-600"
                 >
-                  Log In
+                  Đăng nhập
                 </TabsTrigger>
                 <TabsTrigger
                   value="register"
                   className="rounded-lg font-semibold text-[15px] data-[state=active]:bg-white data-[state=active]:text-blue-600 shadow-sm"
                 >
-                  Register
+                  Đăng ký
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -190,10 +185,10 @@ export const RegisterLearner = () => {
                   <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-semibold text-green-700">
-                      Registration successful!
+                      Đăng ký thành công!
                     </p>
                     <p className="text-xs text-green-600 mt-1">
-                      Redirecting to verify email...
+                      Đang chuyển đến trang xác minh email...
                     </p>
                   </div>
                 </div>
@@ -201,7 +196,7 @@ export const RegisterLearner = () => {
               {/* Full Name */}
               <div className="space-y-2.5">
                 <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
-                  Full Name
+                  Họ và tên
                 </Label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -218,7 +213,7 @@ export const RegisterLearner = () => {
               {/* Email */}
               <div className="space-y-2.5">
                 <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
-                  Email Address
+                  Địa chỉ email
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -237,7 +232,7 @@ export const RegisterLearner = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-2.5">
                   <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
-                    Password
+                    Mật khẩu
                   </Label>
                   <Input
                     type="password"
@@ -250,7 +245,7 @@ export const RegisterLearner = () => {
                 </div>
                 <div className="space-y-2.5">
                   <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
-                    Confirm
+                    Xác nhận
                   </Label>
                   <Input
                     type="password"
@@ -269,7 +264,7 @@ export const RegisterLearner = () => {
               {/* License Type Select */}
               <div className="space-y-2.5">
                 <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
-                  License Type
+                  Loại bằng lái
                 </Label>
                 <Select
                   defaultValue="A1"
@@ -281,8 +276,8 @@ export const RegisterLearner = () => {
                     <SelectValue placeholder="Select license type" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                    <SelectItem value="A1">A1 - Lightest motorcycle</SelectItem>
-                    <SelectItem value="B1">B1 - Manual Car</SelectItem>
+                    <SelectItem value="A1">A1 - Xe máy</SelectItem>
+                    <SelectItem value="B1">B1 - Ô tô số sàn</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -300,13 +295,13 @@ export const RegisterLearner = () => {
                   htmlFor="terms"
                   className="text-sm font-medium text-slate-600 leading-snug"
                 >
-                  I agree to the{" "}
+                  Tôi đồng ý với{" "}
                   <span className="text-blue-600 font-bold hover:underline cursor-pointer">
-                    Terms of Service
+                    Điều khoản dịch vụ
                   </span>{" "}
-                  and{" "}
+                  va{" "}
                   <span className="text-blue-600 font-bold hover:underline cursor-pointer">
-                    Privacy Policy
+                    Chính sách bảo mật
                   </span>
                   .
                 </label>
@@ -321,49 +316,10 @@ export const RegisterLearner = () => {
                 {loading ? (
                   <Loader className="h-5 w-5 animate-spin" />
                 ) : (
-                  "Create Account"
+                  "Tạo tài khoản"
                 )}
               </Button>
             </form>
-
-            {/* Divider & Social/Role Switches */}
-            <div className="mt-10 space-y-3 pt-8 border-t border-slate-100">
-              <Button
-                variant="outline"
-                className="w-full h-14 justify-between px-5 rounded-2xl bg-[#f1f3ff] border-none hover:bg-blue-50 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
-                    <GraduationCap size={18} />
-                  </div>
-                  <span className="font-semibold text-[15px] text-[#141b2b]">
-                    Continue as Instructor
-                  </span>
-                </div>
-                <ChevronRight
-                  size={18}
-                  className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"
-                />
-              </Button>
-
-              <Button
-                variant="outline"
-                className="w-full h-14 justify-between px-5 rounded-2xl bg-[#f1f3ff] border-none hover:bg-blue-50 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <span className="font-semibold text-[15px] text-[#141b2b]">
-                    Continue as Administrator
-                  </span>
-                </div>
-                <ChevronRight
-                  size={18}
-                  className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"
-                />
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </main>
@@ -388,7 +344,7 @@ export const RegisterLearner = () => {
           </nav>
 
           <p className="text-[15px] font-medium text-slate-600 tracking-tight">
-            © 2026 DriveMaster Education. All rights reserved.
+            © 2026 DriveMaster Education. Đã đăng ký bản quyền.
           </p>
         </div>
       </footer>

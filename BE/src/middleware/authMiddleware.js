@@ -59,6 +59,7 @@ export const authorize = (...roles) => {
 
     const roleAliases = {
       admin: [1, 'admin'],
+      instructor: [3, 'instructor'],
       user: [2, 'user'],
     }
 

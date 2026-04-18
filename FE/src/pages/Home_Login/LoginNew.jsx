@@ -3,9 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Eye,
   EyeOff,
-  GraduationCap,
-  ShieldCheck,
-  ChevronRight,
   AlertCircle,
   Loader,
 } from "lucide-react";
@@ -73,9 +70,9 @@ export const LogInLearner = () => {
   const [rememberDevice, setRememberDevice] = useState(false);
 
   const footerLinks = [
-    { label: "Privacy Policy", path: "/privacy-policy" },
-    { label: "Safety Center", path: "/safety-protocols" },
-    { label: "Help", path: "/support" },
+    { label: "Chính sách bảo mật", path: "/privacy-policy" },
+    { label: "Trung tâm an toàn", path: "/safety-protocols" },
+    { label: "Hỗ trợ", path: "/support" },
   ];
 
   const handleLogin = async (e) => {
@@ -84,13 +81,13 @@ export const LogInLearner = () => {
     setLoading(true);
 
     if (!email || !email.includes("@")) {
-      setError("Please enter a valid email address.");
+      setError("Vui lòng nhập địa chỉ email hợp lệ.");
       setLoading(false);
       return;
     }
 
     if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters.");
+      setError("Mật khẩu phải có ít nhất 6 ký tự.");
       setLoading(false);
       return;
     }
@@ -107,19 +104,19 @@ export const LogInLearner = () => {
       if (!response.ok) {
         if (response.status === 403) {
           setError(
-            data.message || "Please verify your email before logging in.",
+            data.message || "Vui lòng xác minh email trước khi đăng nhập.",
           );
         } else if (response.status === 401) {
-          setError("Invalid email or password. Please try again.");
+          setError("Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
         } else {
-          setError(data.message || "Login failed.");
+          setError(data.message || "Đăng nhập thất bại.");
         }
         setLoading(false);
         return;
       }
 
       if (!data.data?.token || !data.data?.user) {
-        setError("Invalid response from server.");
+        setError("Dữ liệu phản hồi từ máy chủ không hợp lệ.");
         setLoading(false);
         return;
       }
@@ -170,7 +167,7 @@ export const LogInLearner = () => {
       else if (userRole === "instructor") navigate("/instructor");
       else navigate("/learner");
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      setError("Đã xảy ra lỗi. Vui lòng thử lại.");
       setLoading(false);
     }
   };
@@ -191,14 +188,14 @@ export const LogInLearner = () => {
               onClick={() => navigate("/safety-protocols")}
               className="text-[15px] md:text-base font-semibold text-slate-700 hover:text-blue-600 transition-colors"
             >
-              Safety Center
+              Trung tâm an toàn
             </button>
             <button
               type="button"
               onClick={() => navigate("/support")}
               className="text-[15px] md:text-base font-semibold text-slate-700 hover:text-blue-600 transition-colors"
             >
-              Help
+              Hỗ trợ
             </button>
           </nav>
         </div>
@@ -211,10 +208,10 @@ export const LogInLearner = () => {
           <CardContent className="p-12 relative z-10">
             <div className="space-y-3 mb-10 text-center sm:text-left">
               <h1 className="text-5xl font-black text-[#141b2b] tracking-tight">
-                Welcome Back
+                Chào mừng trở lại
               </h1>
               <p className="text-slate-600 font-medium text-[17px] leading-7">
-                Enter your credentials to access your portal.
+                Nhập thông tin để truy cập vào tài khoản của bạn.
               </p>
             </div>
 
@@ -224,14 +221,14 @@ export const LogInLearner = () => {
                   value="login"
                   className="rounded-lg font-semibold text-[15px]"
                 >
-                  Log In
+                  Đăng nhập
                 </TabsTrigger>
                 <TabsTrigger
                   value="register"
                   onClick={() => navigate("/signup")}
                   className="rounded-lg font-semibold text-[15px]"
                 >
-                  Register
+                  Đăng ký
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -242,13 +239,13 @@ export const LogInLearner = () => {
                   <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm font-semibold">{error}</p>
-                    {error.includes("verify") && (
+                    {/(verify|xac minh|xác minh)/i.test(error) && (
                       <button
                         type="button"
                         onClick={() => navigate("/resend-verification")}
                         className="text-xs font-bold underline mt-1"
                       >
-                        Resend Verification Email →
+                        Gửi lại email xác minh →
                       </button>
                     )}
                   </div>
@@ -257,7 +254,7 @@ export const LogInLearner = () => {
 
               <div className="space-y-2">
                 <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
-                  Email Address
+                  Địa chỉ email
                 </Label>
                 <Input
                   type="email"
@@ -271,14 +268,14 @@ export const LogInLearner = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
-                    Password
+                    Mật khẩu
                   </Label>
                   <button
                     type="button"
                     onClick={() => navigate("/forgot-password")}
                     className="text-sm font-bold text-blue-600 hover:underline uppercase"
                   >
-                    Forgot Password?
+                    Quên mật khẩu?
                   </button>
                 </div>
                 <div className="relative">
@@ -310,7 +307,7 @@ export const LogInLearner = () => {
                   htmlFor="remember"
                   className="text-[15px] font-medium text-slate-600 cursor-pointer"
                 >
-                  Remember this device for 30 days
+                  Ghi nhớ thiết bị này trong 30 ngày
                 </label>
               </div>
 
@@ -322,44 +319,10 @@ export const LogInLearner = () => {
                 {loading ? (
                   <Loader className="h-5 w-5 animate-spin" />
                 ) : (
-                  "Login"
+                  "Đăng nhập"
                 )}
               </Button>
             </form>
-
-            <div className="mt-8 space-y-3 pt-6 border-t border-slate-100">
-              <Button
-                variant="outline"
-                className="w-full h-14 justify-between px-5 rounded-2xl bg-slate-50 border-none hover:bg-blue-50 group"
-              >
-                <div className="flex items-center gap-3">
-                  <GraduationCap size={18} className="text-blue-600" />
-                  <span className="font-semibold text-[15px] text-slate-700">
-                    Continue as Instructor
-                  </span>
-                </div>
-                <ChevronRight
-                  size={18}
-                  className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"
-                />
-              </Button>
-
-              <Button
-                variant="outline"
-                className="w-full h-14 justify-between px-5 rounded-2xl bg-slate-50 border-none hover:bg-blue-50 group"
-              >
-                <div className="flex items-center gap-3">
-                  <ShieldCheck size={18} className="text-blue-600" />
-                  <span className="font-semibold text-[15px] text-slate-700">
-                    Continue as Administrator
-                  </span>
-                </div>
-                <ChevronRight
-                  size={18}
-                  className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"
-                />
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </main>
@@ -382,7 +345,7 @@ export const LogInLearner = () => {
             ))}
           </nav>
           <p className="text-[15px] font-medium text-slate-400">
-            © 2026 DriveMaster Education.
+            © 2026 DriveMaster Education. Đã đăng ký bản quyền.
           </p>
         </div>
       </footer>
