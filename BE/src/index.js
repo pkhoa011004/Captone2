@@ -11,6 +11,7 @@ import userRoutes from './routes/userRoutes.js'
 import questionRoutes from './routes/questionRoutes.js'
 import classroomRoutes from './routes/classroomRoutes.js'
 import examRoutes from './routes/examRoutes.js'
+import learnerRoutes from './routes/learnerRoutes.js'
 import { testConnection } from './config/database.js'
 import emailService from './services/EmailService.js'
 import { ensureUsersEmailVerificationSchema, ensureLearnerScheduleSchema, ensureTestResultsSchema } from './config/migrations.js'
@@ -28,7 +29,11 @@ const PORT = process.env.PORT || 5000
 const NODE_ENV = process.env.NODE_ENV || 'development'
 
 // Security Middleware
-app.use(helmet())
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+)
 
 // CORS Configuration - Allow localhost on any port for development
 const allowedOrigins = NODE_ENV === 'development'
@@ -66,11 +71,12 @@ app.get('/api/v1/health', (req, res) => {
   })
 })
 
-// API Routes
+// API Routes (grouped by resource under /api/v1)
 app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/questions', questionRoutes)
 app.use('/api/v1/classrooms', classroomRoutes)
 app.use('/api/v1/exams', examRoutes)
+app.use('/api/v1/learners', learnerRoutes)
 
 // 404 Handler
 app.use((req, res) => {
@@ -90,13 +96,13 @@ const server = app.listen(PORT, async () => {
   logger.info(`Environment: ${NODE_ENV}`)
 
   // Test database connection
-  await testConnection()
+  const dbConnected = await testConnection()
 
-  // Run migrations
-  await ensureUsersEmailVerificationSchema()
-  await ensureLearnerScheduleSchema()
-  await ensureTestResultsSchema()
-
+  if (dbConnected) {
+    await ensureUsersEmailVerificationSchema()
+    await ensureLearnerScheduleSchema()
+  }
+  
   // Initialize email service
   await emailService.init()
 })

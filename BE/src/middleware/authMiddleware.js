@@ -1,5 +1,8 @@
 import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv'
 import { logger } from '../utils/logger.js'
+
+dotenv.config()
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
@@ -56,6 +59,7 @@ export const authorize = (...roles) => {
 
     const roleAliases = {
       admin: [1, 'admin'],
+      instructor: [3, 'instructor'],
       user: [2, 'user'],
       instructor: [3, 'instructor']
     }

@@ -11,6 +11,7 @@ import {
 
 const router = express.Router()
 
+// Instructor classroom endpoints
 router.get('/', authenticate, getClassrooms)
 router.get('/students/all', authenticate, getAllStudents)
 router.get('/:id', authenticate, getClassroomById)

@@ -67,7 +67,7 @@ export const getClassrooms = async (req, res) => {
     let query = `SELECT c.*, u.name as instructor_name FROM classrooms c LEFT JOIN users u ON c.instructor_id = u.id`;
     let params = [];
 
-    // Nếu là instructor thì chỉ thấy lớp của mình
+    // Instructor only sees classrooms assigned to their own account
     if (Number(userRole) === 3) {
       query += ` WHERE c.instructor_id = ?`;
       params.push(req.user.id);
