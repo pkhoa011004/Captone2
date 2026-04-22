@@ -158,6 +158,60 @@ export const getAdminExamManagementData = async (req, res, next) => {
   }
 }
 
+export const getInstructorExamManagementData = async (req, res, next) => {
+  try {
+    const { search, licenseType, license, source, status, page, limit } = req.query
+    const data = await ExamService.getAdminExamManagementData({
+      search,
+      licenseType: licenseType || license,
+      source,
+      status,
+      page,
+      limit,
+    })
+
+    successResponse(res, data, 'Instructor exam management data retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getPublicExamCatalogData = async (req, res, next) => {
+  try {
+    const { search, licenseType, source, page, limit } = req.query
+    const data = await ExamService.getAdminExamManagementData({
+      search,
+      licenseType,
+      source,
+      page,
+      limit,
+    })
+
+    successResponse(res, data, 'Public exam catalog retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const createInstructorExam = async (req, res, next) => {
+  try {
+    const createdExam = await ExamService.createInstructorExam({
+      title: req.body?.title || req.body?.examName,
+      examName: req.body?.examName,
+      licenseType: req.body?.licenseType,
+      source: req.body?.source || req.body?.examsSource,
+      questionCount: req.body?.questionCount,
+      durationMinutes: req.body?.durationMinutes,
+      passThreshold: req.body?.passThreshold,
+      status: req.body?.status,
+    })
+
+    successResponse(res, { exam: createdExam }, 'Exam created successfully', 201)
+  } catch (error) {
+    next(error)
+  }
+}
+
 /**
  * Get detail of one admin exam (read-only)
  * GET /api/v1/exams/admin/management/:examId
@@ -167,36 +221,6 @@ export const getAdminExamManagementDetail = async (req, res, next) => {
     const { examId } = req.params
     const data = await ExamService.getAdminExamManagementDetail({ examId })
     successResponse(res, data, 'Admin exam detail retrieved successfully')
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Get exams summary with pass rate statistics
- * GET /api/v1/exams/summary
- */
-export const getExamsSummary = async (req, res, next) => {
-  try {
-    const data = await ExamService.getExamsSummaryWithPassRate()
-    successResponse(res, data, 'Exams summary retrieved successfully')
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Get exams list with pass rate and attempts statistics
- * GET /api/v1/exams
- */
-export const getExamsList = async (req, res, next) => {
-  try {
-    const { page, limit } = req.query
-    const data = await ExamService.getExamsListWithStats({
-      page,
-      limit,
-    })
-    successResponse(res, data, 'Exams list retrieved successfully')
   } catch (error) {
     next(error)
   }

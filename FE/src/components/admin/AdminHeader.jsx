@@ -9,7 +9,11 @@ const navigationItems = [
     matchPaths: ["/admin", "/admin-dashboard"],
   },
   { label: "User Management", path: "/admin/users" },
-  { label: "Exam Management", path: "/admin/exams" },
+  {
+    label: "Exam Management",
+    path: "/admin/exams",
+    matchPrefixes: ["/admin/exams/"],
+  },
   { label: "Classrooms", path: "/admin/classrooms" },
   { label: "Analytics", path: "/admin/analytics" },
 ];
@@ -19,10 +23,19 @@ export function AdminHeader() {
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem("user"));
+    setUser(userData);
+  }, []);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
         setIsProfileOpen(false);
       }
     };
@@ -30,6 +43,13 @@ export function AdminHeader() {
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userInfo");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-20 border-b border-blue-100 bg-white/95 backdrop-blur">
@@ -47,20 +67,14 @@ export function AdminHeader() {
           </span>
         </button>
 
-        <div className="relative order-3 w-full md:order-none md:max-w-[220px] lg:max-w-[240px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Quick search..."
-            className="h-10 w-full rounded-full border border-blue-100 bg-blue-50/60 pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
-          />
-        </div>
 
         <nav className="order-4 flex w-full min-w-0 items-center gap-1 overflow-x-auto pb-1 md:order-none md:w-auto md:flex-1 md:justify-center md:overflow-visible md:pb-0">
           {navigationItems.map((item) => {
             const isActive = item.matchPaths
               ? item.matchPaths.includes(location.pathname)
-              : location.pathname === item.path;
+              : item.matchPrefixes?.some((prefix) =>
+                  location.pathname.startsWith(prefix),
+                ) || location.pathname === item.path;
 
             return (
               <button
@@ -101,11 +115,13 @@ export function AdminHeader() {
 
             {isProfileOpen ? (
               <div className="absolute right-0 top-12 w-44 rounded-xl border border-blue-100 bg-white p-1.5 shadow-[0_10px_30px_rgba(15,23,42,0.12)]">
-                <p className="px-2 py-1 text-[11px] font-semibold text-slate-400">Profile - admin</p>
+                <p className="px-2 py-1 text-[11px] font-semibold text-slate-400">
+                  Profile - {user?.name?.toLowerCase()}
+                </p>
                 <button
                   type="button"
                   onClick={() => {
-                    navigate("/admin/settings");
+                    navigate("/admin/profile");
                     setIsProfileOpen(false);
                   }}
                   className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
@@ -115,11 +131,14 @@ export function AdminHeader() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsProfileOpen(false)}
-                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                  onClick={() => {
+                    handleLogout();
+                    setIsProfileOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                 >
                   <LogOut className="h-4 w-4" />
-                  Close
+                  Logout
                 </button>
               </div>
             ) : null}

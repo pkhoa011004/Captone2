@@ -23,16 +23,6 @@ export const TopNavigationBarSection = () => {
           </span>
         </div>
 
-        <div className="hidden md:flex relative w-64">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            size={14}
-          />
-          <Input
-            placeholder="Quick search..."
-            className="pl-9 rounded-full bg-slate-100 border-none h-9 text-xs"
-          />
-        </div>
 
         <nav className="hidden lg:flex items-center gap-2">
           {navItems.map((item) => (

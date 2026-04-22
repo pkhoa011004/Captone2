@@ -77,8 +77,7 @@ Cập nhật các giá trị trong `.env` phù hợp với môi trường.
 
 ### 5. Chạy development server
 ```bash
-cd app
-python -m uvicorn main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
 Server sẽ chạy tại `http://localhost:8000`

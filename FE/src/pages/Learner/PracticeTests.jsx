@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import {
   FileText,
   Trophy,
@@ -6,99 +8,71 @@ import {
   Activity,
   RotateCcw,
   Play,
-  Search,
   Filter,
   TrendingUp,
-  AlertTriangle,
   CloudRain,
   Shield,
 } from "lucide-react";
 
-import { TopHeaderLearner } from "@/components/TopHeaderLearner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  getExamSourceForLicenseType,
+  getStoredLicenseType,
+  normalizeLicenseType,
+} from "@/lib/license";
+import { learnerExamsApi } from "@/services/api/LearnerExams";
 
-// --- Dữ liệu Thống kê Tổng quan ---
-const STATS_SUMMARY = [
-  {
-    label: "Tests Completed",
-    value: "12",
-    icon: <FileText size={20} />,
-    badge: "OVERALL",
-    color: "bg-slate-100",
-  },
-  {
-    label: "Average Score",
-    value: "85%",
-    icon: <Trophy size={20} />,
-    trend: "+2%",
-    color: "bg-blue-100",
-    highlight: true,
-  },
-  {
-    label: "Questions Answered",
-    value: "340",
-    icon: <HelpCircle size={20} />,
-    color: "bg-slate-100",
-  },
-  {
-    label: "Readiness Score",
-    value: "High",
-    icon: <Activity size={20} />,
-    color: "bg-slate-100",
-    textColor: "text-blue-600",
-  },
-];
+const CATEGORY_LABELS = {
+  REGULATIONS: "practiceTestsPage.categoryRegulations",
+  TRAFFIC_CULTURE: "practiceTestsPage.categoryTrafficCulture",
+  DRIVING_TECHNIQUE: "practiceTestsPage.categoryDrivingTechnique",
+  VEHICLE_REPAIR: "practiceTestsPage.categoryVehicleRepair",
+  TRAFFIC_SIGNS: "practiceTestsPage.categoryTrafficSigns",
+  SITUATION_HANDLING: "practiceTestsPage.categorySituationHandling",
+  A1: "A1",
+  B1: "B1",
+  exam_250: "250 câu",
+  exam_600: "600 câu",
+};
 
-// --- Dữ liệu Các Bài Kiểm tra ---
-const PRACTICE_TOPICS = [
-  {
-    title: "Traffic Signs & Signals",
-    difficulty: "EASY",
-    questions: 25,
-    bestScore: 92,
-    attempted: true,
-  },
-  {
-    title: "Right of Way Rules",
-    difficulty: "MEDIUM",
-    questions: 20,
-    bestScore: 78,
-    attempted: true,
-  },
-  {
-    title: "Speed Limits & Zones",
-    difficulty: "EASY",
-    questions: 15,
-    bestScore: 65,
-    attempted: true,
-  },
-  {
-    title: "Parking Regulations",
-    difficulty: "MEDIUM",
-    questions: 30,
-    bestScore: 88,
-    attempted: true,
-  },
-  {
-    title: "Emergency Procedures",
-    difficulty: "HARD",
-    questions: 15,
-    bestScore: null,
-    attempted: false,
-    decoIcon: <Shield />,
-  },
-  {
-    title: "Night & Weather Driving",
-    difficulty: "HARD",
-    questions: 20,
-    bestScore: null,
-    attempted: false,
-    decoIcon: <CloudRain />,
-  },
-];
+const buildTopicTitle = (topic, index, t) => {
+  const title = String(topic?.title || topic?.examName || "").trim();
+  if (title) return title;
+
+  const license = String(topic?.licenseType || "A1").trim().toUpperCase();
+  const source = String(topic?.source || topic?.examsSource || "").trim().toLowerCase();
+  const sourceLabel = CATEGORY_LABELS[source] || source || t("practiceTestsPage.customExam");
+  return `${t("practiceTestsPage.exam")} ${index + 1} - ${license} - ${sourceLabel}`;
+};
+
+const PRACTICE_RESULTS_STORAGE_KEY = "practiceTopicResults";
+
+// Legacy mapping for backward compatibility with old topic titles
+const LEGACY_TOPIC_TITLES = {};
+
+const readPracticeResults = () => {
+  try {
+    const raw = localStorage.getItem(PRACTICE_RESULTS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const getQuizConfigForTopic = (topic, licenseType, examsSource) => ({
+  topicId: String(topic.id || topic.examId || "").trim() || null,
+  licenseType: normalizeLicenseType(topic.licenseType, licenseType),
+  questionCount: Number(topic.questionCount || topic.questions || 25),
+  examName: topic.title || topic.examName || "Đề tự tạo",
+  generationMode: "structured",
+  examsSource,
+  fatalOnly: false,
+  selectedCategories: [],
+});
 
 const getDifficultyStyles = (level) => {
   switch (level) {
@@ -114,24 +88,236 @@ const getDifficultyStyles = (level) => {
 };
 
 export const PracticeTests = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [storedResults] = useState(() => readPracticeResults());
+  const currentLicenseType = getStoredLicenseType();
+  const currentExamSource = getExamSourceForLicenseType(currentLicenseType);
+  const [catalogExamRows, setCatalogExamRows] = useState([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
+  const [catalogError, setCatalogError] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [difficultyFilter, setDifficultyFilter] = useState("ALL");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadCatalog = async () => {
+      try {
+        setLoadingCatalog(true);
+        setCatalogError("");
+
+        const result = await learnerExamsApi.getExamCatalog({
+          licenseType: currentLicenseType,
+          limit: 100,
+        });
+
+        if (!active) return;
+
+        const rows = Array.isArray(result.exams) ? result.exams : [];
+        setCatalogExamRows(rows);
+      } catch (error) {
+        if (!active) return;
+        setCatalogError(error?.message || "Không thể tải bộ đề từ DB.");
+        setCatalogExamRows([]);
+      } finally {
+        if (active) {
+          setLoadingCatalog(false);
+        }
+      }
+    };
+
+    loadCatalog();
+
+    return () => {
+      active = false;
+    };
+  }, [currentLicenseType, currentExamSource]);
+
+  const allPracticeTopics = useMemo(() => {
+    return catalogExamRows
+      .map((item) => {
+        const questionCount = Number(item.questionCount || 0);
+        const difficulty =
+          questionCount >= 35 ? "HARD" : questionCount >= 25 ? "MEDIUM" : "EASY";
+
+        return {
+          id: String(item.id || `exam-${questionCount}`),
+          title: item.title || item.examName || t("practiceTestsPage.customExam"),
+          examName: item.title || item.examName || t("practiceTestsPage.customExam"),
+          titleOverride: item.title || item.examName || t("practiceTestsPage.customExam"),
+          difficulty,
+          questions: questionCount,
+          questionCount,
+          selectedCategories: [
+            normalizeLicenseType(item.licenseType, currentLicenseType),
+            String(item.source || currentExamSource).trim().toLowerCase(),
+          ],
+          licenseType: normalizeLicenseType(item.licenseType, currentLicenseType),
+          examsSource: String(item.source || currentExamSource).trim().toLowerCase(),
+          createdAt: item.createdAt || null,
+          status: item.status || "Published",
+          source: item.source || currentExamSource,
+        };
+      })
+      .sort((a, b) => {
+        const timeA = Date.parse(a.createdAt || 0);
+        const timeB = Date.parse(b.createdAt || 0);
+        return timeB - timeA;
+      });
+  }, [catalogExamRows, currentExamSource, currentLicenseType, t]);
+
+  const availableCategories = useMemo(() => {
+    const categories = new Set();
+
+    allPracticeTopics.forEach((topic) => {
+      (topic.selectedCategories || []).forEach((category) => {
+        if (category) categories.add(category);
+      });
+    });
+
+    return ["ALL", ...Array.from(categories)];
+  }, [allPracticeTopics]);
+
+  const filteredPracticeTopics = useMemo(() => {
+    return allPracticeTopics.filter((topic) => {
+      const matchesDifficulty =
+        difficultyFilter === "ALL" || topic.difficulty === difficultyFilter;
+
+      const matchesCategory =
+        categoryFilter === "ALL" ||
+        (topic.selectedCategories || []).includes(categoryFilter);
+
+      return matchesDifficulty && matchesCategory;
+    });
+  }, [allPracticeTopics, difficultyFilter, categoryFilter]);
+
+  const topicsWithResults = useMemo(
+    () =>
+      filteredPracticeTopics.map((topic, index) => {
+        const topicTitle = buildTopicTitle(topic, index, t);
+        const result =
+          storedResults[topic.id] ||
+          storedResults[topicTitle] ||
+          null;
+        const bestScore = Number.isFinite(Number(result?.bestScore))
+          ? Number(result.bestScore)
+          : null;
+
+        return {
+          ...topic,
+          title: topicTitle,
+          bestScore,
+          attempted: bestScore !== null,
+          attemptCount: Number(result?.attemptCount || 0),
+        };
+      }),
+    [filteredPracticeTopics, storedResults, t],
+  );
+
+  const handleStartOrRetake = (topic) => {
+    const examConfig = getQuizConfigForTopic(
+      topic,
+      currentLicenseType,
+      currentExamSource,
+    );
+    sessionStorage.setItem("quizExamConfig", JSON.stringify(examConfig));
+    navigate("/learner/quiz", {
+      state: { examConfig },
+    });
+  };
+
+  const statsSummary = useMemo(() => {
+    const attemptedTopics = topicsWithResults.filter(
+      (topic) => topic.attempted,
+    );
+    const testsCompleted = topicsWithResults.reduce(
+      (sum, topic) => sum + Number(topic.attemptCount || 0),
+      0,
+    );
+
+    const averageScore = attemptedTopics.length
+      ? Math.round(
+          attemptedTopics.reduce((sum, topic) => {
+            const result =
+              storedResults[topic.id] ||
+              storedResults[topic.title] ||
+              storedResults[LEGACY_TOPIC_TITLES[topic.id]] ||
+              null;
+            const score = Number(result?.latestScore ?? topic.bestScore ?? 0);
+            return sum + (Number.isFinite(score) ? score : 0);
+          }, 0) / attemptedTopics.length,
+        )
+      : 0;
+
+    const questionsAnswered = topicsWithResults.reduce((sum, topic) => {
+      const result =
+        storedResults[topic.id] ||
+        storedResults[topic.title] ||
+        storedResults[LEGACY_TOPIC_TITLES[topic.id]] ||
+        null;
+      const attemptCount = Number(result?.attemptCount || 0);
+      const totalQuestions = Number(
+        result?.totalQuestions || topic.questions || 0,
+      );
+      return sum + attemptCount * totalQuestions;
+    }, 0);
+
+    const readinessScore =
+      averageScore >= 80
+        ? t("practiceTestsPage.high")
+        : averageScore >= 60
+          ? t("practiceTestsPage.medium")
+          : t("practiceTestsPage.low");
+
+    return [
+      {
+        label: t("practiceTestsPage.testsCompleted"),
+        value: String(testsCompleted),
+        icon: <FileText size={20} />,
+        badge: t("practiceTestsPage.overall"),
+        color: "bg-slate-100",
+      },
+      {
+        label: t("practiceTestsPage.averageScore"),
+        value: `${averageScore}%`,
+        icon: <Trophy size={20} />,
+        color: "bg-blue-100",
+        highlight: true,
+      },
+      {
+        label: t("practiceTestsPage.questionsAnswered"),
+        value: String(questionsAnswered),
+        icon: <HelpCircle size={20} />,
+        color: "bg-slate-100",
+      },
+      {
+        label: t("practiceTestsPage.readinessScore"),
+        value: readinessScore,
+        icon: <Activity size={20} />,
+        color: "bg-slate-100",
+        textColor: "text-blue-600",
+      },
+    ];
+  }, [topicsWithResults, storedResults, t]);
+
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
-      <TopHeaderLearner />
-
       <main className="flex-1 w-full max-w-screen-2xl mx-auto p-8 space-y-10">
         {/* 1. Header */}
         <header className="space-y-1">
           <h1 className="text-4xl font-extrabold text-[#141b2b] tracking-tight font-manrope">
-            Practice Tests
+            {t("practiceTestsPage.title")}
           </h1>
           <p className="text-lg text-slate-500">
-            Choose a topic and test your knowledge
+            {t("practiceTestsPage.subtitle")}
           </p>
         </header>
 
         {/* 2. Overall Stats Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {STATS_SUMMARY.map((stat, idx) => (
+          {statsSummary.map((stat, idx) => (
             <Card
               key={idx}
               className={`border-none shadow-sm transition-all hover:shadow-md ${stat.highlight ? "border-l-4 border-l-blue-600" : ""}`}
@@ -170,38 +356,171 @@ export const PracticeTests = () => {
           ))}
         </section>
 
+        {catalogError && (
+          <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+            {catalogError}
+          </p>
+        )}
+
         {/* 3. Filter Row */}
         <section className="flex flex-col md:flex-row justify-between items-center gap-4">
           <h2 className="text-2xl font-bold text-[#141b2b]">
-            Choose a Practice Test
+            {t("practiceTestsPage.choosePracticeTest")}
           </h2>
           <div className="flex gap-2">
-            <Button className="rounded-xl bg-[#e1e8fd] text-blue-700 hover:bg-blue-100 font-bold px-6 border-none">
-              All Topics
+            <Button
+              type="button"
+              onClick={() => {
+                setDifficultyFilter("ALL");
+                setCategoryFilter("ALL");
+                setShowFilters(false);
+              }}
+              className="rounded-xl bg-[#e1e8fd] text-blue-700 hover:bg-blue-100 font-bold px-6 border-none"
+            >
+              {t("practiceTestsPage.allTopics")}
             </Button>
             <Button
-              variant="ghost"
-              className="rounded-xl text-slate-500 font-bold px-6 gap-2"
+              type="button"
+              onClick={() => navigate("/learner/create-exam")}
+              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 border-none"
             >
-              <Filter size={16} /> Filter
+              {t("practiceTestsPage.createExam")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setShowFilters((prev) => !prev)}
+              aria-pressed={showFilters}
+              variant="ghost"
+              className={`rounded-xl font-bold px-6 gap-2 transition-colors ${showFilters ? "text-blue-700 bg-blue-50 hover:bg-blue-100" : "text-slate-500 hover:bg-slate-100"}`}
+            >
+              <Filter size={16} /> {t("practiceTestsPage.filter")}
             </Button>
           </div>
         </section>
 
+        {showFilters && (
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4 shadow-sm">
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-[#141b2b]">
+                {t("practiceTestsPage.filterDifficulty")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: "ALL", label: t("practiceTestsPage.all") },
+                  { value: "EASY", label: t("practiceTestsPage.easy") },
+                  {
+                    value: "MEDIUM",
+                    label: t("practiceTestsPage.mediumDifficulty"),
+                  },
+                  { value: "HARD", label: t("practiceTestsPage.hard") },
+                ].map((item) => {
+                  const active = difficultyFilter === item.value;
+                  return (
+                    <Button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setDifficultyFilter(item.value)}
+                      variant={active ? "default" : "outline"}
+                      className={`rounded-full px-4 font-bold ${
+                        active
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {item.label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-[#141b2b]">
+                {t("practiceTestsPage.filterTopic")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {availableCategories.map((category) => {
+                  const active = categoryFilter === category;
+                  const label =
+                    category === "ALL"
+                      ? t("practiceTestsPage.allCategories")
+                      : t(CATEGORY_LABELS[category] || category);
+
+                  return (
+                    <Button
+                      key={category}
+                      type="button"
+                      variant={active ? "default" : "outline"}
+                      onClick={() => setCategoryFilter(category)}
+                      className={`rounded-full px-4 font-bold ${
+                        active
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <p className="text-sm text-slate-500 font-medium">
+                {t("practiceTestsPage.showing")}{" "}
+                <b>{topicsWithResults.length}</b>{" "}
+                {t("practiceTestsPage.topics")}
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setDifficultyFilter("ALL");
+                  setCategoryFilter("ALL");
+                  setShowFilters(false);
+                }}
+                className="rounded-xl text-slate-500 font-bold"
+              >
+                {t("practiceTestsPage.resetFilters")}
+              </Button>
+            </div>
+          </section>
+        )}
+
         {/* 4. Topics Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {PRACTICE_TOPICS.map((topic, idx) => (
-            <Card
-              key={idx}
-              className="border-none shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-300"
-            >
-              <CardContent className="p-8 flex flex-col h-full min-h-[274px]">
+              {loadingCatalog ? (
+                <Card className="border-none shadow-sm bg-white">
+                  <CardContent className="p-6 text-sm text-slate-500">
+                    Đang tải bộ đề từ DB...
+                  </CardContent>
+                </Card>
+              ) : (
+                topicsWithResults.map((topic, idx) => (
+                  <Card
+                    key={idx}
+                    className="border-none shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-300 cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleStartOrRetake(topic)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleStartOrRetake(topic);
+                      }
+                    }}
+                  >
+                    <CardContent className="p-8 flex flex-col h-full min-h-68.5">
                 {/* Topic Header */}
                 <div className="flex justify-between items-start mb-6">
                   <Badge
                     className={`${getDifficultyStyles(topic.difficulty)} border rounded-full px-3 py-1 font-bold tracking-widest text-[10px]`}
                   >
-                    {topic.difficulty}
+                    {topic.difficulty === "EASY"
+                      ? t("practiceTestsPage.easy")
+                      : topic.difficulty === "MEDIUM"
+                        ? t("practiceTestsPage.mediumDifficulty")
+                        : t("practiceTestsPage.hard")}
                   </Badge>
                   {topic.attempted ? (
                     <div className="flex items-baseline gap-1">
@@ -209,12 +528,12 @@ export const PracticeTests = () => {
                         {topic.bestScore}%
                       </span>
                       <span className="text-[10px] font-bold text-slate-400 uppercase">
-                        best
+                        {t("practiceTestsPage.best")}
                       </span>
                     </div>
                   ) : (
                     <span className="text-sm font-bold text-slate-400 italic">
-                      Not attempted
+                      {t("practiceTestsPage.notAttempted")}
                     </span>
                   )}
                 </div>
@@ -227,7 +546,7 @@ export const PracticeTests = () => {
                   <div className="flex items-center gap-2 text-slate-500">
                     <HelpCircle size={14} />
                     <span className="text-sm font-medium">
-                      {topic.questions} questions
+                      {topic.questions} {t("practiceTestsPage.questions")}
                     </span>
                   </div>
                 </div>
@@ -245,12 +564,23 @@ export const PracticeTests = () => {
                     <Button
                       variant="outline"
                       className="w-full rounded-xl bg-[#e1e8fd] border-none text-blue-700 font-bold gap-2 hover:bg-blue-200"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleStartOrRetake(topic);
+                      }}
                     >
-                      <RotateCcw size={16} /> Retake
+                      <RotateCcw size={16} /> {t("practiceTestsPage.retake")}
                     </Button>
                   ) : (
-                    <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2 shadow-lg shadow-blue-100">
-                      <Play size={16} fill="currentColor" /> Start Test
+                    <Button
+                      className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2 shadow-lg shadow-blue-100"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleStartOrRetake(topic);
+                      }}
+                    >
+                      <Play size={16} fill="currentColor" />{" "}
+                      {t("practiceTestsPage.startTest")}
                     </Button>
                   )}
                 </div>
@@ -261,9 +591,10 @@ export const PracticeTests = () => {
                     {React.cloneElement(topic.decoIcon, { size: 120 })}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          ))}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
         </section>
       </main>
     </div>

@@ -13,8 +13,9 @@ export default function ResendVerification() {
     setStatus("loading");
 
     try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/users/resend-verification-email`,
+        `${apiBaseUrl}/users/resend-verification-email`,
         {
           method: "POST",
           headers: {
@@ -29,17 +30,17 @@ export default function ResendVerification() {
       if (response.ok) {
         setStatus("success");
         setMessage(
-          "Verification email sent! Check your email and click the verification link."
+          "Đã gửi email xác minh! Vui lòng kiểm tra email và bấm vào liên kết xác minh."
         );
         setTimeout(() => navigate("/login"), 3000);
       } else {
         setStatus("error");
-        setMessage(data.message || "Failed to resend verification email");
+        setMessage(data.message || "Không thể gửi lại email xác minh");
       }
     } catch (error) {
       console.error("Resend error:", error);
       setStatus("error");
-      setMessage("An error occurred. Please try again.");
+      setMessage("Đã xảy ra lỗi. Vui lòng thử lại.");
     }
   };
 
@@ -49,11 +50,11 @@ export default function ResendVerification() {
         <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md text-center">
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Email Sent!
+            Đã gửi email!
           </h2>
           <p className="text-gray-600 mb-2">{message}</p>
           <p className="text-sm text-gray-500">
-            Redirecting to login page...
+            Đang chuyển đến trang đăng nhập...
           </p>
         </div>
       </div>
@@ -66,10 +67,10 @@ export default function ResendVerification() {
         <div className="text-center mb-6">
           <Mail className="h-12 w-12 text-blue-600 mx-auto mb-3" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Resend Verification Email
+            Gửi lại email xác minh
           </h2>
           <p className="text-gray-600 text-sm">
-            Enter your email address to receive a new verification link
+            Nhập địa chỉ email để nhận liên kết xác minh mới
           </p>
         </div>
 
@@ -79,7 +80,7 @@ export default function ResendVerification() {
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Email Address
+              Địa chỉ email
             </label>
             <input
               id="email"
@@ -105,7 +106,7 @@ export default function ResendVerification() {
             disabled={status === "loading" || !email}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
           >
-            {status === "loading" ? "Sending..." : "Resend Verification Email"}
+            {status === "loading" ? "Đang gửi..." : "Gửi lại email xác minh"}
           </button>
         </form>
 
@@ -113,7 +114,7 @@ export default function ResendVerification() {
           onClick={() => navigate("/login")}
           className="w-full mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200"
         >
-          Back to Login
+          Quay lại đăng nhập
         </button>
       </div>
     </div>

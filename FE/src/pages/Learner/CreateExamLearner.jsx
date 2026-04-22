@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { CheckCircle2, FilePlus2, ShieldCheck } from "lucide-react";
 
 const EXAM_SOURCES = {
@@ -58,6 +59,11 @@ const EXAM_PRESETS = {
   },
 };
 
+const SOURCE_TO_LICENSE = {
+  exam_250: "A1",
+  exam_600: "B1",
+};
+
 const getDefaultCategories = (licenseType, examsSource) => {
   const structure = EXAM_PRESETS[licenseType]?.[examsSource]?.structure || {};
   return Object.keys(structure);
@@ -65,8 +71,9 @@ const getDefaultCategories = (licenseType, examsSource) => {
 
 export default function CreateExamLearner() {
   const navigate = useNavigate();
-  const [licenseType, setLicenseType] = useState("A1");
   const [examsSource, setExamsSource] = useState("exam_250");
+  const licenseType = SOURCE_TO_LICENSE[examsSource] || "A1";
+  const [customExamName, setCustomExamName] = useState("");
   const [selectedCategories, setSelectedCategories] = useState(
     getDefaultCategories("A1", "exam_250"),
   );
@@ -86,22 +93,24 @@ export default function CreateExamLearner() {
   }
 
   const fixedQuestionCount = presetConfig.defaultCount;
-  const examName = useMemo(
+  const suggestedExamName = useMemo(
     () =>
       `Đề ${licenseType} - ${fixedQuestionCount} câu (${EXAM_SOURCES[examsSource].label})`,
     [licenseType, fixedQuestionCount, examsSource],
   );
 
   const handleLicenseChange = (nextType) => {
-    setLicenseType(nextType);
     const availableSource = Object.keys(EXAM_PRESETS[nextType])[0];
     setExamsSource(availableSource);
     setSelectedCategories(getDefaultCategories(nextType, availableSource));
   };
 
+  const finalExamName = customExamName.trim() || suggestedExamName;
+
   const handleExamSourceChange = (nextSource) => {
+    const mappedLicenseType = SOURCE_TO_LICENSE[nextSource] || "A1";
     setExamsSource(nextSource);
-    setSelectedCategories(getDefaultCategories(licenseType, nextSource));
+    setSelectedCategories(getDefaultCategories(mappedLicenseType, nextSource));
   };
 
   const toggleCategory = (category) => {
@@ -275,7 +284,7 @@ export default function CreateExamLearner() {
                   <FilePlus2 size={18} />
                   <h3 className="text-sm font-bold">Đề sắp tạo</h3>
                 </div>
-                <p className="text-xl font-black text-[#141b2b]">{examName}</p>
+                <p className="text-xl font-black text-[#141b2b]">{finalExamName}</p>
                 <p className="text-sm text-slate-600 font-medium">
                   {presetConfig.description}
                 </p>

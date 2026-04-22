@@ -7,10 +7,12 @@ import { LandingPage } from "./pages/Home_Login/LandingPage";
 import { LogInLearner } from "./pages/Home_Login/LoginNew";
 import RegisterLearner from "./pages/Home_Login/SignupNew";
 import VerifyEmail from "./pages/Home_Login/VerifyEmail";
+import ForgotPassword from "./pages/Home_Login/ForgotPassword";
 import ResendVerification from "./pages/Home_Login/ResendVerification";
 import { AdminDashboardPage } from "./pages/Admin/AdminDashboardPage";
 import { AdminUserManagement } from "./pages/Admin/AdminUserManagement";
 import { AdminExamManagement } from "./pages/Admin/AdminExamManagement";
+import { AdminExamDetails } from "./pages/Admin/AdminExamDetails";
 import { AdminClassrooms } from "./pages/Admin/AdminClassrooms";
 import { AdminAnalytics } from "./pages/Admin/AdminAnalytics";
 import { AdminSettings } from "./pages/Admin/AdminSettings";
@@ -20,6 +22,7 @@ import AiLearner from "./pages/Learner/AiLearner";
 import SimulatorLearner from "./pages/Learner/SimulatorLearner";
 import ScheduleLearner from "./pages/Learner/ScheduleLearner";
 import AccountSettings from "./pages/Learner/AccountSettings";
+import CustomExamBuilder from "./pages/Learner/CustomExamBuilder";
 import { InstructorLayout } from "./components/instructor/InstructorLayout";
 import { InstructorDashboardPage } from "./pages/Instructor/InstructorDashboardPage";
 import { InstructorExercisesPage } from "./pages/Instructor/InstructorExercisesPage";
@@ -27,6 +30,12 @@ import { InstructorExerciseDetailsPage } from "./pages/Instructor/InstructorExer
 import { InstructorClassroomsPage } from "./pages/Instructor/InstructorClassroomsPage";
 import { InstructorClassroomDetailsPage } from "./pages/Instructor/InstructorClassroomDetailsPage";
 import { InstructorProfilePage } from "./pages/Instructor/InstructorProfilePage";
+import QuizLearner from "./pages/Learner/QuizLearner";
+import CreateExamLearner from "./pages/Learner/CreateExamLearner";
+import SafetyProtocols from "./pages/Learner/SafetyProtocols";
+import PrivacyPolicy from "./pages/Learner/PrivacyPolicy";
+import Support from "./pages/Learner/Support";
+import HistoryExam from "./pages/Learner/HistoryExam";
 
 const App = () => {
   return (
@@ -34,9 +43,15 @@ const App = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LogInLearner />} />
+        <Route path="/loginnew" element={<Navigate to="/login" replace />} />
         <Route path="/signup" element={<RegisterLearner />} />
+        <Route path="/signupnew" element={<Navigate to="/signup" replace />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/resend-verification" element={<ResendVerification />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/safety-protocols" element={<SafetyProtocols />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/support" element={<Support />} />
         <Route path="/dashboard" element={<Navigate to="/learner" replace />} />
 
         <Route path="/learner" element={<LearnerLayout />}>
@@ -45,26 +60,77 @@ const App = () => {
           <Route path="ai-assistant" element={<AiLearner />} />
           <Route path="simulator" element={<SimulatorLearner />} />
           <Route path="schedule" element={<ScheduleLearner />} />
+          <Route path="profile" element={<AccountSettings />} />
           <Route path="account-settings" element={<AccountSettings />} />
+          <Route path="quiz" element={<QuizLearner />} />
+          <Route path="history-exam" element={<HistoryExam />} />
+          <Route path="safety-protocols" element={<SafetyProtocols />} />
+          <Route path="privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="support" element={<Support />} />
         </Route>
+
+        <Route
+          path="/dashboardlearner"
+          element={<Navigate to="/learner" replace />}
+        />
+        <Route
+          path="/practicelearner"
+          element={<Navigate to="/learner/practice-tests" replace />}
+        />
+        <Route
+          path="/ailearner"
+          element={<Navigate to="/learner/ai-assistant" replace />}
+        />
+        <Route
+          path="/simulatorlearner"
+          element={<Navigate to="/learner/simulator" replace />}
+        />
+        <Route
+          path="/schedulelearner"
+          element={<Navigate to="/learner/schedule" replace />}
+        />
+        <Route
+          path="/accountsettings"
+          element={<Navigate to="/learner/account-settings" replace />}
+        />
+        <Route
+          path="/create-exam"
+          element={<Navigate to="/learner/create-exam" replace />}
+        />
+        <Route path="/learner/create-exam" element={<CustomExamBuilder />} />
+        <Route
+          path="/quizlearner"
+          element={<Navigate to="/learner/quiz" replace />}
+        />
 
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboardPage />} />
           <Route path="users" element={<AdminUserManagement />} />
           <Route path="exams" element={<AdminExamManagement />} />
+          <Route path="exams/:examId" element={<AdminExamDetails />} />
           <Route path="classrooms" element={<AdminClassrooms />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 
-        <Route path="/admin-dashboard" element={<Navigate to="/admin" replace />} />
+        <Route
+          path="/admin-dashboard"
+          element={<Navigate to="/admin" replace />}
+        />
 
         <Route path="/instructor" element={<InstructorLayout />}>
           <Route index element={<InstructorDashboardPage />} />
           <Route path="exercises" element={<InstructorExercisesPage />} />
-          <Route path="exercises/:examId" element={<InstructorExerciseDetailsPage />} />
+          <Route path="create-exam" element={<CreateExamLearner />} />
+          <Route
+            path="exercises/:examId"
+            element={<InstructorExerciseDetailsPage />}
+          />
           <Route path="classrooms" element={<InstructorClassroomsPage />} />
-          <Route path="classrooms/:classId" element={<InstructorClassroomDetailsPage />} />
+          <Route
+            path="classrooms/:classId"
+            element={<InstructorClassroomDetailsPage />}
+          />
           <Route path="profile" element={<InstructorProfilePage />} />
         </Route>
 

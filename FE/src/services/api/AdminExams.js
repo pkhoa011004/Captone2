@@ -140,87 +140,9 @@ const getExamManagementDetail = async (examId) => {
   return normalizeExamDetail(payload);
 };
 
-/**
- * Get exams summary with pass rate statistics
- * Returns: totalExams, activeExams, draftExams, averagePassRate
- */
-const getExamsSummary = async () => {
-  try {
-    console.log("Fetching exams summary...");
-    const response = await apiInstance.get("/exams/summary");
-    console.log("Summary response:", response);
-    const payload = response?.data?.data ?? {};
-
-    return {
-      totalExams: normalizeNumber(payload.totalExams) || 0,
-      activeExams: normalizeNumber(payload.activeExams) || 0,
-      draftExams: normalizeNumber(payload.draftExams) || 0,
-      averagePassRate: normalizeNumber(payload.averagePassRate) || 0,
-    };
-  } catch (error) {
-    console.error("Error fetching exams summary:", error.message, error.response?.data);
-    throw error;
-  }
-};
-
-/**
- * Normalize exam row for list display
- */
-const normalizeExamRow = (exam = {}) => ({
-  id: exam.id ?? null,
-  title: exam.title ?? null,
-  license: exam.license ?? null,
-  questions: normalizeNumber(exam.questions) || 0,
-  time: exam.time ?? null,
-  status: exam.status ?? null,
-  passRate: exam.passRate ?? "N/A",
-  attempts: normalizeNumber(exam.attempts) || 0,
-  attemptsText: exam.attemptsText ?? "0 attempts",
-  createdAt: exam.createdAt ?? null,
-  updatedAt: exam.updatedAt ?? null,
-});
-
-/**
- * Get exams list with pass rate and attempts statistics
- */
-const getExamsListWithStats = async ({
-  page = 1,
-  limit = 10,
-} = {}) => {
-  try {
-    const params = {};
-
-    if (Number.isInteger(Number(page)) && Number(page) > 0) {
-      params.page = Number(page);
-    }
-    if (Number.isInteger(Number(limit)) && Number(limit) > 0) {
-      params.limit = Number(limit);
-    }
-
-    console.log("Fetching exams list with params:", params);
-    const response = await apiInstance.get("/exams", {
-      params,
-    });
-
-    console.log("Exams list response:", response);
-    const payload = response?.data?.data ?? {};
-    const exams = Array.isArray(payload.exams) ? payload.exams : [];
-
-    return {
-      exams: exams.map(normalizeExamRow),
-      pagination: normalizePagination(payload.pagination),
-    };
-  } catch (error) {
-    console.error("Error fetching exams list:", error.message, error.response?.data);
-    throw error;
-  }
-};
-
 export const adminExamsApi = {
   getExamManagementData,
   getExamManagementDetail,
-  getExamsSummary,
-  getExamsListWithStats,
 };
 
 export default adminExamsApi;

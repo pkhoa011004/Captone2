@@ -1,8 +1,20 @@
-import { Bell, CarFront, CircleHelp, Search, UserCircle2 } from "lucide-react";
+import {
+  Bell,
+  CarFront,
+  CircleHelp,
+  LogOut,
+  Search,
+  UserCircle2,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
-  { label: "Dashboard", path: "/instructor", matchPaths: ["/instructor", "/instructor/profile"] },
+  {
+    label: "Dashboard",
+    path: "/instructor",
+    matchPaths: ["/instructor", "/instructor/profile"],
+  },
   { label: "Exercises & Exams", path: "/instructor/exercises" },
   { label: "Classrooms", path: "/instructor/classrooms" },
 ];
@@ -10,6 +22,35 @@ const navItems = [
 export function InstructorHeader() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileMenuRef = useRef(null);
+
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem("user"));
+    setUser(userData);
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userInfo");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-20 border-b border-blue-100 bg-white/95 backdrop-blur">
@@ -27,14 +68,6 @@ export function InstructorHeader() {
           </span>
         </button>
 
-        <div className="relative order-3 w-full md:order-none md:max-w-[220px] lg:max-w-[260px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Quick search..."
-            className="h-10 w-full rounded-full border border-blue-100 bg-blue-50/60 pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
-          />
-        </div>
 
         <nav className="order-4 flex w-full min-w-0 items-center gap-1 overflow-x-auto pb-1 md:order-none md:w-auto md:flex-1 md:justify-center md:overflow-visible md:pb-0">
           {navItems.map((item) => {
@@ -75,14 +108,47 @@ export function InstructorHeader() {
           >
             <CircleHelp className="h-5 w-5" />
           </button>
-          <button
-            type="button"
-            onClick={() => navigate("/instructor/profile")}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-blue-100 text-slate-500 transition hover:bg-blue-50 hover:text-blue-700"
-            aria-label="Instructor profile"
-          >
-            <UserCircle2 className="h-6 w-6" />
-          </button>
+
+          <div className="relative" ref={profileMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsProfileOpen((prev) => !prev)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-blue-100 text-slate-500 transition hover:bg-blue-50 hover:text-blue-700"
+              aria-label="Instructor profile"
+            >
+              <UserCircle2 className="h-6 w-6" />
+            </button>
+
+            {isProfileOpen ? (
+              <div className="absolute right-0 top-12 w-44 rounded-xl border border-blue-100 bg-white p-1.5 shadow-[0_10px_30px_rgba(15,23,42,0.12)]">
+                <p className="px-2 py-1 text-[11px] font-semibold text-slate-400">
+                  Profile - {user?.name?.toLowerCase()}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate("/instructor/profile");
+                    setIsProfileOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <UserCircle2 className="h-4 w-4" />
+                  Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleLogout();
+                    setIsProfileOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </header>

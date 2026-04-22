@@ -92,6 +92,83 @@ export class ExamService {
     )
   }
 
+  static normalizeInstructorLicenseType(licenseType, source) {
+    const normalizedSource = String(source || '').trim().toLowerCase()
+    if (normalizedSource === 'exam_600') return 'B1'
+    if (normalizedSource === 'exam_250') return 'A1'
+
+    const normalizedLicense = String(licenseType || '').trim().toUpperCase()
+    if (normalizedLicense === 'A1' || normalizedLicense === 'B1') {
+      return normalizedLicense
+    }
+
+    return 'A1'
+  }
+
+  static resolveInstructorExamDefaults({ licenseType, source }) {
+    const normalizedLicense = this.normalizeInstructorLicenseType(licenseType, source)
+    if (normalizedLicense === 'B1' || String(source || '').trim().toLowerCase() === 'exam_600') {
+      return {
+        licenseType: 'B1',
+        source: 'exam_600',
+        questionCount: 35,
+        durationMinutes: 22,
+        passThreshold: 27,
+      }
+    }
+
+    return {
+      licenseType: 'A1',
+      source: 'exam_250',
+      questionCount: 25,
+      durationMinutes: 19,
+      passThreshold: 21,
+    }
+  }
+
+  static normalizeInstructorStatus(status) {
+    const normalized = String(status || '').trim().toLowerCase()
+    if (normalized === 'published' || normalized === 'draft' || normalized === 'archived') {
+      return normalized
+    }
+
+    return 'published'
+  }
+
+  static async getExamsTableMeta(connection) {
+    const hasExamsTable = await this.tableExists(connection, 'exams')
+    if (!hasExamsTable) return null
+
+    const columns = await this.getTableColumns(connection, 'exams')
+    return {
+      columns,
+      idColumn: this.pickFirstExistingColumn(columns, ['id', 'exam_id']),
+      titleColumn: this.pickFirstExistingColumn(columns, ['title', 'name', 'exam_name']),
+      licenseColumn: this.pickFirstExistingColumn(
+        columns,
+        ['license_type', 'license', 'certificate_code', 'license_code']
+      ),
+      sourceColumn: this.pickFirstExistingColumn(columns, ['source', 'exams_source']),
+      questionCountColumn: this.pickFirstExistingColumn(
+        columns,
+        ['question_count', 'total_questions', 'questions_count']
+      ),
+      durationColumn: this.pickFirstExistingColumn(
+        columns,
+        ['duration_minutes', 'time_limit_minutes', 'duration']
+      ),
+      passThresholdColumn: this.pickFirstExistingColumn(
+        columns,
+        ['pass_threshold', 'passing_score']
+      ),
+      passScoreColumn: this.pickFirstExistingColumn(columns, ['pass_score']),
+      statusColumn: this.pickFirstExistingColumn(columns, ['status']),
+      isActiveColumn: this.pickFirstExistingColumn(columns, ['is_active']),
+      createdAtColumn: this.pickFirstExistingColumn(columns, ['created_at']),
+      updatedAtColumn: this.pickFirstExistingColumn(columns, ['updated_at']),
+    }
+  }
+
   static normalizeExamStatus(status) {
     const normalized = String(status || '').trim().toLowerCase()
     if (normalized === 'published') return 'Published'
@@ -416,6 +493,165 @@ export class ExamService {
     }
 
     return allRows
+  }
+
+  static async createInstructorExam(payload = {}) {
+    let connection
+
+    try {
+      connection = await pool.getConnection()
+
+      const meta = await this.getExamsTableMeta(connection)
+      if (!meta || !meta.idColumn || !meta.titleColumn || !meta.licenseColumn || !meta.sourceColumn) {
+        const error = new Error('Table exams is missing required columns for exam creation')
+        error.statusCode = 500
+        throw error
+      }
+
+      const title = String(payload.title || payload.examName || '').trim()
+      if (!title) {
+        const error = new Error('Exam title is required')
+        error.statusCode = 400
+        throw error
+      }
+
+      const defaults = this.resolveInstructorExamDefaults({
+        licenseType: payload.licenseType,
+        source: payload.source || payload.examsSource,
+      })
+
+      const licenseType = defaults.licenseType
+      const source = defaults.source
+      const questionCount = this.toPositiveIntegerOrDefault(
+        payload.questionCount ?? payload.question_count,
+        defaults.questionCount,
+        1,
+        1000
+      )
+      const durationMinutes = this.toPositiveIntegerOrDefault(
+        payload.durationMinutes ?? payload.duration_minutes,
+        defaults.durationMinutes,
+        1,
+        1000
+      )
+      const passThreshold = this.toPositiveIntegerOrDefault(
+        payload.passThreshold ?? payload.pass_threshold,
+        defaults.passThreshold,
+        1,
+        questionCount
+      )
+      const status = this.normalizeInstructorStatus(payload.status)
+
+      const insertColumns = [meta.titleColumn, meta.licenseColumn, meta.sourceColumn]
+      const insertValues = ['?', '?', '?']
+      const insertParams = [title, licenseType, source]
+
+      if (meta.questionCountColumn) {
+        insertColumns.push(meta.questionCountColumn)
+        insertValues.push('?')
+        insertParams.push(questionCount)
+      }
+
+      if (meta.durationColumn) {
+        insertColumns.push(meta.durationColumn)
+        insertValues.push('?')
+        insertParams.push(durationMinutes)
+      }
+
+      if (meta.passThresholdColumn) {
+        insertColumns.push(meta.passThresholdColumn)
+        insertValues.push('?')
+        insertParams.push(passThreshold)
+      }
+
+      if (meta.statusColumn) {
+        insertColumns.push(meta.statusColumn)
+        insertValues.push('?')
+        insertParams.push(status)
+      }
+
+      if (meta.isActiveColumn) {
+        insertColumns.push(meta.isActiveColumn)
+        insertValues.push('?')
+        insertParams.push(1)
+      }
+
+      if (meta.createdAtColumn) {
+        insertColumns.push(meta.createdAtColumn)
+        insertValues.push('NOW()')
+      }
+
+      if (meta.updatedAtColumn) {
+        insertColumns.push(meta.updatedAtColumn)
+        insertValues.push('NOW()')
+      }
+
+      await connection.beginTransaction()
+
+      const [result] = await connection.execute(
+        `INSERT INTO exams (${insertColumns.join(', ')})
+         VALUES (${insertValues.join(', ')})`,
+        insertParams
+      )
+
+      const insertedId = result?.insertId ?? null
+      const selectFields = [
+        `e.${meta.idColumn} AS id`,
+        meta.titleColumn ? `e.${meta.titleColumn} AS title` : 'NULL AS title',
+        meta.licenseColumn ? `e.${meta.licenseColumn} AS license_type` : 'NULL AS license_type',
+        meta.sourceColumn ? `e.${meta.sourceColumn} AS source` : 'NULL AS source',
+        meta.questionCountColumn ? `e.${meta.questionCountColumn} AS question_count` : 'NULL AS question_count',
+        meta.durationColumn ? `e.${meta.durationColumn} AS duration_minutes` : 'NULL AS duration_minutes',
+        meta.passThresholdColumn ? `e.${meta.passThresholdColumn} AS pass_threshold` : 'NULL AS pass_threshold',
+        meta.passScoreColumn ? `e.${meta.passScoreColumn} AS pass_score` : 'NULL AS pass_score',
+        meta.statusColumn ? `e.${meta.statusColumn} AS status` : 'NULL AS status',
+        meta.isActiveColumn ? `e.${meta.isActiveColumn} AS is_active` : '1 AS is_active',
+        meta.createdAtColumn ? `e.${meta.createdAtColumn} AS created_at` : 'NULL AS created_at',
+        meta.updatedAtColumn ? `e.${meta.updatedAtColumn} AS updated_at` : 'NULL AS updated_at',
+      ]
+
+      let rawRow = null
+      if (insertedId !== null && insertedId !== undefined) {
+        const [rows] = await connection.query(
+          `SELECT
+             ${selectFields.join(',\n             ')}
+           FROM exams e
+           WHERE e.${meta.idColumn} = ?
+           LIMIT 1`,
+          [insertedId]
+        )
+        rawRow = rows?.[0] || null
+      }
+
+      if (!rawRow) {
+        rawRow = {
+          id: insertedId,
+          title,
+          license_type: licenseType,
+          source,
+          question_count: questionCount,
+          duration_minutes: durationMinutes,
+          pass_threshold: passThreshold,
+          status,
+          is_active: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      }
+
+      await connection.commit()
+      return this.normalizeExamRow(rawRow, 0)
+    } catch (error) {
+      if (connection) {
+        await connection.rollback()
+      }
+      logger.error('Error creating instructor exam:', error)
+      throw error
+    } finally {
+      if (connection) {
+        connection.release()
+      }
+    }
   }
 
   static async getAdminExamManagementData(options = {}) {
@@ -1005,169 +1241,6 @@ export class ExamService {
           category: question.categoryInferred,
         }
       }),
-    }
-  }
-
-  /**
-   * Get exams summary with pass rate statistics
-   * Returns: totalExams, activeExams, draftExams, averagePassRate
-   */
-  static async getExamsSummaryWithPassRate() {
-    let connection
-
-    try {
-      connection = await pool.getConnection()
-
-      // Get all exams
-      const [exams] = await connection.execute(`
-        SELECT 
-          e.id,
-          e.title,
-          e.license_type,
-          e.source,
-          e.total_questions,
-          e.duration_minutes,
-          e.pass_threshold,
-          e.status,
-          e.created_at,
-          e.updated_at
-        FROM exams e
-        ORDER BY e.updated_at DESC
-      `)
-
-      // Get test results summary (passed count, total attempts per exam)
-      const [testResults] = await connection.execute(`
-        SELECT 
-          exam_id,
-          COUNT(*) as total_attempts,
-          SUM(CASE WHEN passed = 1 THEN 1 ELSE 0 END) as passed_count
-        FROM test_results
-        GROUP BY exam_id
-      `)
-
-      // Create a map of test results for quick lookup
-      const testResultsMap = {}
-      for (const result of testResults) {
-        testResultsMap[result.exam_id] = {
-          attempts: result.total_attempts,
-          passed: result.passed_count,
-        }
-      }
-
-      // Calculate summary statistics
-      const totalExams = exams.length
-      const activeExams = exams.filter(e => e.status === 'active').length
-      const draftExams = exams.filter(e => e.status === 'draft').length
-
-      // Calculate average pass rate
-      let totalPassed = 0
-      let totalAttempts = 0
-      for (const examId in testResultsMap) {
-        totalPassed += testResultsMap[examId].passed
-        totalAttempts += testResultsMap[examId].attempts
-      }
-
-      const averagePassRate = totalAttempts > 0 ? Math.round((totalPassed / totalAttempts) * 100) : 0
-
-      return {
-        totalExams,
-        activeExams,
-        draftExams,
-        averagePassRate,
-      }
-    } catch (error) {
-      logger.error('Error getting exams summary with pass rate:', error)
-      throw error
-    } finally {
-      if (connection) {
-        connection.release()
-      }
-    }
-  }
-
-  /**
-   * Get exams list with pass rate and attempts statistics
-   * Performs LEFT JOIN with test_results to calculate metrics
-   */
-  static async getExamsListWithStats(options = {}) {
-    let connection
-
-    try {
-      connection = await pool.getConnection()
-
-      const requestedPage = this.toPositiveIntegerOrDefault(options.page, 1, 1, 100000)
-      const limit = this.toPositiveIntegerOrDefault(options.limit, 10, 1, 100)
-
-      // Get exams with test_results statistics using LEFT JOIN
-      const [rows] = await connection.execute(`
-        SELECT 
-          e.id,
-          e.title,
-          e.license_type,
-          e.source,
-          e.total_questions,
-          e.duration_minutes,
-          e.pass_threshold,
-          e.status,
-          e.created_at,
-          e.updated_at,
-          COUNT(tr.id) as total_attempts,
-          SUM(CASE WHEN tr.passed = 1 THEN 1 ELSE 0 END) as passed_count
-        FROM exams e
-        LEFT JOIN test_results tr ON e.id = tr.exam_id
-        GROUP BY e.id
-        ORDER BY e.updated_at DESC
-      `)
-
-      // Calculate pass rates for each exam
-      const examsWithStats = (rows || []).map(row => {
-        const attempts = row.total_attempts || 0
-        const passedCount = row.passed_count || 0
-        
-        // Calculate pass rate: (passed / total) * 100, or 0 if no attempts yet
-        const passRate = attempts > 0 ? Math.round((passedCount / attempts) * 100) : 0
-        
-        // Map database column names to UI column names
-        return {
-          id: row.id,
-          title: row.title,
-          license: row.license_type,
-          questions: row.total_questions,
-          time: `${row.duration_minutes} min`,
-          status: row.status === 'active' ? 'Active' : row.status === 'draft' ? 'Draft' : 'Archived',
-          passRate: attempts > 0 ? `${passRate}%` : 'N/A',
-          attempts: attempts || 0,
-          attemptsText: attempts > 0 ? `${attempts} attempts` : '0 attempts',
-          createdAt: row.created_at,
-          updatedAt: row.updated_at,
-        }
-      })
-
-      // Calculate pagination
-      const totalItems = examsWithStats.length
-      const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1
-      const page = Math.min(requestedPage, totalPages)
-      const offset = (page - 1) * limit
-      const paginatedExams = examsWithStats.slice(offset, offset + limit)
-
-      return {
-        exams: paginatedExams,
-        pagination: {
-          page,
-          limit,
-          totalItems,
-          totalPages,
-          hasNextPage: page < totalPages,
-          hasPreviousPage: page > 1,
-        },
-      }
-    } catch (error) {
-      logger.error('Error getting exams list with stats:', error)
-      throw error
-    } finally {
-      if (connection) {
-        connection.release()
-      }
     }
   }
 }

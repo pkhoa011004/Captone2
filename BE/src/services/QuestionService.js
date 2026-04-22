@@ -120,20 +120,20 @@ export class QuestionService {
   }
 
   static async gradeExam(payload = {}) {
-    const certificateId = await this.resolveCertificateId(payload)
+    // Don't check certificateId for grading - just verify questions exist
     const questionIds = [...new Set((payload.question_ids || []).map((id) => Number(id)))]
     const answers = payload.answers || []
     const answerMap = new Map(answers.map((item) => [Number(item.question_id), item.selected_answer === null ? null : Number(item.selected_answer)]))
 
     const questions = await QuestionModel.findByIds(questionIds, {
-      certificateId,
+      certificateId: null,  // Don't filter by certificate
       includeAnswer: true,
     })
 
     if (questions.length !== questionIds.length) {
       const foundIds = new Set(questions.map((item) => Number(item.id)))
       const missingQuestionIds = questionIds.filter((id) => !foundIds.has(id))
-      const error = new Error(`Some questions were not found or do not belong to this license: ${missingQuestionIds.join(', ')}`)
+      const error = new Error(`Some questions were not found: ${missingQuestionIds.join(', ')}`)
       error.statusCode = 400
       throw error
     }
@@ -184,7 +184,6 @@ export class QuestionService {
 
     return {
       licenseType: payload.licenseType ? String(payload.licenseType).trim().toUpperCase() : null,
-      certificate_id: certificateId,
       total_questions: totalQuestions,
       pass_threshold: passThreshold,
       correct_count: correctCount,

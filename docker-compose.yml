@@ -1,0 +1,48 @@
+services:
+  be:
+    build:
+      context: ./BE
+    container_name: capstone-be
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      API_PREFIX: /api/v1
+      JWT_SECRET: change-me
+      JWT_EXPIRES_IN: 7d
+      DB_HOST: host.docker.internal
+      DB_PORT: 3306
+      DB_NAME: drive_master
+      DB_USER: root
+      DB_PASSWORD: 12345
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  ai:
+    build:
+      context: ./AI
+    container_name: capstone-ai
+    ports:
+      - "8000:8000"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8000
+      DATABASE_URL: mysql+pymysql://root:12345@host.docker.internal:3306/drive_master
+      SECRET_KEY: change-me
+      GROQ_API_KEY: change-me
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:5000"]'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  fe:
+    build:
+      context: ./FE
+      args:
+        VITE_API_URL: http://localhost:5000/api/v1
+    container_name: capstone-fe
+    ports:
+      - "5173:80"
+    depends_on:
+      - be
+      - ai

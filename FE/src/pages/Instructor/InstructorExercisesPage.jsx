@@ -21,6 +21,48 @@ import adminExamsApi from "../../services/api/AdminExams";
 const statusStyles = {
   Active: "text-emerald-600",
   Draft: "text-amber-600",
+  Unavailable: "text-slate-500",
+};
+
+const getLicenseClass = (licenseType) => {
+  const normalized = String(licenseType || "").trim().toUpperCase();
+  if (normalized === "B1") return "bg-purple-100 text-purple-700";
+  if (normalized === "A1") return "bg-slate-200 text-slate-600";
+  return "bg-blue-100 text-blue-700";
+};
+
+const mapExamToRow = (exam = {}) => {
+  const license = String(exam.licenseType || "A1").trim().toUpperCase();
+  const status = String(exam.status || "").trim().toLowerCase();
+  const normalizedStatus =
+    status === "published"
+      ? "Active"
+      : status === "unavailable"
+        ? "Unavailable"
+        : "Draft";
+
+  return {
+    id: (() => {
+      const rawId = String(exam.id || "--").trim();
+      if (!rawId || rawId === "--") return "--";
+      return rawId.startsWith("#") ? rawId : `#${rawId}`;
+    })(),
+    title:
+      String(exam.title || exam.examName || "").trim() ||
+      `De thi ly thuyet ${license} - Moi tao`,
+    lastEdit: exam.updatedAt
+      ? `Last edited: ${new Date(exam.updatedAt).toLocaleDateString()}`
+      : exam.createdAt
+        ? `Last edited: ${new Date(exam.createdAt).toLocaleDateString()}`
+        : "Last edited: just now",
+    license,
+    licenseClass: getLicenseClass(license),
+    questions: Number(exam.questionCount || (license === "B1" ? 35 : 25)),
+    time: `${Number(exam.durationMinutes || (license === "B1" ? 22 : 19))} min`,
+    status: normalizedStatus,
+    passRate: String(exam.passScore || "N/A"),
+    attempts: "0 attempts",
+  };
 };
 
 export function InstructorExercisesPage() {
@@ -187,8 +229,12 @@ export function InstructorExercisesPage() {
     <div className="space-y-5">
       <section className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Exercises &amp; Exams</h1>
-          <p className="mt-1 text-sm text-slate-500">Create and manage practice tests and exercises</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+            Exercises &amp; Exams
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Create and manage practice tests and exercises
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -200,6 +246,7 @@ export function InstructorExercisesPage() {
           </button>
           <button
             type="button"
+            onClick={() => navigate("/instructor/create-exam")}
             className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"
           >
             <CirclePlus className="h-3.5 w-3.5" />
@@ -208,21 +255,36 @@ export function InstructorExercisesPage() {
         </div>
       </section>
 
+      {loadError && (
+        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          {loadError}
+        </p>
+      )}
+
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => {
           const Icon = card.icon;
           return (
-            <article key={card.label} className="rounded-xl border border-blue-100 bg-white p-4">
+            <article
+              key={card.label}
+              className="rounded-xl border border-blue-100 bg-white p-4"
+            >
               <div className="mb-4 flex items-center justify-between">
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-blue-50 text-blue-600">
                   <Icon className="h-4 w-4" />
                 </span>
                 {card.trend ? (
-                  <span className={`text-[10px] font-bold ${card.trendClass}`}>{card.trend}</span>
+                  <span className={`text-[10px] font-bold ${card.trendClass}`}>
+                    {card.trend}
+                  </span>
                 ) : null}
               </div>
-              <p className="text-[11px] font-semibold text-slate-500">{card.label}</p>
-              <p className="mt-1 text-4xl font-extrabold tracking-tight text-slate-900">{card.value}</p>
+              <p className="text-[11px] font-semibold text-slate-500">
+                {card.label}
+              </p>
+              <p className="mt-1 text-4xl font-extrabold tracking-tight text-slate-900">
+                {card.value}
+              </p>
             </article>
           );
         })}

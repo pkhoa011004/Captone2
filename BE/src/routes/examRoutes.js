@@ -6,32 +6,25 @@ import {
   getExamFrom250,
   getExamFrom600,
   gradeExam,
-  getExamsSummary,
-  getExamsList,
+  getInstructorExamManagementData,
+  getPublicExamCatalogData,
+  createInstructorExam,
 } from '../controllers/examController.js'
 import { authenticate, authorize } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
-// Instructor/Admin routes - exams management with pass rate stats
-/**
- * GET /api/v1/exams/summary
- * Get exams summary: totalExams, activeExams, draftExams, averagePassRate
- */
-router.get('/summary', authenticate, authorize('admin', 'instructor'), getExamsSummary)
-
-/**
- * GET /api/v1/exams
- * Get exams list with pass rate and attempts statistics
- * Query: ?page=1&limit=10
- */
-router.get('/', authenticate, authorize('admin', 'instructor'), getExamsList)
-
 // Admin routes (read-only)
 router.get('/admin/management', authenticate, authorize('admin'), getAdminExamManagementData)
 router.get('/admin/management/:examId', authenticate, authorize('admin'), getAdminExamManagementDetail)
 
+// Instructor routes
+router.get('/instructor/management', authenticate, authorize('instructor', 'admin'), getInstructorExamManagementData)
+router.post('/instructor/create', authenticate, authorize('instructor', 'admin'), createInstructorExam)
+
 // Public routes
+router.get('/catalog', getPublicExamCatalogData)
+
 /**
  * GET /api/v1/exams/random?licenseType=A1&examsSource=exam_250
  * Get random exam từ 250 (25 câu) hoặc 600 (35 câu)

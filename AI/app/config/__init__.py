@@ -1,5 +1,9 @@
 import logging
+import os
 from app.config.settings import settings
+
+# Create logs directory if it doesn't exist
+os.makedirs("logs", exist_ok=True)
 
 # Configure logging
 logging.basicConfig(

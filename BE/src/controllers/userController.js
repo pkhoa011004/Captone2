@@ -72,6 +72,15 @@ export const getProfile = async (req, res, next) => {
   }
 }
 
+export const getCurrentUser = async (req, res, next) => {
+  try {
+    const user = await UserService.getCurrentUser(req.user.id)
+    successResponse(res, user, 'Current user profile retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const getAllUsers = async (req, res, next) => {
   try {
     const { search, role } = req.query
@@ -82,6 +91,79 @@ export const getAllUsers = async (req, res, next) => {
 
     const users = await UserService.getAllUsers(filters)
     successResponse(res, users, 'Users retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getAdminUserManagementData = async (req, res, next) => {
+  try {
+    const { search, status, role, licenseType, license, page, limit } = req.query
+    const data = await UserService.getAdminUserManagementData({
+      search,
+      status,
+      role,
+      licenseType: licenseType || license,
+      page,
+      limit,
+    })
+    successResponse(res, data, 'Admin user management data retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getAdminUserDetail = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const detail = await UserService.getAdminUserDetail(id)
+    successResponse(res, detail, 'Admin user detail retrieved successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const updateAdminUserStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { status } = req.validatedData
+    const actorUserId = req.user?.id
+
+    const updated = await UserService.updateAdminUserStatus({
+      id,
+      status,
+      actorUserId,
+    })
+
+    successResponse(res, updated, 'User status updated successfully')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const createAdminUser = async (req, res, next) => {
+  try {
+    const {
+      email,
+      password,
+      name,
+      phone,
+      licenseType,
+      role,
+      status,
+    } = req.validatedData
+
+    const created = await UserService.createAdminUser({
+      email,
+      password,
+      name,
+      phone,
+      licenseType,
+      role,
+      status,
+    })
+
+    successResponse(res, created, 'User created successfully', 201)
   } catch (error) {
     next(error)
   }
@@ -99,7 +181,12 @@ export const getUserById = async (req, res, next) => {
 
 export const updateUser = async (req, res, next) => {
   try {
-    const { id } = req.params
+    const id = req.params?.id || req.user?.id
+
+    if (!id) {
+      return errorResponse(res, 'User id is required', 400)
+    }
+
     const updateData = req.validatedData
 
     const user = await UserService.updateUser(id, updateData)
@@ -139,6 +226,10 @@ export default {
   resendVerificationEmail,
   getProfile,
   getAllUsers,
+  getAdminUserManagementData,
+  getAdminUserDetail,
+  updateAdminUserStatus,
+  createAdminUser,
   getUserById,
   updateUser,
   changePassword,

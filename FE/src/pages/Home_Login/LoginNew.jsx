@@ -3,11 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Eye,
   EyeOff,
-  ArrowRight,
-  GraduationCap,
-  ShieldCheck,
-  Check,
-  ChevronRight,
   AlertCircle,
   Loader,
 } from "lucide-react";
@@ -21,6 +16,52 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export const LogInLearner = () => {
   const navigate = useNavigate();
+  const apiBaseUrl =
+    import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+
+  const AVATAR_STORAGE_KEY = "learnerAvatar";
+
+  const getAvatarStorageKeys = (userLike) => {
+    const email = String(userLike?.email || "")
+      .trim()
+      .toLowerCase();
+    const id = String(userLike?.id ?? userLike?.user_id ?? "")
+      .trim()
+      .toLowerCase();
+
+    const keys = [];
+    if (email) keys.push(`${AVATAR_STORAGE_KEY}:email:${email}`);
+    if (id) {
+      keys.push(`${AVATAR_STORAGE_KEY}:id:${id}`);
+      // backward compatibility with old format
+      keys.push(`${AVATAR_STORAGE_KEY}:${id}`);
+    }
+    return keys;
+  };
+
+  const readAvatarFromStorage = (userLike) => {
+    const keys = getAvatarStorageKeys(userLike);
+    for (const key of keys) {
+      const value = localStorage.getItem(key);
+      if (value) return value;
+    }
+    return "";
+  };
+
+  const writeAvatarToStorage = (userLike, avatar) => {
+    if (!avatar) return;
+    const keys = getAvatarStorageKeys(userLike);
+    keys.forEach((key) => localStorage.setItem(key, avatar));
+  };
+
+  const parseJsonSafe = (value) => {
+    try {
+      return JSON.parse(value || "null");
+    } catch {
+      return null;
+    }
+  };
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,10 +70,9 @@ export const LogInLearner = () => {
   const [rememberDevice, setRememberDevice] = useState(false);
 
   const footerLinks = [
-    "Privacy Policy",
-    "Terms of Service",
-    "Safety Center",
-    "Contact",
+    { label: "Chính sách bảo mật", path: "/privacy-policy" },
+    { label: "Trung tâm an toàn", path: "/safety-protocols" },
+    { label: "Hỗ trợ", path: "/support" },
   ];
 
   const handleLogin = async (e) => {
@@ -40,148 +80,202 @@ export const LogInLearner = () => {
     setError("");
     setLoading(true);
 
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/users/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+    if (!email || !email.includes("@")) {
+      setError("Vui lòng nhập địa chỉ email hợp lệ.");
+      setLoading(false);
+      return;
+    }
 
-      const data = await response.json();
+    if (!password || password.length < 6) {
+      setError("Mật khẩu phải có ít nhất 6 ký tự.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/users/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setError(
-          data.message ||
-          "Login failed. Please check your credentials."
-        );
+        if (response.status === 403) {
+          setError(
+            data.message || "Vui lòng xác minh email trước khi đăng nhập.",
+          );
+        } else if (response.status === 401) {
+          setError("Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
+        } else {
+          setError(data.message || "Đăng nhập thất bại.");
+        }
         setLoading(false);
         return;
       }
 
-      // Login success - save token and redirect
-      localStorage.setItem("token", data.data.token);
-      localStorage.setItem("user", JSON.stringify(data.data.user));
-
-      // Navigate based on role_id
-      const roleId = Number(data.data.user.role_id || data.data.user.roleId || 1);
-      if (roleId === 2) {
-        navigate("/admin");
-      } else if (roleId === 3) {
-        navigate("/instructor/classrooms");
-      } else {
-        navigate("/learner");
+      if (!data.data?.token || !data.data?.user) {
+        setError("Dữ liệu phản hồi từ máy chủ không hợp lệ.");
+        setLoading(false);
+        return;
       }
+
+      // Lưu thông tin đăng nhập
+      const user = data.data.user;
+      const existingUser = parseJsonSafe(localStorage.getItem("user")) || {};
+      const existingId = existingUser?.id ?? existingUser?.user_id;
+      const incomingId = user?.id ?? user?.user_id;
+      const existingEmail = String(existingUser?.email || "")
+        .trim()
+        .toLowerCase();
+      const incomingEmail = String(user?.email || "")
+        .trim()
+        .toLowerCase();
+      const isSameUser =
+        (existingId &&
+          incomingId &&
+          String(existingId) === String(incomingId)) ||
+        (existingEmail && incomingEmail && existingEmail === incomingEmail);
+
+      const cachedAvatar =
+        readAvatarFromStorage(user) ||
+        (isSameUser
+          ? existingUser?.avatar || existingUser?.profileImage || ""
+          : "");
+      const mergedUser = {
+        ...(isSameUser ? existingUser : {}),
+        ...user,
+        avatar: cachedAvatar || user?.avatar || user?.profileImage || "",
+        profileImage: cachedAvatar || user?.profileImage || user?.avatar || "",
+      };
+
+      localStorage.setItem("token", data.data.token);
+      localStorage.setItem("user", JSON.stringify(mergedUser));
+      localStorage.setItem(
+        "userInfo",
+        JSON.stringify({ accessToken: data.data.token, user: mergedUser }),
+      );
+      if (mergedUser.avatar) {
+        writeAvatarToStorage(mergedUser, mergedUser.avatar);
+      }
+      window.dispatchEvent(new Event("user-updated"));
+
+      // Điều hướng dựa trên role
+      const userRole = mergedUser.role?.toLowerCase() || "user";
+      if (userRole === "admin") navigate("/admin");
+      else if (userRole === "instructor") navigate("/instructor");
+      else navigate("/learner");
     } catch (err) {
-      console.error("Login error:", err);
-      setError("An error occurred. Please try again.");
+      setError("Đã xảy ra lỗi. Vui lòng thử lại.");
       setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] flex flex-col font-sans">
-      {/* --- HEADER --- */}
-      <header className="w-full bg-white/80 backdrop-blur-md border-b border-slate-100 fixed top-0 z-50">
-        <div className="max-w-screen-xl mx-auto px-8 h-20 flex items-center justify-between">
-          <div className="text-2xl font-black text-blue-600 tracking-tighter">
+      <header className="w-full bg-white/90 backdrop-blur-md border-b border-slate-100 fixed top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-10 h-24 flex items-center justify-between">
+          <div
+            className="text-2xl md:text-3xl font-black text-blue-600 tracking-tight cursor-pointer"
+            onClick={() => navigate("/")}
+          >
             DriveMaster
           </div>
-          <nav className="flex items-center gap-8">
-            <a
-              href="#"
-              className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors"
+          <nav className="flex items-center gap-10">
+            <button
+              type="button"
+              onClick={() => navigate("/safety-protocols")}
+              className="text-[15px] md:text-base font-semibold text-slate-700 hover:text-blue-600 transition-colors"
             >
-              Safety Center
-            </a>
-            <a
-              href="#"
-              className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors"
+              Trung tâm an toàn
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/support")}
+              className="text-[15px] md:text-base font-semibold text-slate-700 hover:text-blue-600 transition-colors"
             >
-              Help
-            </a>
+              Hỗ trợ
+            </button>
           </nav>
         </div>
       </header>
 
-      {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 flex items-center justify-center pt-20 pb-12 px-4">
-        <Card className="w-full max-w-[480px] border-none shadow-xl shadow-blue-900/5 rounded-3xl overflow-hidden bg-white relative">
-          {/* Decorative Blur */}
+      <main className="flex-1 flex items-center justify-center pt-32 pb-16 px-4">
+        <Card className="w-full max-w-137.5 border-none shadow-xl shadow-blue-900/5 rounded-[32px] overflow-hidden bg-white relative">
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-100/50 rounded-full blur-3xl" />
 
-          <CardContent className="p-10 relative z-10">
-            {/* Title Section */}
-            <div className="space-y-2 mb-10 text-center sm:text-left">
-              <h1 className="text-4xl font-black text-[#141b2b] tracking-tight">
-                Welcome Back
+          <CardContent className="p-12 relative z-10">
+            <div className="space-y-3 mb-10 text-center sm:text-left">
+              <h1 className="text-5xl font-black text-[#141b2b] tracking-tight">
+                Chào mừng trở lại
               </h1>
-              <p className="text-slate-500 font-medium leading-relaxed">
-                Enter your credentials to access your driving portal.
+              <p className="text-slate-600 font-medium text-[17px] leading-7">
+                Nhập thông tin để truy cập vào tài khoản của bạn.
               </p>
             </div>
 
-            {/* Tabs Switcher */}
             <Tabs defaultValue="login" className="w-full mb-8">
               <TabsList className="grid w-full grid-cols-2 bg-slate-100/50 p-1 rounded-xl">
                 <TabsTrigger
                   value="login"
-                  className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
+                  className="rounded-lg font-semibold text-[15px]"
                 >
-                  Log In
+                  Đăng nhập
                 </TabsTrigger>
                 <TabsTrigger
                   value="register"
                   onClick={() => navigate("/signup")}
-                  className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-slate-600"
+                  className="rounded-lg font-semibold text-[15px]"
                 >
-                  Register
+                  Đăng ký
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
-            {/* Form Fields */}
-            <div className="space-y-6">
+            <form className="space-y-6" onSubmit={handleLogin}>
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-red-700">{error}</p>
-                    {error.includes("verify your email") && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-700">
+                  <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold">{error}</p>
+                    {/(verify|xac minh|xác minh)/i.test(error) && (
                       <button
+                        type="button"
                         onClick={() => navigate("/resend-verification")}
-                        className="text-xs font-bold text-red-600 hover:underline mt-2"
+                        className="text-xs font-bold underline mt-1"
                       >
-                        Resend Verification Email →
+                        Gửi lại email xác minh →
                       </button>
                     )}
                   </div>
                 </div>
               )}
+
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-slate-400 tracking-[1.5px] uppercase ml-1">
-                  Email Address
+                <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
+                  Địa chỉ email
                 </Label>
                 <Input
                   type="email"
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 bg-[#dce2f7] border-none rounded-xl focus-visible:ring-blue-500 font-medium placeholder:text-slate-400"
+                  className="h-16 bg-[#f0f2f9] border-none rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 font-medium text-base"
                 />
               </div>
 
               <div className="space-y-2">
-                <div className="flex justify-between items-center px-1">
-                  <Label className="text-[10px] font-bold text-slate-400 tracking-[1.5px] uppercase">
-                    Password
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-bold text-slate-500 tracking-[1.5px] uppercase ml-1">
+                    Mật khẩu
                   </Label>
-                  <button className="text-[10px] font-bold text-blue-600 hover:underline tracking-tight uppercase">
-                    Forgot Password?
+                  <button
+                    type="button"
+                    onClick={() => navigate("/forgot-password")}
+                    className="text-sm font-bold text-blue-600 hover:underline uppercase"
+                  >
+                    Quên mật khẩu?
                   </button>
                 </div>
                 <div className="relative">
@@ -190,125 +284,73 @@ export const LogInLearner = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-14 bg-[#dce2f7] border-none rounded-xl focus-visible:ring-blue-500 font-medium"
+                    className="h-16 bg-[#f0f2f9] border-none rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 font-medium text-base"
                   />
                   <button
+                    type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600"
                   >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
-              {/* Remember device */}
-              <div className="flex items-center space-x-3 py-1">
+              <div className="flex items-center space-x-3">
                 <Checkbox
                   id="remember"
                   checked={rememberDevice}
                   onCheckedChange={setRememberDevice}
-                  className="w-5 h-5 rounded border-slate-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                  className="w-5 h-5"
                 />
                 <label
                   htmlFor="remember"
-                  className="text-sm font-medium text-slate-500 cursor-pointer select-none"
+                  className="text-[15px] font-medium text-slate-600 cursor-pointer"
                 >
-                  Remember this device for 30 days
+                  Ghi nhớ thiết bị này trong 30 ngày
                 </label>
               </div>
 
-              {/* Login Button */}
               <Button
-                onClick={handleLogin}
+                type="submit"
                 disabled={loading || !email || !password}
-                className="w-full h-14 bg-gradient-to-r from-blue-700 to-blue-500 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-lg font-bold shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
+                className="w-full h-16 bg-linear-to-r from-blue-700 to-blue-500 hover:opacity-90 rounded-2xl text-[17px] font-bold shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
               >
                 {loading ? (
                   <Loader className="h-5 w-5 animate-spin" />
                 ) : (
-                  "Login"
+                  "Đăng nhập"
                 )}
               </Button>
-            </div>
-
-            {/* Alternate Roles */}
-            <div className="mt-10 space-y-3 pt-8 border-t border-slate-100">
-              <Button
-                variant="outline"
-                className="w-full h-14 justify-between px-5 rounded-2xl bg-[#f1f3ff] border-none hover:bg-blue-50 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
-                    <GraduationCap size={18} />
-                  </div>
-                  <span className="font-bold text-[#141b2b]">
-                    Continue as Instructor
-                  </span>
-                </div>
-                <ChevronRight
-                  size={18}
-                  className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"
-                />
-              </Button>
-
-              <Button
-                variant="outline"
-                className="w-full h-14 justify-between px-5 rounded-2xl bg-[#f1f3ff] border-none hover:bg-blue-50 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <span className="font-bold text-[#141b2b]">
-                    Continue as Administrator
-                  </span>
-                </div>
-                <ChevronRight
-                  size={18}
-                  className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"
-                />
-              </Button>
-            </div>
-
-            {/* Bottom Link */}
-            <div className="mt-12 text-center">
-              <p className="text-slate-500 font-medium">
-                New to DriveMaster?{" "}
-                <button
-                  onClick={() => navigate("/signup")}
-                  className="text-blue-600 font-bold hover:underline"
-                >
-                  Create an account
-                </button>
-              </p>
-            </div>
+            </form>
           </CardContent>
         </Card>
       </main>
 
-      {/* --- FOOTER --- */}
-      <footer className="w-full bg-slate-50 py-12 border-t border-slate-100">
-        <div className="max-w-screen-xl mx-auto px-8 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="text-xl font-bold text-slate-900">DriveMaster</div>
-
-          <nav className="flex flex-wrap justify-center gap-8">
+      <footer className="w-full bg-white py-10 border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="text-2xl font-black text-blue-600 tracking-tight">
+            DriveMaster
+          </div>
+          <nav className="flex gap-8">
             {footerLinks.map((link) => (
-              <a
-                key={link}
-                href="#"
-                className="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors"
+              <button
+                key={`${link.label}-${link.path}`}
+                type="button"
+                onClick={() => navigate(link.path)}
+                className="text-[15px] font-medium text-slate-500 hover:text-blue-600"
               >
-                {link}
-              </a>
+                {link.label}
+              </button>
             ))}
           </nav>
-
-          <p className="text-sm font-medium text-slate-400">
-            © 2026 DriveMaster Education. All rights reserved.
+          <p className="text-[15px] font-medium text-slate-400">
+            © 2026 DriveMaster Education. Đã đăng ký bản quyền.
           </p>
         </div>
       </footer>
     </div>
   );
 };
+
 export default LogInLearner;
