@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, FilePlus2, ShieldCheck } from "lucide-react";
-import { instructorExamsApi } from "@/services/api/InstructorExams";
 
 const EXAM_SOURCES = {
   exam_250: {
@@ -75,8 +74,6 @@ export default function CreateExamLearner() {
   const [examsSource, setExamsSource] = useState("exam_250");
   const licenseType = SOURCE_TO_LICENSE[examsSource] || "A1";
   const [customExamName, setCustomExamName] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
   const [selectedCategories, setSelectedCategories] = useState(
     getDefaultCategories("A1", "exam_250"),
   );
@@ -101,6 +98,13 @@ export default function CreateExamLearner() {
       `Đề ${licenseType} - ${fixedQuestionCount} câu (${EXAM_SOURCES[examsSource].label})`,
     [licenseType, fixedQuestionCount, examsSource],
   );
+
+  const handleLicenseChange = (nextType) => {
+    const availableSource = Object.keys(EXAM_PRESETS[nextType])[0];
+    setExamsSource(availableSource);
+    setSelectedCategories(getDefaultCategories(nextType, availableSource));
+  };
+
   const finalExamName = customExamName.trim() || suggestedExamName;
 
   const handleExamSourceChange = (nextSource) => {
@@ -124,46 +128,24 @@ export default function CreateExamLearner() {
     });
   };
 
-  const handleGenerateExam = async () => {
-    setIsSubmitting(true);
-    setSubmitError("");
+  const handleGenerateExam = () => {
+    const examConfig = {
+      licenseType,
+      questionCount: fixedQuestionCount,
+      examsSource,
+      selectedCategories,
+      examName: `Đề ${licenseType} - ${fixedQuestionCount} câu`,
+      generationMode: "structured",
+      createdAt: new Date().toISOString(),
+    };
 
-    try {
-      const createdExam = await instructorExamsApi.createExam({
-        title: finalExamName,
-        examName: finalExamName,
-        licenseType,
-        source: examsSource,
-        questionCount: fixedQuestionCount,
-        durationMinutes: fixedQuestionCount === 35 ? 22 : 19,
-        passThreshold: fixedQuestionCount === 35 ? 27 : 21,
-        status: "published",
-      });
+    sessionStorage.setItem("quizExamConfig", JSON.stringify(examConfig));
 
-      navigate("/instructor/exercises", {
-        state: {
-          createdExam: createdExam || {
-            title: finalExamName,
-            examName: finalExamName,
-            licenseType,
-            source: examsSource,
-            questionCount: fixedQuestionCount,
-            durationMinutes: fixedQuestionCount === 35 ? 22 : 19,
-            passThreshold: fixedQuestionCount === 35 ? 27 : 21,
-            status: "Published",
-            createdAt: new Date().toISOString(),
-          },
-          justCreated: true,
-        },
-        replace: true,
-      });
-    } catch (error) {
-      const message =
-        error?.response?.data?.message || error?.message || "Không thể lưu đề vào DB.";
-      setSubmitError(message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    const categoriesQuery = encodeURIComponent(selectedCategories.join(","));
+    navigate(
+      `/quizlearner?licenseType=${licenseType}&questionCount=${fixedQuestionCount}&examsSource=${examsSource}&categories=${categoriesQuery}&mode=structured`,
+      { state: { examConfig } },
+    );
   };
 
   const structureEntries = Object.entries(presetConfig.structure || {});
@@ -184,14 +166,57 @@ export default function CreateExamLearner() {
           <Card className="lg:col-span-8 border-none shadow-sm rounded-[28px]">
             <CardHeader>
               <CardTitle className="text-xl font-bold text-[#141b2b]">
-                1) Chọn nguồn đề
+                1) Chọn loại đề
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
+                <h4 className="text-sm font-bold text-[#141b2b]">
+                  Phân loại bằng lái
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {["A1", "B1"].map((type) => {
+                    const active = licenseType === type;
+
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => handleLicenseChange(type)}
+                        className={`text-left rounded-2xl border p-5 transition-all ${
+                          active
+                            ? "border-blue-500 bg-blue-50 ring-1 ring-blue-300"
+                            : "border-slate-200 bg-white hover:border-blue-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge className="bg-[#e1e8fd] text-blue-700 border-none font-bold">
+                            {type}
+                          </Badge>
+                          {active && (
+                            <CheckCircle2 className="text-blue-600 w-5 h-5" />
+                          )}
+                        </div>
+
+                        <h3 className="text-lg font-black text-[#141b2b]">
+                          Đề {type}
+                        </h3>
+                        <p className="text-xs text-blue-700 font-bold mt-2">
+                          Nguồn khả dụng:{" "}
+                          {Object.keys(EXAM_PRESETS[type])
+                            .map((s) => EXAM_SOURCES[s].label)
+                            .join(", ")}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
                 <h4 className="text-sm font-bold text-[#141b2b]">Nguồn đề</h4>
                 <div className="flex flex-wrap gap-2">
-                  {Object.keys(SOURCE_TO_LICENSE).map((source) => {
+                  {Object.entries(EXAM_PRESETS[licenseType]).map(([source]) => {
                     const active = examsSource === source;
                     return (
                       <Button
@@ -209,35 +234,11 @@ export default function CreateExamLearner() {
                     );
                   })}
                 </div>
-                <p className="text-xs text-slate-500">
-                  Hệ thống tự suy ra hạng đề: <b>{licenseType}</b>
-                </p>
               </div>
 
               <div className="space-y-3">
                 <h3 className="text-base font-bold text-[#141b2b]">
-                  2) Nhập tên đề thi
-                </h3>
-                <Input
-                  value={customExamName}
-                  onChange={(event) => setCustomExamName(event.target.value)}
-                  placeholder={suggestedExamName}
-                  className="h-11"
-                />
-                <p className="text-xs text-slate-500">
-                  Nếu bỏ trống, hệ thống sẽ dùng tên gợi ý tự động.
-                </p>
-              </div>
-
-              {submitError && (
-                <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-                  {submitError}
-                </p>
-              )}
-
-              <div className="space-y-3">
-                <h3 className="text-base font-bold text-[#141b2b]">
-                  3) Chọn phần cấu trúc cho đề thi
+                  2) Chọn phần cấu trúc cho đề thi
                 </h3>
                 <p className="text-sm text-slate-500 font-medium">
                   Tổng số câu được cố định theo nguồn đề:{" "}
@@ -311,10 +312,10 @@ export default function CreateExamLearner() {
 
             <Button
               onClick={handleGenerateExam}
-              disabled={selectedCategories.length === 0 || isSubmitting}
+              disabled={selectedCategories.length === 0}
               className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold h-12"
             >
-              {isSubmitting ? "Đang lưu..." : "Tạo đề & Quay về danh sách"}
+              Tạo đề & Bắt đầu làm bài
             </Button>
           </aside>
         </section>

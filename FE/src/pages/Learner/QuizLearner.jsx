@@ -821,11 +821,6 @@ export default function QuizLearner() {
       totalQuestions,
       result,
     });
-    savePracticeHistoryEntry({
-      examConfig,
-      totalQuestions,
-      result,
-    });
     clearQuizDraft(quizDraftStorageKey);
     setIsFinished(true);
   };

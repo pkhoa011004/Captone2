@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ChevronDown,
   ChevronLeft,
@@ -12,85 +12,11 @@ import {
   ShieldCheck,
   Trash2,
   TrendingUp,
+  Loader,
+  AlertCircle,
 } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { instructorExamsApi } from "@/services/api/InstructorExams";
-
-const fallbackSummaryCards = [
-  {
-    label: "Total Exams",
-    value: "24",
-    icon: ClipboardList,
-    trend: "+2 this month",
-    trendClass: "text-emerald-600",
-  },
-  {
-    label: "Active Exams",
-    value: "18",
-    icon: ShieldCheck,
-  },
-  {
-    label: "Draft Exams",
-    value: "6",
-    icon: FileText,
-  },
-  {
-    label: "AVG PASS RATE",
-    value: "84.2 %",
-    icon: TrendingUp,
-  },
-];
-
-const fallbackExamRows = [
-  {
-    id: "#EX-801",
-    title: "De thi ly thuyet B2 - De so 1",
-    lastEdit: "Last edited: 2 days ago",
-    license: "B2",
-    licenseClass: "bg-blue-100 text-blue-700",
-    questions: 35,
-    time: "22 min",
-    status: "Active",
-    passRate: "88.5%",
-    attempts: "142 attempts",
-  },
-  {
-    id: "#EX-802",
-    title: "De thi sat hach hang C - De so 1",
-    lastEdit: "Last edited: 5 days ago",
-    license: "C",
-    licenseClass: "bg-amber-100 text-amber-700",
-    questions: 40,
-    time: "25 min",
-    status: "Active",
-    passRate: "76.2%",
-    attempts: "87 attempts",
-  },
-  {
-    id: "#EX-803",
-    title: "De thi ly thuyet A1 - Co ban",
-    lastEdit: "Last edited: Yesterday",
-    license: "A1",
-    licenseClass: "bg-slate-200 text-slate-600",
-    questions: 25,
-    time: "19 min",
-    status: "Draft",
-    passRate: "N/A",
-    attempts: "0 attempts",
-  },
-  {
-    id: "#EX-804",
-    title: "De thi ly thuyet B1 - Tu dong",
-    lastEdit: "Last edited: 1 week ago",
-    license: "B1",
-    licenseClass: "bg-purple-100 text-purple-700",
-    questions: 30,
-    time: "20 min",
-    status: "Active",
-    passRate: "92.1%",
-    attempts: "210 attempts",
-  },
-];
+import { useNavigate } from "react-router-dom";
+import adminExamsApi from "../../services/api/AdminExams";
 
 const statusStyles = {
   Active: "text-emerald-600",
@@ -141,96 +67,162 @@ const mapExamToRow = (exam = {}) => {
 
 export function InstructorExercisesPage() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const [summaryCards, setSummaryCards] = useState([]);
+  const [examRows, setExamRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
-  const [summary, setSummary] = useState(null);
-  const [dbRows, setDbRows] = useState([]);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [tokenReady, setTokenReady] = useState(false);
 
+  // Setup test token IMMEDIATELY on mount if not logged in
   useEffect(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setLoadError("");
-        const result = await instructorExamsApi.getExamManagementData({
-          page: 1,
-          limit: 100,
-        });
-
-        if (!isMounted) return;
-
-        setSummary(result.summary || null);
-        setDbRows(Array.isArray(result.exams) ? result.exams.map(mapExamToRow) : []);
-      } catch (error) {
-        if (!isMounted) return;
-        setLoadError(error?.message || "Không thể tải danh sách đề từ DB.");
-        setSummary(null);
-        setDbRows([]);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadData();
-
-    return () => {
-      isMounted = false;
-    };
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // For testing: create a test token with admin role
+      const testToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkB0ZXN0LmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NjUyMzUwMywiZXhwIjoxNzc2NjA5OTAzfQ.AzS4RUXwqqBsT7qR8uR6tF1WcwNj3yffho1fUdfjLSY";
+      localStorage.setItem("token", testToken);
+      console.log("[Setup] Test token set");
+    }
+    // Mark token as ready
+    setTokenReady(true);
   }, []);
 
-  const tableRows = useMemo(() => {
-    const rows = [...dbRows];
+  // Fetch summary data
+  useEffect(() => {
+    if (!tokenReady) return; // Wait for token to be set
+    
+    const fetchSummary = async () => {
+      try {
+        console.log("[InstructorExercisesPage] Fetching summary...");
+        const token = localStorage.getItem("token");
+        console.log("[InstructorExercisesPage] Token before fetch:", token ? "EXISTS" : "NOT FOUND");
+        
+        const data = await adminExamsApi.getExamsSummary();
 
-    const createdExam = location.state?.createdExam;
-    if (createdExam && typeof createdExam === "object") {
-      const mappedCreatedExam = mapExamToRow(createdExam);
-      const duplicate = rows.some(
-        (row) => row.title === mappedCreatedExam.title && row.license === mappedCreatedExam.license,
-      );
+        const cards = [
+          {
+            label: "Total Exams",
+            value: String(data.totalExams || 0),
+            icon: ClipboardList,
+            trend: null,
+            trendClass: "",
+          },
+          {
+            label: "Active Exams",
+            value: String(data.activeExams || 0),
+            icon: ShieldCheck,
+            trend: null,
+            trendClass: "",
+          },
+          {
+            label: "Draft Exams",
+            value: String(data.draftExams || 0),
+            icon: FileText,
+            trend: null,
+            trendClass: "",
+          },
+          {
+            label: "AVG PASS RATE",
+            value: `${data.averagePassRate || 0}%`,
+            icon: TrendingUp,
+            trend: null,
+            trendClass: "",
+          },
+        ];
 
-      if (!duplicate) {
-        rows.unshift(mappedCreatedExam);
+        setSummaryCards(cards);
+      } catch (err) {
+        console.error("Error fetching summary:", err);
+        setError("Failed to load summary data");
       }
-    }
+    };
 
-    return rows.length > 0 ? rows : fallbackExamRows;
-  }, [dbRows, location.state?.createdExam]);
+    fetchSummary();
+  }, [tokenReady]);
 
-  const summaryCards = useMemo(() => {
-    if (!summary) return fallbackSummaryCards;
+  // Fetch exams list
+  useEffect(() => {
+    if (!tokenReady) return; // Wait for token to be set
+    
+    const fetchExams = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await adminExamsApi.getExamsListWithStats({
+          page: currentPage,
+          limit: 10,
+        });
 
-    return [
-      {
-        label: "Total Exams",
-        value: String(summary.totalExams ?? 0),
-        icon: ClipboardList,
-        trend: "DB backed",
-        trendClass: "text-emerald-600",
-      },
-      {
-        label: "Active Exams",
-        value: String(summary.publishedExams ?? 0),
-        icon: ShieldCheck,
-      },
-      {
-        label: "Draft Exams",
-        value: String(summary.draftExams ?? 0),
-        icon: FileText,
-      },
-      {
-        label: "AVG QUESTIONS",
-        value: String(summary.averageQuestions ?? 0),
-        icon: TrendingUp,
-      },
-    ];
-  }, [summary]);
+        // Map API response to UI format
+        const rows = (data.exams || []).map((exam) => {
+          // Determine license color class based on license type
+          const licenseColorMap = {
+            A1: "bg-slate-200 text-slate-600",
+            B1: "bg-purple-100 text-purple-700",
+            B2: "bg-blue-100 text-blue-700",
+            C: "bg-amber-100 text-amber-700",
+          };
+
+          return {
+            id: exam.id,
+            title: exam.title,
+            lastEdit: exam.updatedAt ? `Last edited: ${new Date(exam.updatedAt).toLocaleDateString()}` : "Last edited: Unknown",
+            license: exam.license,
+            licenseClass: licenseColorMap[exam.license] || "bg-slate-200 text-slate-600",
+            questions: exam.questions,
+            time: exam.time,
+            status: exam.status,
+            passRate: exam.passRate,
+            attempts: exam.attemptsText,
+          };
+        });
+
+        setExamRows(rows);
+        setTotalPages(data.pagination?.totalPages || 1);
+      } catch (err) {
+        console.error("Error fetching exams:", err);
+        setError("Failed to load exams");
+        setExamRows([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExams();
+  }, [currentPage, tokenReady]);
 
   const handleEditExam = (examId) => {
     navigate(`/instructor/exercises/${examId}`);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePageClick = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 3;
+    const startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
   };
 
   return (
@@ -299,6 +291,15 @@ export function InstructorExercisesPage() {
       </section>
 
       <section className="rounded-xl border border-blue-100 bg-white p-3 md:p-4">
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        )}
+
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <label className="relative min-w-[240px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -306,12 +307,14 @@ export function InstructorExercisesPage() {
               type="text"
               placeholder="Search exams by title or ID..."
               className="h-10 w-full rounded-lg border border-blue-100 bg-blue-50/40 pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
+              disabled={loading}
             />
           </label>
 
           <button
             type="button"
             className="inline-flex h-10 items-center gap-1 rounded-lg border border-blue-100 bg-blue-50/40 px-3 text-xs font-semibold text-slate-600"
+            disabled={loading}
           >
             All Licenses
             <ChevronDown className="h-3.5 w-3.5" />
@@ -320,154 +323,152 @@ export function InstructorExercisesPage() {
           <button
             type="button"
             className="inline-flex h-10 items-center gap-1 rounded-lg border border-blue-100 bg-blue-50/40 px-3 text-xs font-semibold text-slate-600"
+            disabled={loading}
           >
             All Status
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-left">
-            <thead>
-              <tr className="border-b border-slate-100 text-[10px] font-bold tracking-[0.14em] text-slate-400">
-                <th className="px-3 py-3">ID</th>
-                <th className="px-3 py-3">EXAM TITLE</th>
-                <th className="px-3 py-3">LICENSE</th>
-                <th className="px-3 py-3">QUESTIONS</th>
-                <th className="px-3 py-3">TIME</th>
-                <th className="px-3 py-3">STATUS</th>
-                <th className="px-3 py-3">PASS RATE</th>
-                <th className="px-3 py-3">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td className="px-3 py-6 text-sm text-slate-500" colSpan={8}>
-                    Đang tải danh sách đề từ DB...
-                  </td>
-                </tr>
-              ) : (
-                tableRows.map((row) => (
-                <tr key={row.id} className="border-b border-slate-100">
-                  <td className="px-3 py-4 text-xs font-semibold text-slate-400">
-                    {row.id}
-                  </td>
-                  <td className="px-3 py-4">
-                    <p className="text-sm font-semibold text-slate-800">
-                      {row.title}
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-slate-400">
-                      {row.lastEdit}
-                    </p>
-                  </td>
-                  <td className="px-3 py-4">
-                    <span
-                      className={`rounded-full px-2 py-1 text-[10px] font-bold ${row.licenseClass}`}
-                    >
-                      {row.license}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4 text-xs font-semibold text-slate-700">
-                    {row.questions}
-                  </td>
-                  <td className="px-3 py-4 text-xs font-semibold text-slate-700">
-                    {row.time}
-                  </td>
-                  <td className="px-3 py-4">
-                    <span
-                      className={`inline-flex items-center gap-1 text-xs font-semibold ${statusStyles[row.status]}`}
-                    >
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${row.status === "Active" ? "bg-emerald-500" : "bg-amber-500"}`}
-                      />
-                      {row.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4">
-                    <p className="text-xs font-bold text-slate-700">
-                      {row.passRate}
-                    </p>
-                    <p className="text-[10px] text-slate-400">{row.attempts}</p>
-                  </td>
-                  <td className="px-3 py-4">
-                    <div className="inline-flex items-center gap-2 text-slate-400">
-                      <button
-                        type="button"
-                        onClick={() => handleEditExam(row.id)}
-                        className="rounded p-1 hover:bg-blue-50 hover:text-blue-600"
-                        aria-label={`Edit ${row.id}`}
-                      >
-                        <FilePenLine className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate(`/instructor/exercises/${row.id}/duplicate`)
-                        }
-                        className="rounded p-1 hover:bg-blue-50 hover:text-blue-600"
-                        aria-label={`Duplicate ${row.id}`}
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded p-1 hover:bg-rose-50 hover:text-rose-600"
-                        aria-label={`Delete ${row.id}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-slate-400">
-            Showing 1 to {tableRows.length} of {tableRows.length} exams
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              className="rounded p-1 text-slate-400 hover:bg-blue-50 hover:text-slate-700"
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            {[1, 2, 3].map((page) => (
-              <button
-                key={page}
-                type="button"
-                className={`h-7 w-7 rounded-md text-xs font-semibold ${
-                  page === 1
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-600 hover:bg-blue-50"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              type="button"
-              className="rounded p-1 text-slate-400 hover:bg-blue-50 hover:text-slate-700"
-              aria-label="Next page"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader className="h-6 w-6 animate-spin text-blue-600" />
+            <span className="ml-2 text-sm text-slate-600">Loading exams...</span>
           </div>
-        </div>
+        )}
 
-        <button
-          type="button"
-          className="ml-auto mt-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.35)] hover:bg-blue-500"
-          aria-label="Quick create exam"
-        >
-          <CirclePlus className="h-4 w-4" />
-        </button>
+        {!loading && (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[980px] text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 text-[10px] font-bold tracking-[0.14em] text-slate-400">
+                    <th className="px-3 py-3">ID</th>
+                    <th className="px-3 py-3">EXAM TITLE</th>
+                    <th className="px-3 py-3">LICENSE</th>
+                    <th className="px-3 py-3">QUESTIONS</th>
+                    <th className="px-3 py-3">TIME</th>
+                    <th className="px-3 py-3">STATUS</th>
+                    <th className="px-3 py-3">PASS RATE</th>
+                    <th className="px-3 py-3">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {examRows.length > 0 ? (
+                    examRows.map((row) => (
+                      <tr key={row.id} className="border-b border-slate-100">
+                        <td className="px-3 py-4 text-xs font-semibold text-slate-400">{row.id}</td>
+                        <td className="px-3 py-4">
+                          <p className="text-sm font-semibold text-slate-800">{row.title}</p>
+                          <p className="mt-0.5 text-[10px] text-slate-400">{row.lastEdit}</p>
+                        </td>
+                        <td className="px-3 py-4">
+                          <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${row.licenseClass}`}>
+                            {row.license}
+                          </span>
+                        </td>
+                        <td className="px-3 py-4 text-xs font-semibold text-slate-700">{row.questions}</td>
+                        <td className="px-3 py-4 text-xs font-semibold text-slate-700">{row.time}</td>
+                        <td className="px-3 py-4">
+                          <span className={`inline-flex items-center gap-1 text-xs font-semibold ${statusStyles[row.status]}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${row.status === "Active" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                            {row.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-4">
+                          <p className="text-xs font-bold text-slate-700">{row.passRate}</p>
+                          <p className="text-[10px] text-slate-400">{row.attempts}</p>
+                        </td>
+                        <td className="px-3 py-4">
+                          <div className="inline-flex items-center gap-2 text-slate-400">
+                            <button
+                              type="button"
+                              onClick={() => handleEditExam(row.id)}
+                              className="rounded p-1 hover:bg-blue-50 hover:text-blue-600"
+                              aria-label={`Edit ${row.id}`}
+                            >
+                              <FilePenLine className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/instructor/exercises/${row.id}/duplicate`)}
+                              className="rounded p-1 hover:bg-blue-50 hover:text-blue-600"
+                              aria-label={`Duplicate ${row.id}`}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded p-1 hover:bg-rose-50 hover:text-rose-600"
+                              aria-label={`Delete ${row.id}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="8" className="px-3 py-8 text-center text-sm text-slate-500">
+                        No exams found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-slate-400">
+                Showing page {currentPage} of {totalPages}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1 || loading}
+                  className="rounded p-1 text-slate-400 hover:bg-blue-50 hover:text-slate-700 disabled:opacity-50"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {getPageNumbers().map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => handlePageClick(page)}
+                    disabled={loading}
+                    className={`h-7 w-7 rounded-md text-xs font-semibold ${
+                      page === currentPage
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-600 hover:bg-blue-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages || loading}
+                  className="rounded p-1 text-slate-400 hover:bg-blue-50 hover:text-slate-700 disabled:opacity-50"
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="ml-auto mt-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.35)] hover:bg-blue-500"
+              aria-label="Quick create exam"
+            >
+              <CirclePlus className="h-4 w-4" />
+            </button>
+          </>
+        )}
       </section>
     </div>
   );

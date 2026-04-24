@@ -17,10 +17,10 @@ export const ForgotPassword = () => {
   const [success, setSuccess] = useState(false);
 
   const footerLinks = [
-    "Chính sách bảo mật",
-    "Điều khoản dịch vụ",
-    "Trung tâm an toàn",
-    "Liên hệ",
+    "Privacy Policy",
+    "Terms of Service",
+    "Safety Center",
+    "Contact",
   ];
 
   const handleSubmit = async (e) => {

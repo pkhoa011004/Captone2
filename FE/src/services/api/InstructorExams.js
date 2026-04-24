@@ -9,6 +9,7 @@ const DEFAULT_PAGINATION = {
   hasPreviousPage: false,
 };
 
+// Normalize API payloads to stable UI-friendly shapes.
 const normalizeNumber = (value) => {
   if (value === null || value === undefined) return null;
   const numericValue = Number(value);

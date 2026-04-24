@@ -115,4 +115,59 @@ export async function ensureLearnerScheduleSchema() {
   }
 }
 
+export async function ensureTestResultsSchema() {
+  let connection
+
+  try {
+    connection = await pool.getConnection()
+
+    const [dbResult] = await connection.execute('SELECT DATABASE() AS db_name')
+    const databaseName = dbResult?.[0]?.db_name
+
+    if (!databaseName) {
+      logger.warn('⚠️ Auto-migration skipped: no active database selected')
+      return false
+    }
+
+    const [tableRows] = await connection.execute(
+      `SELECT COUNT(*) AS total
+       FROM information_schema.TABLES
+       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'test_results'`,
+      [databaseName]
+    )
+
+    const tableExists = tableRows?.[0]?.total > 0
+
+    if (!tableExists) {
+      await connection.execute(`
+        CREATE TABLE test_results (
+          id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          exam_id BIGINT UNSIGNED NOT NULL,
+          score INT NOT NULL COMMENT 'Score achieved in the test',
+          passed TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0 = failed, 1 = passed',
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE CASCADE,
+          INDEX idx_test_results_user_id (user_id),
+          INDEX idx_test_results_exam_id (exam_id),
+          INDEX idx_test_results_created_at (created_at)
+        )
+      `)
+      logger.info('✅ Created test_results table')
+    }
+
+    logger.info('✅ Auto-migration completed: test_results schema is up to date')
+    return true
+  } catch (error) {
+    logger.error(`❌ Auto-migration failed for test_results: ${error.message}`)
+    return false
+  } finally {
+    if (connection) {
+      connection.release()
+    }
+  }
+}
+
 export default ensureUsersEmailVerificationSchema
