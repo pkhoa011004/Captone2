@@ -135,6 +135,16 @@ export class ExamService {
     return 'published'
   }
 
+  static normalizeInstructorStatusOnCreate(status) {
+    // Explicitly ensure status defaults to 'published' when creating new exams
+    const normalized = String(status || '').trim().toLowerCase()
+    if (normalized === 'published' || normalized === 'draft' || normalized === 'archived') {
+      return normalized
+    }
+
+    return 'published'
+  }
+
   static async getExamsTableMeta(connection) {
     const hasExamsTable = await this.tableExists(connection, 'exams')
     if (!hasExamsTable) return null

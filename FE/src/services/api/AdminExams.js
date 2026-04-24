@@ -127,6 +127,54 @@ const getExamManagementData = async ({
   };
 };
 
+const getInstructorExamManagementData = async ({
+  search = "",
+  licenseType = "",
+  source = "",
+  status = "",
+  page = 1,
+  limit = 10,
+} = {}) => {
+  const params = {};
+  const normalizedSearch = String(search || "").trim();
+  const normalizedLicenseType = String(licenseType || "").trim().toUpperCase();
+  const normalizedSource = String(source || "").trim().toLowerCase();
+  const normalizedStatus = String(status || "").trim();
+
+  if (normalizedSearch) {
+    params.search = normalizedSearch;
+  }
+  if (normalizedLicenseType) {
+    params.licenseType = normalizedLicenseType;
+  }
+  if (normalizedSource) {
+    params.source = normalizedSource;
+  }
+  if (normalizedStatus) {
+    params.status = normalizedStatus;
+  }
+  if (Number.isInteger(Number(page)) && Number(page) > 0) {
+    params.page = Number(page);
+  }
+  if (Number.isInteger(Number(limit)) && Number(limit) > 0) {
+    params.limit = Number(limit);
+  }
+
+  const response = await apiInstance.get("/exams/instructor/management", {
+    params,
+  });
+
+  const payload = response?.data?.data ?? {};
+  const exams = Array.isArray(payload.exams) ? payload.exams : [];
+
+  return {
+    summary: normalizeSummary(payload.summary),
+    pagination: normalizePagination(payload.pagination),
+    filters: normalizeFilters(payload.filters),
+    exams: exams.map(normalizeExam),
+  };
+};
+
 const getExamManagementDetail = async (examId) => {
   const normalizedExamId = String(examId || "").trim();
   if (!normalizedExamId) {
@@ -140,9 +188,37 @@ const getExamManagementDetail = async (examId) => {
   return normalizeExamDetail(payload);
 };
 
+const createInstructorExam = async ({
+  title,
+  examName,
+  licenseType,
+  source,
+  examsSource,
+  questionCount,
+  durationMinutes,
+  passThreshold,
+  status = "published",
+} = {}) => {
+  const response = await apiInstance.post("/exams/instructor/create", {
+    title,
+    examName,
+    licenseType,
+    source,
+    examsSource,
+    questionCount,
+    durationMinutes,
+    passThreshold,
+    status,
+  });
+
+  return response?.data?.data?.exam ?? null;
+};
+
 export const adminExamsApi = {
   getExamManagementData,
+  getInstructorExamManagementData,
   getExamManagementDetail,
+  createInstructorExam,
 };
 
 export default adminExamsApi;

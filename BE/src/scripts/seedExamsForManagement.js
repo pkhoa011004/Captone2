@@ -50,7 +50,7 @@ const ensureExamsTable = async (connection) => {
       total_questions INT UNSIGNED NOT NULL DEFAULT 0,
       duration_minutes INT NOT NULL,
       pass_threshold INT NOT NULL,
-      status ENUM('draft','published','archived') NOT NULL DEFAULT 'draft',
+      status ENUM('draft','published','archived') NOT NULL DEFAULT 'published',
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (id),
@@ -70,9 +70,7 @@ const buildSeedExam = ({ index, seedTag }) => {
   const passThreshold = isA1 ? 21 : 27
   const status = index % 11 === 0
     ? 'archived'
-    : index % 4 === 0
-      ? 'draft'
-      : 'published'
+    : 'published' // Default to published instead of mixing draft and published
 
   return {
     title: `${licenseType} Theory Exam ${seedTag} #${String(index).padStart(3, '0')}`,

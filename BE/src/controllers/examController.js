@@ -203,7 +203,7 @@ export const createInstructorExam = async (req, res, next) => {
       questionCount: req.body?.questionCount,
       durationMinutes: req.body?.durationMinutes,
       passThreshold: req.body?.passThreshold,
-      status: req.body?.status,
+      status: req.body?.status || 'published', // Default to published
     })
 
     successResponse(res, { exam: createdExam }, 'Exam created successfully', 201)

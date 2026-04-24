@@ -20,7 +20,6 @@ import adminExamsApi from "../../services/api/AdminExams";
 
 const statusStyles = {
   Active: "text-emerald-600",
-  Draft: "text-amber-600",
   Unavailable: "text-slate-500",
 };
 
@@ -35,11 +34,9 @@ const mapExamToRow = (exam = {}) => {
   const license = String(exam.licenseType || "A1").trim().toUpperCase();
   const status = String(exam.status || "").trim().toLowerCase();
   const normalizedStatus =
-    status === "published"
-      ? "Active"
-      : status === "unavailable"
+    status === "unavailable" || status === "archived" || status === "inactive"
         ? "Unavailable"
-        : "Draft";
+        : "Active";
 
   return {
     id: (() => {
@@ -98,33 +95,33 @@ export function InstructorExercisesPage() {
         const token = localStorage.getItem("token");
         console.log("[InstructorExercisesPage] Token before fetch:", token ? "EXISTS" : "NOT FOUND");
         
-        const data = await adminExamsApi.getExamsSummary();
+        const data = await adminExamsApi.getInstructorExamManagementData({ page: 1, limit: 1 });
 
         const cards = [
           {
             label: "Total Exams",
-            value: String(data.totalExams || 0),
+            value: String(data.summary?.totalExams || 0),
             icon: ClipboardList,
             trend: null,
             trendClass: "",
           },
           {
             label: "Active Exams",
-            value: String(data.activeExams || 0),
+            value: String(data.summary?.publishedExams || 0),
             icon: ShieldCheck,
             trend: null,
             trendClass: "",
           },
           {
             label: "Draft Exams",
-            value: String(data.draftExams || 0),
+            value: String(data.summary?.draftExams || 0),
             icon: FileText,
             trend: null,
             trendClass: "",
           },
           {
             label: "AVG PASS RATE",
-            value: `${data.averagePassRate || 0}%`,
+            value: `${data.summary?.averagePassRate || 0}%`,
             icon: TrendingUp,
             trend: null,
             trendClass: "",
@@ -149,14 +146,13 @@ export function InstructorExercisesPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await adminExamsApi.getExamsListWithStats({
+        const data = await adminExamsApi.getInstructorExamManagementData({
           page: currentPage,
           limit: 10,
         });
 
         // Map API response to UI format
         const rows = (data.exams || []).map((exam) => {
-          // Determine license color class based on license type
           const licenseColorMap = {
             A1: "bg-slate-200 text-slate-600",
             B1: "bg-purple-100 text-purple-700",
@@ -164,17 +160,25 @@ export function InstructorExercisesPage() {
             C: "bg-amber-100 text-amber-700",
           };
 
+          const normalizedStatus = String(exam.status || "").trim().toLowerCase();
+          const status =
+            normalizedStatus === "unavailable" ||
+            normalizedStatus === "archived" ||
+            normalizedStatus === "inactive"
+              ? "Unavailable"
+              : "Active";
+
           return {
             id: exam.id,
-            title: exam.title,
+            title: exam.title || "Untitled Exam",
             lastEdit: exam.updatedAt ? `Last edited: ${new Date(exam.updatedAt).toLocaleDateString()}` : "Last edited: Unknown",
-            license: exam.license,
-            licenseClass: licenseColorMap[exam.license] || "bg-slate-200 text-slate-600",
-            questions: exam.questions,
-            time: exam.time,
-            status: exam.status,
-            passRate: exam.passRate,
-            attempts: exam.attemptsText,
+            license: exam.licenseType || "A1",
+            licenseClass: licenseColorMap[exam.licenseType] || "bg-slate-200 text-slate-600",
+            questions: exam.questionCount || 0,
+            time: `${exam.durationMinutes || 19} min`,
+            status: status,
+            passRate: exam.passScore || "N/A",
+            attempts: "0 attempts",
           };
         });
 
@@ -255,9 +259,9 @@ export function InstructorExercisesPage() {
         </div>
       </section>
 
-      {loadError && (
+      {error && (
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-          {loadError}
+          {error}
         </p>
       )}
 
@@ -370,8 +374,12 @@ export function InstructorExercisesPage() {
                         <td className="px-3 py-4 text-xs font-semibold text-slate-700">{row.questions}</td>
                         <td className="px-3 py-4 text-xs font-semibold text-slate-700">{row.time}</td>
                         <td className="px-3 py-4">
-                          <span className={`inline-flex items-center gap-1 text-xs font-semibold ${statusStyles[row.status]}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${row.status === "Active" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                          <span className={`inline-flex items-center gap-1 text-xs font-semibold ${statusStyles[row.status] || statusStyles.Active}`}>
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                row.status === "Unavailable" ? "bg-slate-400" : "bg-emerald-500"
+                              }`}
+                            />
                             {row.status}
                           </span>
                         </td>

@@ -87,6 +87,17 @@ const getDifficultyStyles = (level) => {
   }
 };
 
+const normalizePracticeStatus = (status) => {
+  const normalized = String(status || "").trim().toLowerCase();
+  if (normalized === "draft" || normalized === "published" || normalized === "active") {
+    return "Active";
+  }
+  if (normalized === "archived" || normalized === "unavailable" || normalized === "inactive") {
+    return "Unavailable";
+  }
+  return "Active";
+};
+
 export const PracticeTests = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -157,7 +168,7 @@ export const PracticeTests = () => {
           licenseType: normalizeLicenseType(item.licenseType, currentLicenseType),
           examsSource: String(item.source || currentExamSource).trim().toLowerCase(),
           createdAt: item.createdAt || null,
-          status: item.status || "Published",
+          status: normalizePracticeStatus(item.status),
           source: item.source || currentExamSource,
         };
       })

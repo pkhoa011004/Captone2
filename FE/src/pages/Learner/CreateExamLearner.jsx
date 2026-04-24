@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, FilePlus2, ShieldCheck } from "lucide-react";
+import adminExamsApi from "../../services/api/AdminExams";
 
 const EXAM_SOURCES = {
   exam_250: {
@@ -74,6 +75,8 @@ export default function CreateExamLearner() {
   const [examsSource, setExamsSource] = useState("exam_250");
   const licenseType = SOURCE_TO_LICENSE[examsSource] || "A1";
   const [customExamName, setCustomExamName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [selectedCategories, setSelectedCategories] = useState(
     getDefaultCategories("A1", "exam_250"),
   );
@@ -128,24 +131,48 @@ export default function CreateExamLearner() {
     });
   };
 
-  const handleGenerateExam = () => {
+  const handleGenerateExam = async () => {
+    if (isSubmitting) return;
+
     const examConfig = {
       licenseType,
       questionCount: fixedQuestionCount,
       examsSource,
       selectedCategories,
-      examName: `Đề ${licenseType} - ${fixedQuestionCount} câu`,
+      examName: finalExamName,
       generationMode: "structured",
       createdAt: new Date().toISOString(),
     };
 
-    sessionStorage.setItem("quizExamConfig", JSON.stringify(examConfig));
+    try {
+      setIsSubmitting(true);
+      setSubmitError("");
 
-    const categoriesQuery = encodeURIComponent(selectedCategories.join(","));
-    navigate(
-      `/quizlearner?licenseType=${licenseType}&questionCount=${fixedQuestionCount}&examsSource=${examsSource}&categories=${categoriesQuery}&mode=structured`,
-      { state: { examConfig } },
-    );
+      await adminExamsApi.createInstructorExam({
+        title: finalExamName,
+        examName: finalExamName,
+        licenseType,
+        source: examsSource,
+        examsSource,
+        questionCount: fixedQuestionCount,
+        durationMinutes: presetConfig.defaultCount === 35 ? 22 : 19,
+        passThreshold: presetConfig.defaultCount === 35 ? 27 : 21,
+        status: "published",
+      });
+
+      sessionStorage.setItem("quizExamConfig", JSON.stringify(examConfig));
+
+      // Redirect back to instructor exercises page after save success
+      navigate("/instructor/exercises");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Không thể tạo đề. Vui lòng thử lại.";
+      setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const structureEntries = Object.entries(presetConfig.structure || {});
@@ -234,6 +261,21 @@ export default function CreateExamLearner() {
                     );
                   })}
                 </div>
+                <div className="space-y-2 pt-2">
+                  <label
+                    htmlFor="exam-name"
+                    className="text-sm font-bold text-[#141b2b]"
+                  >
+                    Tên đề
+                  </label>
+                  <Input
+                    id="exam-name"
+                    value={customExamName}
+                    onChange={(event) => setCustomExamName(event.target.value)}
+                    placeholder={suggestedExamName}
+                    className="h-11 rounded-xl border-slate-200 bg-white"
+                  />
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -312,11 +354,14 @@ export default function CreateExamLearner() {
 
             <Button
               onClick={handleGenerateExam}
-              disabled={selectedCategories.length === 0}
+              disabled={selectedCategories.length === 0 || isSubmitting}
               className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold h-12"
             >
-              Tạo đề & Bắt đầu làm bài
+              {isSubmitting ? "Đang tạo đề..." : "Tạo đề"}
             </Button>
+            {submitError ? (
+              <p className="text-sm font-medium text-rose-600">{submitError}</p>
+            ) : null}
           </aside>
         </section>
       </main>
