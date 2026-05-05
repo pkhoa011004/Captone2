@@ -33,6 +33,7 @@ export const updateUserSchema = Joi.object({
   name: Joi.string().trim().min(2).optional(),
   phone: Joi.string().trim().allow('').optional(),
   email: Joi.string().email().optional(),
+  avatar: Joi.string().trim().allow('').max(5000000).optional(),
 })
 
 export const changePasswordSchema = Joi.object({

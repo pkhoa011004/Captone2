@@ -417,10 +417,14 @@ export class UserService {
       throw error
     }
 
-    // Generate Gravatar URL from email
-    const crypto = await import('crypto')
-    const emailHash = crypto.createHash('md5').update(user.email.toLowerCase()).digest('hex')
-    const avatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon&s=40`
+    let avatarUrl = user.avatar || null
+
+    if (!avatarUrl) {
+      // Generate Gravatar URL from email as fallback
+      const crypto = await import('crypto')
+      const emailHash = crypto.createHash('md5').update(user.email.toLowerCase()).digest('hex')
+      avatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon&s=40`
+    }
 
     return {
       ...UserModel.excludePassword(user),
@@ -952,18 +956,26 @@ export class UserService {
   }
 
   static async changePassword(id, currentPassword, newPassword) {
-    const user = await UserModel.findById(id)
+    const user = await UserModel.findByIdWithPassword(id)
     if (!user) {
       const error = new Error('User not found')
       error.statusCode = 404
       throw error
     }
 
-    const userWithPassword = await UserModel.findById(id)
-    const userFull = await UserModel.constructor.prototype.constructor(id)
+    const currentPasswordHash = user.password_hash || user.passwordHash
+    if (!currentPasswordHash) {
+      const error = new Error('Invalid user password data')
+      error.statusCode = 400
+      throw error
+    }
 
-    // Note: In this mock implementation, we can't fully verify since we exclude password
-    // In real implementation with DB, you'd retrieve the full user record
+    const isPasswordValid = await bcrypt.compare(currentPassword, currentPasswordHash)
+    if (!isPasswordValid) {
+      const error = new Error('Current password is incorrect')
+      error.statusCode = 400
+      throw error
+    }
 
     const newPasswordHash = await bcrypt.hash(newPassword, PASSWORD_HASH_ROUNDS)
     const updated = await UserModel.update(id, { passwordHash: newPasswordHash })

@@ -7,13 +7,42 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 const summaryCards = [
-  { label: "MY STUDENTS", value: "62", meta: "+1 this week", metaClass: "text-emerald-600" },
-  { label: "ACTIVE CLASSES", value: "2", meta: "Ongoing batches", metaClass: "text-slate-500" },
-  { label: "AVG PASS RATE", value: "81%", meta: "+2%", metaClass: "text-emerald-600" },
-  { label: "UPCOMING SESSIONS", value: "4", meta: "Today", metaClass: "text-blue-600" },
+  {
+    label: "MY STUDENTS",
+    value: "62",
+    meta: "+1 this week",
+    metaClass: "text-emerald-600",
+  },
+  {
+    label: "ACTIVE CLASSES",
+    value: "2",
+    meta: "Ongoing batches",
+    metaClass: "text-slate-500",
+  },
+  {
+    label: "AVG PASS RATE",
+    value: "81%",
+    meta: "+2%",
+    metaClass: "text-emerald-600",
+  },
+  {
+    label: "UPCOMING SESSIONS",
+    value: "4",
+    meta: "Today",
+    metaClass: "text-blue-600",
+  },
 ];
 
 const passRateTrend = [
@@ -27,31 +56,25 @@ const passRateTrend = [
   { week: "W8", score: 73 },
 ];
 
-const scheduleItems = [
-  {
-    time: "08:00 AM - 10:00 AM",
-    title: "Classroom: Road Safety Rules",
-    room: "Room 302",
-    note: "12 Students",
-  },
-  {
-    time: "10:30 AM - 12:30 PM",
-    title: "Driving Practice: Urban",
-    room: "Vehicle K24",
-    note: "5 Students",
-  },
-  {
-    time: "02:00 PM - 04:00 PM",
-    title: "Sim Lab: Night Driving",
-    room: "Booth 12",
-    note: "4 Students",
-  },
-];
-
 const recentActivities = [
-  { name: "Thai Kim Ngoc", context: "Theory Exam - Module 5", score: "88%", time: "2h ago" },
-  { name: "Nguyen Minh Thanh", context: "Simulator Practice", score: "94%", time: "1d ago" },
-  { name: "Ta Hoang Huy", context: "Road Test - Unit 1", score: "78%", time: "3h ago" },
+  {
+    name: "Thai Kim Ngoc",
+    context: "Theory Exam - Module 5",
+    score: "88%",
+    time: "2h ago",
+  },
+  {
+    name: "Nguyen Minh Thanh",
+    context: "Simulator Practice",
+    score: "94%",
+    time: "1d ago",
+  },
+  {
+    name: "Ta Hoang Huy",
+    context: "Road Test - Unit 1",
+    score: "78%",
+    time: "3h ago",
+  },
 ];
 
 const classProgress = [
@@ -61,7 +84,11 @@ const classProgress = [
 ];
 
 const warnings = [
-  { title: "Hoang Nguyen", detail: "Failed 2 consecutive exams", action: "RE-SCHEDULE INTERVIEW" },
+  {
+    title: "Hoang Nguyen",
+    detail: "Failed 2 consecutive exams",
+    action: "REVIEW INTERVIEW",
+  },
   { title: "Vehicle #18", detail: "Maintenance due tomorrow", action: "" },
 ];
 
@@ -75,10 +102,16 @@ const quickActions = [
 function DashboardCard({ item }) {
   return (
     <article className="rounded-xl border border-blue-100 bg-white p-5 shadow-[0_6px_20px_rgba(15,23,42,0.04)]">
-      <p className="text-[10px] font-bold tracking-[0.14em] text-slate-500">{item.label}</p>
+      <p className="text-[10px] font-bold tracking-[0.14em] text-slate-500">
+        {item.label}
+      </p>
       <div className="mt-2 flex items-end gap-2">
-        <p className="text-4xl font-extrabold tracking-tight text-slate-900">{item.value}</p>
-        <p className={`pb-1 text-xs font-semibold ${item.metaClass}`}>{item.meta}</p>
+        <p className="text-4xl font-extrabold tracking-tight text-slate-900">
+          {item.value}
+        </p>
+        <p className={`pb-1 text-xs font-semibold ${item.metaClass}`}>
+          {item.meta}
+        </p>
       </div>
     </article>
   );
@@ -88,7 +121,9 @@ export function InstructorDashboardPage() {
   return (
     <div className="space-y-5">
       <section>
-        <h1 className="text-5xl font-extrabold tracking-tight text-slate-900">Mai Phuoc Khoa</h1>
+        <h1 className="text-5xl font-extrabold tracking-tight text-slate-900">
+          Mai Phuoc Khoa
+        </h1>
         <p className="mt-1 text-sm text-slate-500">March 9, 2026</p>
       </section>
 
@@ -102,7 +137,9 @@ export function InstructorDashboardPage() {
         <div className="space-y-4">
           <article className="rounded-xl border border-blue-100 bg-white p-5 shadow-[0_6px_20px_rgba(15,23,42,0.04)]">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900">Student Pass Rate Trend</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+                Student Pass Rate Trend
+              </h2>
               <button
                 type="button"
                 className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-slate-600"
@@ -111,9 +148,12 @@ export function InstructorDashboardPage() {
               </button>
             </div>
 
-            <div className="h-[280px]">
+            <div className="h-70">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={passRateTrend} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                <BarChart
+                  data={passRateTrend}
+                  margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
+                >
                   <CartesianGrid stroke="#eef2ff" vertical={false} />
                   <XAxis
                     dataKey="week"
@@ -132,7 +172,14 @@ export function InstructorDashboardPage() {
                   />
                   <Bar dataKey="score" radius={[6, 6, 0, 0]}>
                     {passRateTrend.map((entry) => (
-                      <Cell key={entry.week} fill={entry.week === "W4" || entry.week === "W8" ? "#1d4ed8" : "#cbd5e1"} />
+                      <Cell
+                        key={entry.week}
+                        fill={
+                          entry.week === "W4" || entry.week === "W8"
+                            ? "#1d4ed8"
+                            : "#cbd5e1"
+                        }
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -148,7 +195,10 @@ export function InstructorDashboardPage() {
               </h3>
               <ul className="space-y-3">
                 {recentActivities.map((item) => (
-                  <li key={item.name} className="flex items-center justify-between gap-3">
+                  <li
+                    key={item.name}
+                    className="flex items-center justify-between gap-3"
+                  >
                     <div className="flex items-center gap-2">
                       <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">
                         {item.name
@@ -158,12 +208,18 @@ export function InstructorDashboardPage() {
                           .join("")}
                       </span>
                       <div>
-                        <p className="text-xs font-semibold text-slate-800">{item.name}</p>
-                        <p className="text-[10px] text-slate-400">{item.context}</p>
+                        <p className="text-xs font-semibold text-slate-800">
+                          {item.name}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {item.context}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-bold text-blue-600">{item.score}</p>
+                      <p className="text-xs font-bold text-blue-600">
+                        {item.score}
+                      </p>
                       <p className="text-[10px] text-slate-400">{item.time}</p>
                     </div>
                   </li>
@@ -180,8 +236,12 @@ export function InstructorDashboardPage() {
                 {classProgress.map((item) => (
                   <li key={item.className}>
                     <div className="mb-1.5 flex items-center justify-between">
-                      <p className="text-xs font-semibold text-slate-700">{item.className}</p>
-                      <p className="text-xs font-semibold text-slate-500">{item.progress}%</p>
+                      <p className="text-xs font-semibold text-slate-700">
+                        {item.className}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-500">
+                        {item.progress}%
+                      </p>
                     </div>
                     <div className="h-2 rounded-full bg-blue-100">
                       <div
@@ -197,24 +257,6 @@ export function InstructorDashboardPage() {
         </div>
 
         <div className="space-y-4">
-          <article className="rounded-xl border border-blue-100 bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]">
-            <h3 className="mb-3 text-lg font-bold tracking-tight text-slate-900">Today's Schedule</h3>
-            <ul className="space-y-4">
-              {scheduleItems.map((item) => (
-                <li key={item.title} className="flex gap-3">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-blue-600" />
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.08em] text-blue-600">{item.time}</p>
-                    <p className="text-sm font-semibold text-slate-800">{item.title}</p>
-                    <p className="text-[11px] text-slate-500">
-                      {item.room} · {item.note}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </article>
-
           <article className="rounded-xl border border-rose-100 bg-rose-50/50 p-4">
             <h3 className="mb-3 inline-flex items-center gap-2 text-sm font-bold text-rose-600">
               <AlertTriangle className="h-4 w-4" />
@@ -222,8 +264,13 @@ export function InstructorDashboardPage() {
             </h3>
             <ul className="space-y-2">
               {warnings.map((item) => (
-                <li key={item.title} className="rounded-lg border border-rose-100 bg-white p-3">
-                  <p className="text-xs font-semibold text-slate-800">{item.title}</p>
+                <li
+                  key={item.title}
+                  className="rounded-lg border border-rose-100 bg-white p-3"
+                >
+                  <p className="text-xs font-semibold text-slate-800">
+                    {item.title}
+                  </p>
                   <p className="text-[11px] text-slate-500">{item.detail}</p>
                   {item.action ? (
                     <p className="mt-1 text-[10px] font-bold tracking-[0.08em] text-rose-600">
@@ -248,8 +295,12 @@ export function InstructorDashboardPage() {
                       : "border-blue-100 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
                   }`}
                 >
-                  <Icon className={`mx-auto h-4 w-4 ${item.primary ? "text-white" : "text-blue-600"}`} />
-                  <span className="mt-2 block text-[11px] font-bold">{item.label.toUpperCase()}</span>
+                  <Icon
+                    className={`mx-auto h-4 w-4 ${item.primary ? "text-white" : "text-blue-600"}`}
+                  />
+                  <span className="mt-2 block text-[11px] font-bold">
+                    {item.label.toUpperCase()}
+                  </span>
                 </button>
               );
             })}

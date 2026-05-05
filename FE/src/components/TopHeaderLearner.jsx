@@ -35,11 +35,6 @@ const navItems = [
     path: "/learner/simulator",
     active: false,
   },
-  {
-    labelKey: "learnerHeader.schedule",
-    path: "/learner/schedule",
-    active: false,
-  },
 ];
 
 const API_BASE_URL =
