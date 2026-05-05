@@ -44,7 +44,7 @@ export class UserModel {
 
   static async findAll(filters = {}) {
     try {
-      let query = 'SELECT id, email, name, phone, license_type, role_id, email_verified, created_at, updated_at FROM users WHERE 1=1'
+      let query = 'SELECT id, email, name, phone, license_type, role_id, email_verified, avatar, created_at, updated_at FROM users WHERE 1=1'
       const params = []
 
       if (filters.search) {
@@ -72,7 +72,7 @@ export class UserModel {
     try {
       const connection = await pool.getConnection()
       const [users] = await connection.execute(
-        'SELECT id, email, name, phone, license_type, role_id, email_verified, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, email, name, phone, license_type, role_id, email_verified, avatar, created_at, updated_at FROM users WHERE id = ?',
         [id]
       )
       connection.release()
@@ -80,6 +80,22 @@ export class UserModel {
       return users[0] || null
     } catch (error) {
       logger.error('Error finding user by id:', error)
+      throw error
+    }
+  }
+
+  static async findByIdWithPassword(id) {
+    try {
+      const connection = await pool.getConnection()
+      const [users] = await connection.execute(
+        'SELECT * FROM users WHERE id = ? LIMIT 1',
+        [id]
+      )
+      connection.release()
+
+      return users[0] || null
+    } catch (error) {
+      logger.error('Error finding user by id with password:', error)
       throw error
     }
   }
@@ -104,7 +120,7 @@ export class UserModel {
     let connection
 
     try {
-      const { email, passwordHash, name, phone = '', licenseType = 'A1', roleId } = data
+      const { email, passwordHash, name, phone = '', licenseType = 'A1', roleId, avatar = null } = data
 
       // Validate required fields
       if (!email || !passwordHash || !name) {
@@ -115,14 +131,15 @@ export class UserModel {
       const resolvedRoleId = roleId ?? await this.resolveDefaultRoleId(connection)
 
       const [result] = await connection.execute(
-        'INSERT INTO users (email, password_hash, name, phone, license_type, role_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+        'INSERT INTO users (email, password_hash, name, phone, license_type, role_id, avatar, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
         [
           String(email || ''),
           String(passwordHash || ''),
           String(name || ''),
           String(phone || ''),
           String(licenseType || 'A1'),
-          Number(resolvedRoleId)
+          Number(resolvedRoleId),
+          avatar
         ]
       )
 
@@ -134,6 +151,7 @@ export class UserModel {
         phone: phone || '',
         license_type: licenseType || 'A1',
         role_id: Number(resolvedRoleId),
+        avatar: avatar || null,
       }
     } catch (error) {
       logger.error('Error creating user:', error)
@@ -165,6 +183,14 @@ export class UserModel {
       if (data.roleId !== undefined) {
         fields.push('role_id = ?')
         values.push(data.roleId)
+      }
+      if (data.avatar !== undefined) {
+        fields.push('avatar = ?')
+        values.push(data.avatar || null)
+      }
+      if (data.passwordHash !== undefined) {
+        fields.push('password_hash = ?')
+        values.push(data.passwordHash)
       }
 
       if (fields.length === 0) {

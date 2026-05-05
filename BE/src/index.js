@@ -14,7 +14,7 @@ import examRoutes from './routes/examRoutes.js'
 import learnerRoutes from './routes/learnerRoutes.js'
 import { testConnection } from './config/database.js'
 import emailService from './services/EmailService.js'
-import { ensureUsersEmailVerificationSchema, ensureLearnerScheduleSchema, ensureTestResultsSchema } from './config/migrations.js'
+import { ensureUsersEmailVerificationSchema, ensureTestResultsSchema } from './config/migrations.js'
 
 // Load environment variables
 dotenv.config()
@@ -100,7 +100,6 @@ const server = app.listen(PORT, async () => {
 
   if (dbConnected) {
     await ensureUsersEmailVerificationSchema()
-    await ensureLearnerScheduleSchema()
   }
   
   // Initialize email service

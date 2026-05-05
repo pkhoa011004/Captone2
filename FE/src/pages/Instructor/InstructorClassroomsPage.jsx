@@ -84,15 +84,18 @@ function StatCard({ item }) {
         </span>
         {item.badge ? (
           <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${item.badgeClass || "bg-blue-100 text-blue-600"
-              }`}
+            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              item.badgeClass || "bg-blue-100 text-blue-600"
+            }`}
           >
             {item.badge}
           </span>
         ) : null}
       </div>
       <p className="text-sm text-slate-500">{item.label}</p>
-      <p className="mt-1 text-4xl font-extrabold tracking-tight text-slate-900">{item.value}</p>
+      <p className="mt-1 text-4xl font-extrabold tracking-tight text-slate-900">
+        {item.value}
+      </p>
     </article>
   );
 }
@@ -101,7 +104,11 @@ function ClassCard({ item, navigate }) {
   return (
     <article className="rounded-xl border border-blue-100 bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.05)]">
       <div className="relative overflow-hidden rounded-lg">
-        <img src={item.image} alt={item.title} className="h-40 w-full object-cover" />
+        <img
+          src={item.image}
+          alt={item.title}
+          className="h-40 w-full object-cover"
+        />
         <span
           className={`absolute bottom-2 left-2 rounded px-2 py-1 text-[10px] font-bold tracking-[0.08em] ${item.tagClass}`}
         >
@@ -109,7 +116,9 @@ function ClassCard({ item, navigate }) {
         </span>
       </div>
 
-      <h3 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900">{item.title}</h3>
+      <h3 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900">
+        {item.title}
+      </h3>
       <p className="mt-1 text-sm text-slate-500">{item.instructor}</p>
 
       <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
@@ -118,12 +127,19 @@ function ClassCard({ item, navigate }) {
       </div>
 
       <div className="mt-2 h-2 rounded-full bg-blue-100">
-        <div className="h-2 rounded-full bg-blue-600" style={{ width: `${item.progress}%` }} />
+        <div
+          className="h-2 rounded-full bg-blue-600"
+          style={{ width: `${item.progress}%` }}
+        />
       </div>
 
       <button
         type="button"
-        onClick={() => navigate(`/instructor/classrooms/${item.id || item.title.toLowerCase().replace(/\s+/g, '-')}`)}
+        onClick={() =>
+          navigate(
+            `/instructor/classrooms/${item.id || item.title.toLowerCase().replace(/\s+/g, "-")}`,
+          )
+        }
         className="mt-4 inline-flex w-full items-center justify-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
       >
         Manage Class
@@ -151,16 +167,19 @@ export function InstructorClassroomsPage() {
     certificate_id: "1", // 1 for A1, 2 for B1
     capacity: 30,
     start_date: "",
-    end_date: ""
+    end_date: "",
   });
 
   const fetchClassrooms = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/classrooms`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`
-        }
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/classrooms`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+        },
+      );
       const data = await response.json();
       if (data.success) {
         setDbClasses(data.data);
@@ -172,9 +191,14 @@ export function InstructorClassroomsPage() {
         }
       }
 
-      const rosterResponse = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/students/all`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` }
-      });
+      const rosterResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/classrooms/students/all`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+        },
+      );
       const rosterData = await rosterResponse.json();
       if (rosterData.success) {
         setAllStudents(rosterData.data);
@@ -196,24 +220,33 @@ export function InstructorClassroomsPage() {
       try {
         const user = JSON.parse(localStorage.getItem("user"));
         if (user && user.id) instructorId = user.id;
-      } catch (err) { }
+      } catch (err) {}
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/classrooms`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/classrooms`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+          body: JSON.stringify({
+            ...formData,
+            instructor_id: instructorId,
+          }),
         },
-        body: JSON.stringify({
-          ...formData,
-          instructor_id: instructorId
-        })
-      });
+      );
 
       if (response.ok) {
         alert("Classroom created successfully!");
         setIsCreateModalOpen(false);
-        setFormData({ name: "", certificate_id: "1", capacity: 30, start_date: "", end_date: "" });
+        setFormData({
+          name: "",
+          certificate_id: "1",
+          capacity: 30,
+          start_date: "",
+          end_date: "",
+        });
         fetchClassrooms(); // Refresh UI list
       } else {
         const data = await response.json();
@@ -225,7 +258,7 @@ export function InstructorClassroomsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   // Derived stats
   const dynamicStats = [
@@ -245,18 +278,25 @@ export function InstructorClassroomsPage() {
       label: "Upcoming Sessions",
       value: upcomingCount.toString(),
       icon: CalendarClock,
-      badge: "Soon"
-    }
+      badge: "Soon",
+    },
   ];
 
   // Filtering logic
   const filteredClasses = dbClasses.filter((item) => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.instructor_name && item.instructor_name.toLowerCase().includes(searchQuery.toLowerCase()));
+      (item.instructor_name &&
+        item.instructor_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const licenseFilter = selectedType === "All Types" ? true : (Number(item.certificate_id) === 1 ? "A1" : "B1") === selectedType;
-    const statusFilter = selectedStatus === "All Status" ? true : item.status === selectedStatus.toLowerCase();
+    const licenseFilter =
+      selectedType === "All Types"
+        ? true
+        : (Number(item.certificate_id) === 1 ? "A1" : "B1") === selectedType;
+    const statusFilter =
+      selectedStatus === "All Status"
+        ? true
+        : item.status === selectedStatus.toLowerCase();
 
     return matchesSearch && licenseFilter && statusFilter;
   });
@@ -266,24 +306,34 @@ export function InstructorClassroomsPage() {
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="mb-4 text-2xl font-bold text-slate-900">Create New Class</h2>
+            <h2 className="mb-4 text-2xl font-bold text-slate-900">
+              Create New Class
+            </h2>
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Class Name</label>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  Class Name
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="w-full rounded-lg border border-slate-300 p-2 outline-none focus:border-blue-500"
                   placeholder="E.g. A1 Weekend Batch"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">License Type</label>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  License Type
+                </label>
                 <select
                   value={formData.certificate_id}
-                  onChange={(e) => setFormData({ ...formData, certificate_id: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, certificate_id: e.target.value })
+                  }
                   className="w-full rounded-lg border border-slate-300 p-2 outline-none focus:border-blue-500"
                 >
                   <option value="1">A1 - Motorcycle</option>
@@ -291,34 +341,46 @@ export function InstructorClassroomsPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Capacity</label>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  Capacity
+                </label>
                 <input
                   type="number"
                   required
                   min="1"
                   value={formData.capacity}
-                  onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, capacity: e.target.value })
+                  }
                   className="w-full rounded-lg border border-slate-300 p-2 outline-none focus:border-blue-500"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">Start Date</label>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    Start Date
+                  </label>
                   <input
                     type="date"
                     required
                     value={formData.start_date}
-                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, start_date: e.target.value })
+                    }
                     className="w-full rounded-lg border border-slate-300 p-2 outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">End Date</label>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    End Date
+                  </label>
                   <input
                     type="date"
                     required
                     value={formData.end_date}
-                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, end_date: e.target.value })
+                    }
                     className="w-full rounded-lg border border-slate-300 p-2 outline-none focus:border-blue-500"
                   />
                 </div>
@@ -345,9 +407,11 @@ export function InstructorClassroomsPage() {
       )}
       <section className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-5xl font-extrabold tracking-tight text-slate-900">Classrooms</h1>
+          <h1 className="text-5xl font-extrabold tracking-tight text-slate-900">
+            Classrooms
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Manage your assigned learning batches and schedules
+            Manage your assigned learning batches
           </p>
         </div>
 
@@ -378,7 +442,9 @@ export function InstructorClassroomsPage() {
       <section className="rounded-xl border border-blue-100 bg-white p-4">
         <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
           <label>
-            <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-slate-500">SEARCH CLASSES</p>
+            <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-slate-500">
+              SEARCH CLASSES
+            </p>
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
@@ -392,11 +458,13 @@ export function InstructorClassroomsPage() {
           </label>
 
           <label>
-            <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-slate-500">LICENSE TYPE</p>
+            <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-slate-500">
+              LICENSE TYPE
+            </p>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="inline-flex h-10 min-w-[130px] w-full items-center justify-between gap-2 rounded-lg border border-blue-100 bg-blue-50/40 px-3 text-sm text-slate-600 outline-none focus:border-blue-300"
+              className="inline-flex h-10 min-w-32.5 w-full items-center justify-between gap-2 rounded-lg border border-blue-100 bg-blue-50/40 px-3 text-sm text-slate-600 outline-none focus:border-blue-300"
             >
               <option value="All Types">All Types</option>
               <option value="A1">A1</option>
@@ -405,11 +473,13 @@ export function InstructorClassroomsPage() {
           </label>
 
           <label>
-            <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-slate-500">STATUS</p>
+            <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-slate-500">
+              STATUS
+            </p>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="inline-flex h-10 min-w-[130px] w-full items-center justify-between gap-2 rounded-lg border border-blue-100 bg-blue-50/40 px-3 text-sm text-slate-600 outline-none focus:border-blue-300"
+              className="inline-flex h-10 min-w-32.5 w-full items-center justify-between gap-2 rounded-lg border border-blue-100 bg-blue-50/40 px-3 text-sm text-slate-600 outline-none focus:border-blue-300"
             >
               <option value="All Status">All Status</option>
               <option value="Draft">Draft</option>
@@ -441,28 +511,37 @@ export function InstructorClassroomsPage() {
 
         {activeView === "classes" && (
           <div className="mt-5 grid gap-4 lg:grid-cols-3">
-            {filteredClasses.length > 0 ? filteredClasses.map((item) => {
-              const count = item.student_count || 0;
-              const progress = item.capacity > 0 ? Math.min(100, Math.round((count / item.capacity) * 100)) : 0;
-              return (
-                <ClassCard
-                  key={item.id}
-                  item={{
-                    id: item.id,
-                    title: item.name,
-                    license: Number(item.certificate_id) === 1 ? "A1" : "B1",
-                    instructor: item.instructor_name || "Unknown Instructor",
-                    nextSession: "Starts: " + (item.start_date?.split('T')[0] || "TBD"),
-                    students: `${count}/${item.capacity} Students`,
-                    progress: progress,
-                    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=900&q=80",
-                    tagClass: "bg-blue-600 text-white"
-                  }}
-                  navigate={navigate}
-                />
-              )
-            }) : (
-              <p className="text-slate-500 text-sm">No classes created yet. Click &quot;Create Class&quot; to begin.</p>
+            {filteredClasses.length > 0 ? (
+              filteredClasses.map((item) => {
+                const count = item.student_count || 0;
+                const progress =
+                  item.capacity > 0
+                    ? Math.min(100, Math.round((count / item.capacity) * 100))
+                    : 0;
+                return (
+                  <ClassCard
+                    key={item.id}
+                    item={{
+                      id: item.id,
+                      title: item.name,
+                      license: Number(item.certificate_id) === 1 ? "A1" : "B1",
+                      instructor: item.instructor_name || "Unknown Instructor",
+                      nextSession:
+                        "Starts: " + (item.start_date?.split("T")[0] || "TBD"),
+                      students: `${count}/${item.capacity} Students`,
+                      progress: progress,
+                      image:
+                        "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=900&q=80",
+                      tagClass: "bg-blue-600 text-white",
+                    }}
+                    navigate={navigate}
+                  />
+                );
+              })
+            ) : (
+              <p className="text-slate-500 text-sm">
+                No classes created yet. Click &quot;Create Class&quot; to begin.
+              </p>
             )}
           </div>
         )}
@@ -483,8 +562,13 @@ export function InstructorClassroomsPage() {
               <tbody className="divide-y divide-slate-100 bg-white">
                 {allStudents.length > 0 ? (
                   allStudents.map((student) => (
-                    <tr key={student.id} className="transition-colors hover:bg-slate-50">
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-500">#{student.id}</td>
+                    <tr
+                      key={student.id}
+                      className="transition-colors hover:bg-slate-50"
+                    >
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-500">
+                        #{student.id}
+                      </td>
                       <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900">
                         <div className="flex items-center gap-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
@@ -493,9 +577,15 @@ export function InstructorClassroomsPage() {
                           {student.name}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3">{student.email}</td>
-                      <td className="whitespace-nowrap px-4 py-3">{student.phone || "N/A"}</td>
-                      <td className="whitespace-nowrap px-4 py-3 font-semibold text-blue-600">{student.license_type || "N/A"}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        {student.email}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        {student.phone || "N/A"}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 font-semibold text-blue-600">
+                        {student.license_type || "N/A"}
+                      </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right">
                         <span className="inline-block rounded bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-700">
                           ACTIVE
@@ -505,7 +595,9 @@ export function InstructorClassroomsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="py-8 text-center text-slate-500">No students found.</td>
+                    <td colSpan="6" className="py-8 text-center text-slate-500">
+                      No students found.
+                    </td>
                   </tr>
                 )}
               </tbody>

@@ -20,7 +20,6 @@ import { DashboardLearner } from "./pages/Learner/DashboardLearner";
 import PracticeTests from "./pages/Learner/PracticeTests";
 import AiLearner from "./pages/Learner/AiLearner";
 import SimulatorLearner from "./pages/Learner/SimulatorLearner";
-import ScheduleLearner from "./pages/Learner/ScheduleLearner";
 import AccountSettings from "./pages/Learner/AccountSettings";
 import CustomExamBuilder from "./pages/Learner/CustomExamBuilder";
 import { InstructorLayout } from "./components/instructor/InstructorLayout";
@@ -59,7 +58,6 @@ const App = () => {
           <Route path="practice-tests" element={<PracticeTests />} />
           <Route path="ai-assistant" element={<AiLearner />} />
           <Route path="simulator" element={<SimulatorLearner />} />
-          <Route path="schedule" element={<ScheduleLearner />} />
           <Route path="profile" element={<AccountSettings />} />
           <Route path="account-settings" element={<AccountSettings />} />
           <Route path="quiz" element={<QuizLearner />} />
@@ -84,10 +82,6 @@ const App = () => {
         <Route
           path="/simulatorlearner"
           element={<Navigate to="/learner/simulator" replace />}
-        />
-        <Route
-          path="/schedulelearner"
-          element={<Navigate to="/learner/schedule" replace />}
         />
         <Route
           path="/accountsettings"

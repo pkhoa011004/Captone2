@@ -6,14 +6,10 @@ import {
   Zap,
   CheckCircle2,
   Cpu,
-  Calendar,
   ChevronRight,
   MessageSquare,
   Map,
   FileText,
-  Clock,
-  Info,
-  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +17,6 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { learnerDashboardApi } from "@/services/api/learnerDashboard";
-import learnerScheduleApi from "@/services/api/learnerSchedule";
 
 const QUICK_LINKS = [
   {
@@ -61,6 +56,7 @@ const FOOTER_LINKS = [
 ];
 const DEFAULT_SIMULATION_IMAGE =
   "https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/Cover_744a8e3903.jpg";
+const PRACTICE_HISTORY_STORAGE_KEY = "practiceExamHistory";
 
 const DASHBOARD_FALLBACK = {
   knowledgeTheory: {
@@ -85,14 +81,41 @@ const DASHBOARD_FALLBACK = {
   },
 };
 
+const safeJsonParse = (raw, fallback) => {
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const getLatestPracticeHistoryEntry = () => {
+  if (typeof window === "undefined") return null;
+
+  const raw = localStorage.getItem(PRACTICE_HISTORY_STORAGE_KEY);
+  const parsed = safeJsonParse(raw, []);
+  if (!Array.isArray(parsed) || !parsed.length) return null;
+
+  const sorted = [...parsed]
+    .filter((item) => item && typeof item === "object")
+    .sort(
+      (a, b) =>
+        new Date(b?.submittedAt || b?.updatedAt || 0).getTime() -
+        new Date(a?.submittedAt || a?.updatedAt || 0).getTime(),
+    );
+
+  return sorted[0] || null;
+};
+
 const formatSessionTime = (isoDateString) => {
   if (!isoDateString) {
-    return "No scheduled session yet";
+    return "No simulation session yet";
   }
 
   const date = new Date(isoDateString);
   if (Number.isNaN(date.getTime())) {
-    return "No scheduled session yet";
+    return "No simulation session yet";
   }
 
   const now = new Date();
@@ -121,74 +144,10 @@ const formatSessionTime = (isoDateString) => {
   return `${dateText} at ${timeText}`;
 };
 
-const formatDateLabel = (value) => {
-  if (!value) return "TBD";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "TBD";
-  return parsed.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-const formatTimeLabel = (value) => {
-  if (!value) return "TBD";
-  const raw = String(value).trim();
-  if (!raw) return "TBD";
-  if (/\b(AM|PM)\b/i.test(raw)) return raw;
-  const normalized = raw.length === 5 ? `${raw}:00` : raw;
-  const parsed = new Date(`1970-01-01T${normalized}`);
-  if (Number.isNaN(parsed.getTime())) return raw.slice(0, 5);
-  return parsed.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-const parseSessionDateTime = (session) => {
-  const rawDate =
-    session?.date || session?.sessionDate || session?.session_date;
-  if (!rawDate) return null;
-
-  const rawTime = session?.startTime || session?.start_time || "00:00:00";
-  const normalizedTime =
-    String(rawTime).trim().length === 5
-      ? `${String(rawTime).trim()}:00`
-      : String(rawTime).trim();
-  const parsed = new Date(`${String(rawDate).slice(0, 10)}T${normalizedTime}`);
-
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed;
-};
-
-const getUpcomingScheduleSession = (sessions = []) => {
-  if (!Array.isArray(sessions) || sessions.length === 0) return null;
-
-  const withDate = sessions
-    .map((session) => ({
-      session,
-      parsedDate: parseSessionDateTime(session),
-    }))
-    .filter((item) => item.parsedDate);
-
-  if (withDate.length === 0) return null;
-
-  const sorted = [...withDate].sort(
-    (a, b) => a.parsedDate.getTime() - b.parsedDate.getTime(),
-  );
-
-  const now = Date.now();
-  const upcoming = sorted.find((item) => item.parsedDate.getTime() >= now);
-  return (upcoming || sorted[0]).session;
-};
-
 export const DashboardLearner = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(DASHBOARD_FALLBACK);
-  const [nextScheduleSession, setNextScheduleSession] = useState(null);
-  const [showDashboardDetail, setShowDashboardDetail] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -197,24 +156,16 @@ export const DashboardLearner = () => {
     const fetchDashboard = async () => {
       try {
         setIsLoading(true);
-        const [dashboardResponse, scheduleResponse] = await Promise.all([
-          learnerDashboardApi.getLearnerDashboard(),
-          learnerScheduleApi.getLearnerSchedule().catch(() => null),
-        ]);
-
-        const nextSession = getUpcomingScheduleSession(
-          scheduleResponse?.sessions || [],
-        );
+        const dashboardResponse =
+          await learnerDashboardApi.getLearnerDashboard();
 
         if (mounted) {
           setDashboardData(dashboardResponse || DASHBOARD_FALLBACK);
-          setNextScheduleSession(nextSession);
         }
       } catch (error) {
         console.error("Error fetching dashboard:", error);
         if (mounted) {
           setDashboardData(DASHBOARD_FALLBACK);
-          setNextScheduleSession(null);
         }
       } finally {
         if (mounted) {
@@ -238,46 +189,14 @@ export const DashboardLearner = () => {
   const simulationTraining =
     dashboardData?.simulationTraining || DASHBOARD_FALLBACK.simulationTraining;
 
-  const scheduledCardTitle =
-    nextScheduleSession?.title ||
-    simulationTraining?.title ||
-    "Simulation Training";
-
-  const scheduledSessionDate =
-    nextScheduleSession?.date ||
-    nextScheduleSession?.sessionDate ||
-    simulationTraining?.nextSessionAt ||
-    null;
-
-  const scheduledSessionStartTime =
-    nextScheduleSession?.startTime || nextScheduleSession?.start_time || null;
-
-  const scheduledSessionEndTime =
-    nextScheduleSession?.endTime || nextScheduleSession?.end_time || null;
-
-  const scheduledSessionInstructor =
-    nextScheduleSession?.instructor ||
-    (nextScheduleSession?.instructorId
-      ? `Instructor #${nextScheduleSession.instructorId}`
-      : "Instructor TBD");
-
-  const scheduledSessionLocation = nextScheduleSession?.location || "TBD";
-
-  const scheduleCardDateTime =
-    scheduledSessionDate && scheduledSessionStartTime
-      ? `${String(scheduledSessionDate).slice(0, 10)}T${
-          String(scheduledSessionStartTime).trim().length === 5
-            ? `${String(scheduledSessionStartTime).trim()}:00`
-            : String(scheduledSessionStartTime).trim()
-        }`
-      : scheduledSessionDate;
+  const scheduledCardTitle = simulationTraining?.title || "Simulation Training";
 
   const simulationImageUrl =
     simulationTraining?.imageUrl || DEFAULT_SIMULATION_IMAGE;
 
   const sessionTimeText = useMemo(
-    () => formatSessionTime(scheduleCardDateTime),
-    [scheduleCardDateTime],
+    () => formatSessionTime(simulationTraining?.nextSessionAt),
+    [simulationTraining?.nextSessionAt],
   );
 
   const aiBridgeMessage = useMemo(() => {
@@ -299,10 +218,52 @@ export const DashboardLearner = () => {
     Math.min(100, Number(knowledgeTheory?.completionPercent || 0)),
   );
 
-  const handleDashboardDetailToggle = () => {
-    if (!nextScheduleSession?.id) return;
-    setShowDashboardDetail((prev) => !prev);
-  };
+  const latestTestDisplay = useMemo(() => {
+    const latestHistory = getLatestPracticeHistoryEntry();
+    if (latestHistory?.examName) {
+      return {
+        name: String(latestHistory.examName).trim(),
+        submittedAt:
+          latestHistory?.submittedAt || latestHistory?.updatedAt || null,
+        hasAttempt: true,
+      };
+    }
+
+    const apiName = String(latestTest?.name || "").trim();
+    if (apiName && apiName.toLowerCase() !== "no test yet") {
+      return {
+        name: apiName,
+        submittedAt: null,
+        hasAttempt: true,
+      };
+    }
+
+    return {
+      name: t("dashboardPage.noTestYet"),
+      submittedAt: null,
+      hasAttempt: false,
+    };
+  }, [latestTest?.name, t]);
+
+  const latestAttemptLabel = useMemo(() => {
+    if (!latestTestDisplay?.submittedAt) {
+      return t("dashboardPage.noAttemptTime");
+    }
+
+    const date = new Date(latestTestDisplay.submittedAt);
+    if (Number.isNaN(date.getTime())) {
+      return t("dashboardPage.noAttemptTime");
+    }
+
+    return date.toLocaleString(i18n.language === "vi" ? "vi-VN" : "en-US", {
+      hour12: false,
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }, [i18n.language, latestTestDisplay?.submittedAt, t]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f9f9ff] font-sans">
@@ -394,26 +355,17 @@ export const DashboardLearner = () => {
 
               <div className="space-y-3">
                 <p className="text-[15px] font-bold text-slate-500 uppercase tracking-tight">
-                  {latestTest?.name || t("dashboardPage.noTestYet")}
+                  {latestTestDisplay?.name || t("dashboardPage.noTestYet")}
                 </p>
-                <div className="flex items-end gap-2">
-                  <span className="text-6xl leading-none font-black text-[#141b2b]">
-                    {latestTest?.correctAnswers ?? 0}
-                  </span>
-                  <span className="pb-1 text-2xl font-bold text-slate-400">
-                    / {latestTest?.totalQuestions ?? 0}
-                  </span>
-                </div>
                 <p className="text-sm text-slate-500 font-medium">
-                  {t("dashboardPage.latestTestDesc")}
+                  {t("dashboardPage.latestTestOnlyDesc")}
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 p-5 bg-green-50 rounded-2xl border border-green-100 shadow-sm mt-auto">
-                <CheckCircle2 size={22} className="text-green-600" />
-                <span className="text-base font-bold text-green-700">
-                  {latestTest?.accuracyPercent ?? 0}%{" "}
-                  {t("dashboardPage.accuracyScore")}
+              <div className="flex items-center gap-3 p-5 bg-blue-50 rounded-2xl border border-blue-100 shadow-sm mt-auto">
+                <CheckCircle2 size={22} className="text-blue-600" />
+                <span className="text-sm font-bold text-blue-700">
+                  {t("dashboardPage.lastAttemptAt")} {latestAttemptLabel}
                 </span>
               </div>
             </CardContent>
@@ -454,7 +406,7 @@ export const DashboardLearner = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
                   <span className="text-[10px] font-bold text-slate-500 tracking-[1.5px] uppercase">
-                    {t("dashboardPage.scheduledSession")}
+                    {t("dashboardPage.quickSimulation")}
                   </span>
                 </div>
 
@@ -470,20 +422,9 @@ export const DashboardLearner = () => {
                 <div className="flex gap-3 pt-2">
                   <Button
                     className="rounded-xl bg-[#141b2b] hover:bg-slate-800 text-white font-bold h-11 px-6 transition-transform active:scale-95"
-                    onClick={() => navigate("/learner/schedule")}
+                    onClick={() => navigate("/learner/simulator")}
                   >
-                    {t("dashboardPage.addToCalendar")}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-11 w-11 rounded-xl border border-slate-200 bg-slate-100/80 text-slate-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={handleDashboardDetailToggle}
-                    disabled={!nextScheduleSession?.id}
-                    title="View details"
-                    aria-label="View schedule details"
-                  >
-                    <Info size={16} />
+                    {t("dashboardPage.quickSimulation")}
                   </Button>
                 </div>
               </div>
@@ -551,86 +492,6 @@ export const DashboardLearner = () => {
           </div>
         )}
       </main>
-
-      {showDashboardDetail && nextScheduleSession ? (
-        <div className="fixed inset-0 z-50">
-          <button
-            type="button"
-            aria-label="Close session details"
-            className="absolute inset-0 bg-[#141b2b]/25"
-            onClick={() => setShowDashboardDetail(false)}
-          />
-
-          <div className="absolute left-1/2 top-1/2 w-[min(92vw,820px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
-            <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-100">
-              <div className="space-y-1">
-                <p className="text-[11px] font-bold tracking-[0.14em] text-blue-600 uppercase">
-                  {t("dashboardPage.sessionDetails")}
-                  Session Details
-                </p>
-                <h4 className="text-2xl font-black text-[#141b2b] leading-tight">
-                  {scheduledCardTitle}
-                </h4>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-xl text-slate-500"
-                onClick={() => setShowDashboardDetail(false)}
-              >
-                <X size={18} />
-              </Button>
-            </div>
-
-            <div className="p-6">
-              <div className="rounded-xl border border-slate-200 overflow-hidden">
-                <table className="w-full text-sm">
-                  <tbody>
-                    <tr className="border-b border-slate-100">
-                      <th className="w-42 bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        {t("dashboardPage.date")}
-                        Date
-                      </th>
-                      <td className="px-4 py-3 font-semibold text-[#141b2b]">
-                        {formatDateLabel(scheduledSessionDate)}
-                      </td>
-                    </tr>
-                    <tr className="border-b border-slate-100">
-                      <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        {t("dashboardPage.time")}
-                        Time
-                      </th>
-                      <td className="px-4 py-3 font-semibold text-[#141b2b]">
-                        {formatTimeLabel(scheduledSessionStartTime)} -{" "}
-                        {formatTimeLabel(scheduledSessionEndTime)}
-                      </td>
-                    </tr>
-                    <tr className="border-b border-slate-100">
-                      <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        {t("dashboardPage.instructor")}
-                        Instructor
-                      </th>
-                      <td className="px-4 py-3 font-semibold text-[#141b2b]">
-                        {scheduledSessionInstructor}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th className="bg-slate-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        {t("dashboardPage.location")}
-                        Location
-                      </th>
-                      <td className="px-4 py-3 font-semibold text-[#141b2b]">
-                        {scheduledSessionLocation}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {/* Footer */}
       <footer className="w-full max-w-7xl mx-auto px-10 py-14 flex flex-col md:flex-row justify-between items-center gap-8 border-t border-slate-100 mt-20">

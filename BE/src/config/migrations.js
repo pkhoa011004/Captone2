@@ -1,6 +1,5 @@
 import { pool } from './database.js'
 import { logger } from '../utils/logger.js'
-import { LearnerScheduleModel } from '../models/LearnerScheduleModel.js'
 
 export async function ensureUsersEmailVerificationSchema() {
   let connection
@@ -33,13 +32,14 @@ export async function ensureUsersEmailVerificationSchema() {
        FROM information_schema.COLUMNS
        WHERE TABLE_SCHEMA = ?
          AND TABLE_NAME = 'users'
-         AND COLUMN_NAME IN ('email_verified', 'verification_token', 'token_expires_at')`,
+         AND COLUMN_NAME IN ('email_verified', 'verification_token', 'token_expires_at', 'avatar')`,
       [databaseName]
     )
 
     const hasEmailVerified = columnRows.some((row) => row.COLUMN_NAME === 'email_verified')
     const hasVerificationToken = columnRows.some((row) => row.COLUMN_NAME === 'verification_token')
     const hasTokenExpiresAt = columnRows.some((row) => row.COLUMN_NAME === 'token_expires_at')
+    const hasAvatar = columnRows.some((row) => row.COLUMN_NAME === 'avatar')
 
     if (!hasEmailVerified) {
       await connection.execute(
@@ -59,11 +59,18 @@ export async function ensureUsersEmailVerificationSchema() {
       )
     }
 
+    if (!hasAvatar) {
+      await connection.execute(
+        'ALTER TABLE users ADD COLUMN avatar LONGTEXT NULL AFTER token_expires_at'
+      )
+    }
+
     await connection.execute(
       `ALTER TABLE users
          MODIFY COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0,
          MODIFY COLUMN verification_token VARCHAR(255) NULL,
-         MODIFY COLUMN token_expires_at DATETIME NULL`
+          MODIFY COLUMN token_expires_at DATETIME NULL,
+          MODIFY COLUMN avatar LONGTEXT NULL`
     )
 
     const [indexRows] = await connection.execute(
@@ -89,24 +96,6 @@ export async function ensureUsersEmailVerificationSchema() {
     return true
   } catch (error) {
     logger.error(`❌ Auto-migration failed: ${error.message}`)
-    return false
-  } finally {
-    if (connection) {
-      connection.release()
-    }
-  }
-}
-
-export async function ensureLearnerScheduleSchema() {
-  let connection
-
-  try {
-    connection = await pool.getConnection()
-    await LearnerScheduleModel.ensureTable(connection)
-    logger.info('✅ Auto-migration completed: learner schedule schema is up to date')
-    return true
-  } catch (error) {
-    logger.error(`❌ Learner schedule auto-migration failed: ${error.message}`)
     return false
   } finally {
     if (connection) {

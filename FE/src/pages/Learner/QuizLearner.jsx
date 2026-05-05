@@ -132,7 +132,9 @@ const getOptionTextByAnswer = (options = [], answerValue) => {
   }
 
   const normalizedLetter = (() => {
-    const key = String(answerValue ?? "").trim().toUpperCase();
+    const key = String(answerValue ?? "")
+      .trim()
+      .toUpperCase();
     return ["A", "B", "C", "D"].includes(key) ? key : null;
   })();
 
@@ -324,7 +326,8 @@ const resolveAiMessage = ({ focusTopic, scorePercent }) => {
 
 const normalizeExamConfig = (config = {}) => {
   const accountRole = getStoredUserRole("user");
-  const forceLearnerLicense = accountRole === "user" || accountRole === "learner";
+  const forceLearnerLicense =
+    accountRole === "user" || accountRole === "learner";
 
   const licenseType = forceLearnerLicense
     ? getStoredLicenseType("A1")
@@ -518,22 +521,25 @@ export default function QuizLearner() {
     // Refetch questions with correct answers when entering review mode
     const fetchQuestionsWithAnswers = async () => {
       try {
-        console.log('[Review Mode] Fetching questions with answers...');
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+        console.log("[Review Mode] Fetching questions with answers...");
+        const apiUrl =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
         const url = `${apiUrl}/questions?licenseType=${examConfig.licenseType}&includeAnswer=true`;
-        console.log('[Review Mode] Fetch URL:', url);
-        
+        console.log("[Review Mode] Fetch URL:", url);
+
         const response = await fetch(url);
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: Failed to fetch questions with answers`);
+          throw new Error(
+            `HTTP ${response.status}: Failed to fetch questions with answers`,
+          );
         }
-        
+
         const result = await response.json();
-        console.log('[Review Mode] API Response:', result);
-        
+        console.log("[Review Mode] API Response:", result);
+
         const data = Array.isArray(result?.data) ? result.data : [];
-        console.log('[Review Mode] Questions count:', data.length);
-        
+        console.log("[Review Mode] Questions count:", data.length);
+
         // Normalize and map to original question IDs
         const qWithAnswersMap = {};
         data.forEach((q, idx) => {
@@ -543,36 +549,49 @@ export default function QuizLearner() {
             q?.correct_answer ?? q?.correctAnswer,
           );
           qWithAnswersMap[qId] = correctAns;
-          if (idx < 3) { // Log first 3 for debugging
+          if (idx < 3) {
+            // Log first 3 for debugging
             console.log(`[Review Mode] Q${qId}: correctAnswer=${correctAns}`);
           }
         });
-        
+
         // Merge with existing questions
-        const merged = questions.map(q => ({
+        const merged = questions.map((q) => ({
           ...q,
           correctAnswer:
             qWithAnswersMap[q.id] ??
-            normalizeAnswerToOptionId(q.options ?? [], q.correctAnswer ?? q.correct_answer),
+            normalizeAnswerToOptionId(
+              q.options ?? [],
+              q.correctAnswer ?? q.correct_answer,
+            ),
         }));
-        
-        console.log('[Review Mode] Merged sample:', {
+
+        console.log("[Review Mode] Merged sample:", {
           id: merged[0]?.id,
           correctAnswer: merged[0]?.correctAnswer,
-          options: merged[0]?.options?.map(o => ({ id: o.optionId, text: o.optionText.substring(0, 20) })),
+          options: merged[0]?.options?.map((o) => ({
+            id: o.optionId,
+            text: o.optionText.substring(0, 20),
+          })),
         });
-        
+
         setQuestionsWithAnswers(merged);
       } catch (error) {
-        console.error('[Review Mode] Failed to fetch answers:', error);
-        console.log('[Review Mode] Falling back to existing questions');
+        console.error("[Review Mode] Failed to fetch answers:", error);
+        console.log("[Review Mode] Falling back to existing questions");
         // Fallback: use existing questions
         setQuestionsWithAnswers(questions);
       }
     };
 
     fetchQuestionsWithAnswers();
-  }, [isFinished, reviewMode, questions.length, examConfig.licenseType, questions]);
+  }, [
+    isFinished,
+    reviewMode,
+    questions.length,
+    examConfig.licenseType,
+    questions,
+  ]);
 
   const quizDraftStorageKey = useMemo(
     () => getQuizDraftStorageKey(examConfig),
@@ -821,6 +840,11 @@ export default function QuizLearner() {
       totalQuestions,
       result,
     });
+    savePracticeHistoryEntry({
+      examConfig,
+      totalQuestions,
+      result,
+    });
     clearQuizDraft(quizDraftStorageKey);
     setIsFinished(true);
   };
@@ -1064,7 +1088,9 @@ export default function QuizLearner() {
         licenseType: examConfig.licenseType,
         wrongQuestions: wrongQuestions.map((q) => {
           const userAnswerValue = Number(answersByQuestion[q.id]);
-          const correctAnswerValue = Number(q.correctAnswer ?? q.correct_answer);
+          const correctAnswerValue = Number(
+            q.correctAnswer ?? q.correct_answer,
+          );
           const userAnswerText = Number.isFinite(userAnswerValue)
             ? getOptionTextByAnswer(q.options, userAnswerValue)
             : "Không chọn";
@@ -1073,7 +1099,10 @@ export default function QuizLearner() {
             : "Không xác định";
 
           console.log(`   Processing Q${q.id}:`, {
-            question_text: (q.questionText ?? q.question_text)?.substring(0, 30),
+            question_text: (q.questionText ?? q.question_text)?.substring(
+              0,
+              30,
+            ),
             user_answer: userAnswerValue,
             correct_answer: correctAnswerValue,
           });
@@ -1084,7 +1113,9 @@ export default function QuizLearner() {
             correct_answer: Number.isFinite(correctAnswerValue)
               ? correctAnswerValue
               : null,
-            user_answer: Number.isFinite(userAnswerValue) ? userAnswerValue : null,
+            user_answer: Number.isFinite(userAnswerValue)
+              ? userAnswerValue
+              : null,
             correct_answer_text: correctAnswerText,
             user_answer_text: userAnswerText,
             options: q.options,
@@ -1200,7 +1231,10 @@ export default function QuizLearner() {
       backendPassed === null ? computedPassed : backendPassed && computedPassed;
 
     const wrongAnswerIds = new Set(
-      (Array.isArray(gradingResult?.wrong_answers) ? gradingResult.wrong_answers : [])
+      (Array.isArray(gradingResult?.wrong_answers)
+        ? gradingResult.wrong_answers
+        : []
+      )
         .map((id) => Number(id))
         .filter((id) => Number.isFinite(id)),
     );
@@ -1260,8 +1294,13 @@ export default function QuizLearner() {
       isCorrect,
       isWrong,
       optionCount: reviewQuestion.options?.length,
-      optionIds: reviewQuestion.options?.map(o => o.optionId),
-      firstOption: reviewQuestion.options?.[0] ? { id: reviewQuestion.options[0].optionId, text: reviewQuestion.options[0].optionText.substring(0, 20) } : null,
+      optionIds: reviewQuestion.options?.map((o) => o.optionId),
+      firstOption: reviewQuestion.options?.[0]
+        ? {
+            id: reviewQuestion.options[0].optionId,
+            text: reviewQuestion.options[0].optionText.substring(0, 20),
+          }
+        : null,
     });
 
     const userAnswerText = Number.isFinite(userAnswer)
@@ -1321,9 +1360,7 @@ export default function QuizLearner() {
                       key={item.id}
                       type="button"
                       onClick={() => setCurrentQuestion(index)}
-                      title={
-                        isWrongQuestion ? "Câu sai" : `Câu ${index + 1}`
-                      }
+                      title={isWrongQuestion ? "Câu sai" : `Câu ${index + 1}`}
                       className={`relative h-9 rounded-lg text-sm font-semibold border transition-all ${
                         isCurrent
                           ? "bg-blue-600 text-white border-blue-600"
@@ -1424,12 +1461,16 @@ export default function QuizLearner() {
                 <div className="space-y-3">
                   {reviewQuestion.options.map((option, optIdx) => {
                     const optionId = Number(
-                      option?.optionId ?? option?.option_id ?? option?.id ?? option?.value,
+                      option?.optionId ??
+                        option?.option_id ??
+                        option?.id ??
+                        option?.value,
                     );
-                    const isUserAnswer = Number.isFinite(optionId) && userAnswer === optionId;
+                    const isUserAnswer =
+                      Number.isFinite(optionId) && userAnswer === optionId;
                     const isCorrectOption =
                       Number.isFinite(optionId) && correctAnswer === optionId;
-                    
+
                     if (optIdx === 0) {
                       console.log(`[Options Render] First option:`, {
                         optionId: option.optionId,
@@ -1439,7 +1480,7 @@ export default function QuizLearner() {
                         isUserAnswer,
                       });
                     }
-                    
+
                     let optionBgColor = "bg-white border-slate-300";
                     let optionTextColor = "text-slate-700";
                     let circleBgColor = "bg-white border-slate-400";
@@ -1452,7 +1493,7 @@ export default function QuizLearner() {
                       circleBgColor = "bg-emerald-200 border-emerald-500";
                       circleTextColor = "text-emerald-700";
                     }
-                    
+
                     if (isUserAnswer && isWrong && !isCorrectOption) {
                       // Đáp án sai user chọn - tô đậm màu đỏ
                       optionBgColor = "bg-red-100 border-red-500";
@@ -1466,11 +1507,15 @@ export default function QuizLearner() {
                         key={option.optionId}
                         className={`border-2 p-4 rounded-xl flex items-start gap-3 transition-all ${optionBgColor} ${isCorrectOption ? "shadow-sm ring-1 ring-emerald-300" : ""} ${isUserAnswer && isWrong ? "shadow-sm ring-1 ring-red-300" : ""}`}
                       >
-                        <span className={`shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center text-base font-bold ${circleBgColor} ${circleTextColor}`}>
+                        <span
+                          className={`shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center text-base font-bold ${circleBgColor} ${circleTextColor}`}
+                        >
                           {String.fromCharCode(64 + option.optionId)}
                         </span>
                         <div className="grow pt-0.5">
-                          <p className={`text-sm font-medium ${optionTextColor}`}>
+                          <p
+                            className={`text-sm font-medium ${optionTextColor}`}
+                          >
                             {option.optionText}
                           </p>
                           {isCorrectOption && (
@@ -1627,10 +1672,13 @@ export default function QuizLearner() {
             )}
 
             <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <Button onClick={handleRestart} className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700">
+              <Button
+                onClick={handleRestart}
+                className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
+              >
                 Làm lại
               </Button>
-              <Button 
+              <Button
                 onClick={() => setReviewMode(true)}
                 className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
               >
@@ -1648,15 +1696,7 @@ export default function QuizLearner() {
                 disabled={sendingToAI}
                 className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
               >
-                {sendingToAI ? (
-                  <>
-                    Đang gửi...
-                  </>
-                ) : (
-                  <>
-                    Phân tích với AI
-                  </>
-                )}
+                {sendingToAI ? <>Đang gửi...</> : <>Phân tích với AI</>}
               </Button>
             </div>
           </CardContent>
@@ -1685,7 +1725,10 @@ export default function QuizLearner() {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <Button onClick={handleRestart} className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700">
+              <Button
+                onClick={handleRestart}
+                className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
+              >
                 Làm lại
               </Button>
               <Button
